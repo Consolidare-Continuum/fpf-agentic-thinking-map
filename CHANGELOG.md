@@ -15,6 +15,39 @@ list: [`docs/deep/EXPANDED_PROVENANCE.md`](docs/deep/EXPANDED_PROVENANCE.md).
   finalized, not yet implemented. See
   [`docs/deep/DESIGN_TRAVERSAL_CHECKPOINT.md`](docs/deep/DESIGN_TRAVERSAL_CHECKPOINT.md).
 
+## [1.9.3] - 2026-07-24
+
+### Added
+
+- **`fpf_thinking_map.reachability`**: discrete reachability analysis over a
+  `SemanticMap`'s declared transition graph — `graph_roots()`,
+  `forward_reachable()`, `unreachable_transitions()`. Algorithm 10.1/10.3 from
+  M. J. Kochenderfer, S. M. Katz, A. L. Corso, and R. J. Moss, *Algorithms for
+  Validation* (MIT Press, 2026), ch. 10 — cheap at domain-map scale (tens of
+  transitions), and it checks the actual declared graph instead of only the
+  paths a hand-written test happened to exercise.
+- `check_reachability` added to `python -m fpf_thinking_map.verify` (27/27).
+
+### Fixed (by the check catching it, not by changing runtime behavior)
+
+- A downstream domain map (outside this package) gave a
+  `requires_human_authorization` transition its own dedicated `from_state`,
+  distinct from its non-destructive twin's. Read cold, that `from_state`
+  looked unreachable — nothing else in the map produced it. The state was
+  actually an intentional external entry point (callers arrive there after
+  work upstream of the map), not a defect — but nothing recorded that on
+  purpose, so a plausible-looking fix (merge it onto the shared `from_state`
+  its safe twin used) broke four behavior tests: `ThinkingMapTraversal.step()`
+  called without an explicit `transition_id` aggregates `missing_evidence`
+  across every transition sharing a `from_state`, not just the one the caller
+  meant. Runtime behavior of this package is unchanged by this release —
+  `reachability.unreachable_transitions()` requires `entry_states` as an
+  explicit argument precisely so an intentional entry point is a one-line,
+  reviewable statement instead of tribal knowledge someone has to
+  rediscover the hard way, as happened here. Worked example, both directions,
+  against this package's own `build_destructive_action_map()`: see
+  `check_reachability` in `fpf_thinking_map/verify.py`.
+
 ## [1.9.2] - 2026-07-23
 
 ### Changed

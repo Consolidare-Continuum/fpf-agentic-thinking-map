@@ -15,12 +15,14 @@ import traceback
 from fpf_thinking_map.examples import (
     build_deploy_decision_map,
     build_deploy_rules,
+    build_destructive_action_map,
     run_logic_scenario,
     run_scenario_full_traversal,
     run_scenario_missing_evidence,
     run_scenario_role_conflict,
     run_truth_table_demo,
 )
+from fpf_thinking_map.reachability import unreachable_transitions
 from fpf_thinking_map.authorization import (
     AuthorizationReceipt,
     compute_state_fingerprint,
@@ -1680,6 +1682,62 @@ def check_move_intent():
     )
 
 
+def check_reachability():
+    """Discrete reachability over a map's declared transition graph (val.pdf ch.10).
+
+    Worked example, both directions, using the library's own canonical
+    destructive-move map (build_destructive_action_map): delete_records and
+    archive_records both declare from_state="reviewed", which is nobody's
+    to_state in this map — callers arrive at "reviewed" from outside (a
+    dry-run happened upstream), the same shape as the case that motivated
+    this module (see reachability.py's docstring for the full story: an
+    unreachable-looking from_state turned out to be an intentional external
+    entry point, and the "obvious" fix of merging it onto a shared from_state
+    broke four behavior tests by changing what missing_evidence aggregates
+    across).
+
+    entry_states is required, not inferred, precisely so that mistake isn't
+    repeatable: declaring "reviewed" as an entry point is a one-line,
+    reviewable statement of intent instead of something a reachability walk
+    has to guess at.
+    """
+    sm = build_destructive_action_map()
+
+    # declared correctly: "reviewed" is a named entry point, nothing is
+    # unreachable
+    dead = unreachable_transitions(sm, entry_states={"reviewed"})
+    assert not dead, f"unexpected unreachable transitions: {[t.transition_id for t in dead]}"
+
+    # omit the entry point on purpose: the check's whole job is to make an
+    # undeclared entry point loud, not to silently let it through. All three
+    # transitions rooted at "reviewed" must come back.
+    undeclared = unreachable_transitions(sm, entry_states=set())
+    undeclared_ids = {t.transition_id for t in undeclared}
+    assert undeclared_ids == {"delete_records", "archive_records", "log_status"}, undeclared_ids
+
+    # a genuinely orphaned transition — from_state nobody produces and
+    # nobody declared as an entry point — must still be caught even when a
+    # real entry point is declared correctly
+    sm2 = build_destructive_action_map()
+    sm2.register_transition(TransitionPrimitive(
+        transition_id="orphan_move",
+        label="Unreachable by construction — nothing produces 'nowhere'",
+        context_id="data_ops",
+        from_state="nowhere",
+        to_state="deleted",
+    ))
+    orphaned = unreachable_transitions(sm2, entry_states={"reviewed"})
+    assert [t.transition_id for t in orphaned] == ["orphan_move"], (
+        [t.transition_id for t in orphaned]
+    )
+    assert orphaned[0].requires_human_authorization is False, (
+        "orphan_move isn't gated — reachability catches dead transitions "
+        "regardless of whether they happen to be destructive; it is not a "
+        "substitute for requires_human_authorization, it is a separate check "
+        "on a separate property (can the graph get here at all)"
+    )
+
+
 def main():
     print("FPF Thinking Map — Self-verification (horizontal)")
     print("=" * 55)
@@ -1711,6 +1769,7 @@ def main():
         ("authorization receipt (scoped, non-replayable, TOCTOU-safe)", check_authorization_receipt),
         ("pending input / AWAIT (distinct from IDLE)", check_pending_input_await),
         ("move intent / inspect_move (concrete move identity)", check_move_intent),
+        ("reachability (discrete graph analysis, val.pdf ch.10)", check_reachability),
     ]
 
     passed = sum(check(name, fn) for name, fn in checks)
