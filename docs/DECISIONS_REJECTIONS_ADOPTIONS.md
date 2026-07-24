@@ -39,6 +39,8 @@ Use this index when you need rationale and provenance behind design choices.
   - [REJECTED_F17_UNIFIED_TERM_SHEET.md](deep/REJECTED_F17_UNIFIED_TERM_SHEET.md)
 - **A.22.CGUS as model self-admissibility procedure (rejected as practice; pattern acknowledged):**
   - [REJECTED_A22_CGUS_MODEL_SELF_ADMISSIBILITY.md](deep/REJECTED_A22_CGUS_MODEL_SELF_ADMISSIBILITY.md)
+- **Cross-Map Composition and Cross-Task State Bridging (rejected, investigated at v1.9.2):**
+  - [REJECTED_CROSS_MAP_TASK_BRIDGING.md](deep/REJECTED_CROSS_MAP_TASK_BRIDGING.md)
 
 ## Analysis and rationale
 
