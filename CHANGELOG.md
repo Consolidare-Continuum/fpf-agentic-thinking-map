@@ -15,6 +15,33 @@ list: [`docs/deep/EXPANDED_PROVENANCE.md`](docs/deep/EXPANDED_PROVENANCE.md).
   finalized, not yet implemented. See
   [`docs/deep/DESIGN_TRAVERSAL_CHECKPOINT.md`](docs/deep/DESIGN_TRAVERSAL_CHECKPOINT.md).
 
+## [1.9.4] - 2026-07-25
+
+### Fixed
+
+- **`TransitionPrimitive.guard_expression` was declared but never
+  consulted** — not read by `guards.py`, `traversal.py`, `state.py`, or
+  `logic.py`. `ThinkingMapTraversal.attempt_transition()` now treats a
+  non-empty `guard_expression` as a `DecisionRule.name` reference in the
+  bound `LogicLayer`: the transition only fires when that rule's current
+  recommendation (`action_if_true`/`action_if_false`, whichever the
+  condition resolves to) matches the transition_id being attempted.
+  Closes #10.
+  - A routing-policy mismatch returns `REVISE_PLAN` — not `ESCALATE` — with
+    the rule's actual recommendation in `Outcome.alternatives`, so an
+    agentic caller can retry the correct transition_id in the same turn.
+    `REVISE_PLAN` was declared in `OutcomeKind` since the outcome space was
+    first drawn up but never previously returned by any code path.
+  - No active recommendation (condition false with no `action_if_false`,
+    or a `HINT`/`WARN` rule's vacuous-implication suppression): silent
+    pass-through, same as not setting `guard_expression` at all.
+  - Dangling reference (no `logic_layer` bound, or the named rule doesn't
+    exist): silent no-op, matching `required_gate_id`'s existing
+    convention for an unresolved reference — backward compatible with
+    every existing map.
+- `check_route_gated_transition` added to `python -m fpf_thinking_map.verify`
+  (28/28).
+
 ## [1.9.3] - 2026-07-24
 
 ### Added
