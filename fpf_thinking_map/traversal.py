@@ -451,6 +451,33 @@ class ThinkingMapTraversal:
                         missing_evidence=gate.missing_evidence(state.available_evidence_ids),
                     )
 
+        if t.guard_expression and self.logic_layer:
+            rule = next(
+                (r for r in self.logic_layer.rules if r.name == t.guard_expression),
+                None,
+            )
+            # dangling rule name: same silent no-op as an unresolved
+            # required_gate_id above — a missing reference doesn't block.
+            if rule:
+                _, recommended = rule.evaluate(state)
+                # no active recommendation right now ("" from a false
+                # condition with no action_if_false, or vacuous HINT/WARN
+                # suppression) means the policy has no opinion — allow,
+                # same as guard_expression being unset. Only a *different*
+                # active recommendation blocks.
+                if recommended and recommended != transition_id:
+                    reason = (
+                        f"Transition '{transition_id}' does not match routing policy "
+                        f"'{rule.name}' — policy currently recommends '{recommended}'"
+                    )
+                    if rule.explanation:
+                        reason += f": {rule.explanation}"
+                    return Outcome(
+                        kind=OutcomeKind.REVISE_PLAN,
+                        reason=reason,
+                        alternatives=[recommended],
+                    )
+
         allowed, guard_results = self.guard_engine.is_action_allowed(state, transition_id)
         if not allowed:
             denials = [r.reason for r in guard_results if r.verdict == GuardVerdict.DENY]

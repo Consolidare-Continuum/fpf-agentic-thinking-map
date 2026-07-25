@@ -1738,6 +1738,98 @@ def check_reachability():
     )
 
 
+def check_route_gated_transition():
+    """guard_expression -> DecisionRule: routing-policy legality, agentic
+
+    not human-facing. A transition naming a DecisionRule via
+    guard_expression only fires when that rule's current recommendation
+    matches the attempted transition_id — mismatches return REVISE_PLAN
+    (never ESCALATE: no human is asked, nothing is added to
+    pending_authorizations) with the rule's actual recommendation in
+    alternatives, so an agentic caller retries in the same turn, inside
+    the map's own vocabulary."""
+    sm = SemanticMap()
+    sm.register_context(ContextPrimitive("cis", "Compound Intelligence Stack"))
+    sm.register_transition(TransitionPrimitive(
+        "route_local", "route to local/open tier", "cis",
+        "control_plane", "local_open", guard_expression="escalation_policy",
+    ))
+    sm.register_transition(TransitionPrimitive(
+        "route_frontier", "escalate to frontier oracle", "cis",
+        "control_plane", "frontier", guard_expression="escalation_policy",
+    ))
+
+    logic = LogicLayer()
+    logic.add_rule(DecisionRule(
+        name="escalation_policy", condition=RiskAbove("high"),
+        action_if_true="route_frontier", action_if_false="route_local",
+        explanation="routine load stays local; frontier is the rare escalation",
+        kind=RuleKind.ROUTE,
+    ))
+    engine = ThinkingMapTraversal(sm, logic_layer=logic)
+
+    # normal risk: policy recommends route_local. Attempting the
+    # mismatched transition does not fire it, and — the whole point —
+    # does not touch pending_authorizations the way an ESCALATE would.
+    s_normal = engine.build_active_state(
+        RuntimeBinding(active_context_id="cis", risk_level="normal"),
+        current_state="control_plane",
+    )
+    o_mismatch = engine.attempt_transition(s_normal, "route_frontier")
+    assert o_mismatch.kind == OutcomeKind.REVISE_PLAN, o_mismatch.kind
+    assert o_mismatch.kind != OutcomeKind.ESCALATE, (
+        "a routing-policy mismatch must never read as 'needs a human'"
+    )
+    assert o_mismatch.alternatives == ["route_local"], o_mismatch.alternatives
+    assert "escalation_policy" in o_mismatch.reason
+    assert s_normal.current_state == "control_plane", "mismatch must not move state"
+    assert s_normal.pending_authorizations == set(), (
+        "REVISE_PLAN is not an authorization ask — nothing pending for a human"
+    )
+
+    # the matching transition at the same state fires normally
+    o_match = engine.attempt_transition(s_normal, "route_local")
+    assert o_match.kind == OutcomeKind.CONTINUE, o_match.kind
+    assert s_normal.current_state == "local_open"
+
+    # high risk: policy now recommends route_frontier instead. Attempting
+    # the now-wrong default gets REVISE_PLAN naming the correct one —
+    # and the caller can retry it immediately, autonomously, same turn.
+    s_high = engine.build_active_state(
+        RuntimeBinding(active_context_id="cis", risk_level="high"),
+        current_state="control_plane",
+    )
+    o_wrong_tier = engine.attempt_transition(s_high, "route_local")
+    assert o_wrong_tier.kind == OutcomeKind.REVISE_PLAN, o_wrong_tier.kind
+    assert o_wrong_tier.alternatives == ["route_frontier"], o_wrong_tier.alternatives
+    assert s_high.current_state == "control_plane"
+
+    o_retry = engine.attempt_transition(s_high, o_wrong_tier.alternatives[0])
+    assert o_retry.kind == OutcomeKind.CONTINUE, (
+        "the model's own retry, using exactly what REVISE_PLAN handed back, "
+        f"must succeed — got {o_retry.kind}"
+    )
+    assert s_high.current_state == "frontier"
+
+    # dangling reference / no logic_layer bound: same silent no-op as an
+    # unresolved required_gate_id — backward compatible with maps that
+    # never opted into routing policy at all
+    sm2 = SemanticMap()
+    sm2.register_context(ContextPrimitive("cis2", "Test"))
+    sm2.register_transition(TransitionPrimitive(
+        "t_a", "A", "cis2", "start", "mid", guard_expression="no_such_rule",
+    ))
+    engine_no_logic = ThinkingMapTraversal(sm2)  # no logic_layer at all
+    s2 = engine_no_logic.build_active_state(
+        RuntimeBinding(active_context_id="cis2"), current_state="start",
+    )
+    o2 = engine_no_logic.attempt_transition(s2, "t_a")
+    assert o2.kind == OutcomeKind.CONTINUE, (
+        f"a dangling guard_expression with no bound logic_layer must not "
+        f"block — got {o2.kind}"
+    )
+
+
 def main():
     print("FPF Thinking Map — Self-verification (horizontal)")
     print("=" * 55)
@@ -1770,6 +1862,7 @@ def main():
         ("pending input / AWAIT (distinct from IDLE)", check_pending_input_await),
         ("move intent / inspect_move (concrete move identity)", check_move_intent),
         ("reachability (discrete graph analysis, val.pdf ch.10)", check_reachability),
+        ("route-gated transition (guard_expression -> DecisionRule, REVISE_PLAN not ESCALATE)", check_route_gated_transition),
     ]
 
     passed = sum(check(name, fn) for name, fn in checks)

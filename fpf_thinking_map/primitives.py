@@ -438,6 +438,35 @@ class TransitionPrimitive:
     does — the engine only makes the
     option visible, it never picks one. Whether an alternative actually
     satisfies the goal is a domain judgment outside this library's scope.
+
+    guard_expression: names a DecisionRule (fpf_thinking_map.logic) that
+    must currently recommend *this* transition_id for the fire to
+    proceed unopposed — the routing-policy counterpart to
+    required_gate_id/required_evidence. Checked in
+    ThinkingMapTraversal.attempt_transition(), not by the guard engine
+    despite the name (guards.py stays pure ActiveState predicates; a
+    LogicLayer reference only ThinkingMapTraversal can resolve doesn't
+    belong there).
+
+    Deliberately not an ESCALATE: a routing-policy mismatch is not
+    "needs a human," it's "the map disagrees with the proposed move and
+    knows what it would prefer instead" — the same shape as
+    COLLECT_EVIDENCE, not requires_human_authorization. Fires
+    REVISE_PLAN (declared in OutcomeKind since the traversal engine's
+    outcome space was first drawn up, never previously returned by any
+    code path) with the rule's actual current recommendation in
+    Outcome.alternatives, so an agentic caller can retry the recommended
+    transition_id in the same turn — solution-seeking stays inside the
+    map's own vocabulary, no external tool, no waiting on a person.
+
+    Silent no-op, matching required_gate_id's existing convention for a
+    dangling reference, when: no logic_layer is bound on the traversal,
+    the named rule doesn't exist in it, or the rule currently has no
+    active recommendation at all (condition false with no
+    action_if_false, or a HINT/WARN rule's vacuous-implication
+    suppression) — "the policy has no opinion right now" defaults to
+    allow, same as not setting guard_expression at all. Only an active
+    recommendation for a *different* transition_id blocks.
     """
     transition_id: str
     label: str
