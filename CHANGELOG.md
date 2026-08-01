@@ -19,7 +19,12 @@ list: [`docs/deep/EXPANDED_PROVENANCE.md`](docs/deep/EXPANDED_PROVENANCE.md).
 
 ### Fixed
 
-- **A.21 gate lattice was not order-correct.** `GatePrimitive.evaluate()`
+- **A.21 gate lattice was not order-correct** ("Ground Stop"): a real hard
+  denial (`GateDecision.BLOCK`) is now distinguishable from a soft,
+  resolvable hold (`ABSTAIN`) at every layer — matching the FAA distinction
+  between a Ground Stop (no amount of new information lifts it) and a
+  Ground Delay Program (resolves once conditions improve), which is exactly
+  the gap this release closes. `GatePrimitive.evaluate()`
   aggregated multiple `GateCheck` results by checking for `ABSTAIN` before
   `DEGRADE`, contradicting its own declared lattice (`abstain ≤ pass ≤
   degrade ≤ block`, where `BLOCK` should dominate). Confirmed by direct
