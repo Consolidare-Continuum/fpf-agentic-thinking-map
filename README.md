@@ -61,6 +61,24 @@ into ordinary code:
 This is not another reasoning prompt. It is a compact control surface around
 reasoning.
 
+## Why this works across model sizes
+
+The map clips interpretive slack at both ends. Strong models stop
+free-associating past what a constraint actually says; lighter models receive
+enough scaffolding that they do not have to infer the workflow's intent from
+scratch.
+
+Building a good map still requires real judgment, so new controls should be
+designed and challenged with strong models first. Consuming the finished map
+does not require the same reasoning capacity. Once a workflow is encoded as
+explicit constraints and gates instead of tacit prose, following it correctly
+stops depending on frontier-level inference. A lighter model does not have to
+understand the workflow deeply; it has to respect the map.
+
+That is what makes the result portable down to smaller models, not merely
+across flagship ones: the hard reasoning was front-loaded into the encoding,
+once, by the map author.
+
 ## The contract
 
 The division of responsibility is deliberate:
