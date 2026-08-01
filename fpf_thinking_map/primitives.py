@@ -16,15 +16,30 @@ from typing import Any
 
 
 # ---------------------------------------------------------------------------
-# A.1.1 — U.BoundedContext: The Semantic Frame
+# Operational Decision Frame — compiled scoping index, not an FPF U-kind
 # ---------------------------------------------------------------------------
 
 @dataclass
 class ContextPrimitive:
-    """A bounded semantic frame where meaning is local.
+    """A bounded, compiled scoping frame — which transitions/gates/evidence/
+    roles are locally in play, and where cross-frame moves must go through
+    an explicit Bridge.
 
-    FPF A.1.1: meaning is defined inside a context. Cross-context use
-    requires explicit Bridges with declared translation loss.
+    This is a runtime execution artifact, not a claim about FPF ontology.
+    Inspired by A.1.1 as it read pre-2026-07-26 (`U.BoundedContext` as a
+    U-kind); current upstream FPF explicitly forbids publishing
+    `U.BoundedContext` as a U-kind (`ailev/FPF` commit `60caecb`) and
+    replaces it with on-demand recovery of `ModelApplicabilityRelation` /
+    `ModelUseRelation` / `ModelExpressionCoherenceRelation`, bundled into a
+    named `BoundedModelUseStructure` only when their joint organization
+    changes one decision — never a standing container, never holding state
+    between calls. A deterministic engine still needs exactly that standing,
+    indexed frame at every step (see `SemanticMap._ctx_transition_idx`) —
+    that operational need is downstream of FPF's ontology, not an
+    implementation of current A.1.1. See
+    `docs/deep/FPF_THINKING_MAP_VS_AILEV_FPF_POSITIONING.md` (Operational
+    Decision Frame counter-proposal) for the full argument.
+
     Contexts do not form holarchies — no containment or inheritance.
     Cross-context relation goes through bridges only.
     """

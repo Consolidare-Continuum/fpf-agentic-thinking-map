@@ -68,7 +68,7 @@ Step 12: age=2×TTL → EXPIRED
 
 | Primitive | FPF source | Why this floor |
 |-----------|-----------|---------------|
-| ContextPrimitive | A.1.1 U.BoundedContext | Meaning frames are build-time. Changing a context mid-traversal changes the board. |
+| ContextPrimitive | A.1.1 pre-2026-07-26 (`U.BoundedContext`, since removed as a U-kind — see `FPF_THINKING_MAP_VS_AILEV_FPF_POSITIONING.md`) | Meaning frames are build-time. Changing a context mid-traversal changes the board. |
 | ContextBridge | A.6.9 CrossContextSameness | Bridge topology defines what cross-context moves are possible. Structural. |
 | RolePrimitive | A.2 Role Taxonomy | Role definitions (responsibilities, conflicts, specialization) require governance to change. |
 | TransitionPrimitive | A.3.3 U.Dynamics | State machine topology is compiled. Adding/removing transitions = redesigning the board. |

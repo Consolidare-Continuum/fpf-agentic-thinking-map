@@ -17,7 +17,7 @@ A transdisciplinary specification for reasoning, assurance, and evolution — an
 
 | What we built | FPF spec section(s) | What the spec section defines |
 |--------------|---------------------|------------------------------|
-| `ContextPrimitive` | A.1.1 U.BoundedContext | A bounded area where words have specific local meanings. Cross-context use requires explicit bridges with declared translation loss. |
+| `ContextPrimitive` | A.1.1 as it read pre-2026-07-26 (`U.BoundedContext`) | A bounded area where words have specific local meanings. Cross-context use requires explicit bridges with declared translation loss. **Provenance note (2026-08-01):** `ailev/FPF` commit `60caecb` now forbids publishing `U.BoundedContext` as a U-kind, replacing it with on-demand recovery of `ModelApplicabilityRelation`/`ModelUseRelation`/`ModelExpressionCoherenceRelation`, optionally bundled as `BoundedModelUseStructure` — never a standing container. `ContextPrimitive` is a downstream execution artifact (an "Operational Decision Frame" — see `FPF_THINKING_MAP_VS_AILEV_FPF_POSITIONING.md`), not a current implementation of A.1.1. |
 | `ContextBridge` | A.6.9 CrossContextSamenessDisambiguation | How to connect two contexts: direction, mapping, substitution license, loss notes. |
 | `RolePrimitive` | A.2 Role Taxonomy, A.2.1 U.RoleAssignment, A.2.7 U.RoleAlgebra, A.13 AgentialRole | Roles as assignments (not identities). Specialization (≤), incompatibility (⊥), bundles (⊗). Agency as a spectrum (passive → deliberative). |
 | `WorkPrimitive` | A.15 U.Planning, A.15.1 U.Work, A.15.2 U.WorkPlan | The strict distinction between a plan (intent) and an enactment (what actually happened). A plan is NOT done work. |
