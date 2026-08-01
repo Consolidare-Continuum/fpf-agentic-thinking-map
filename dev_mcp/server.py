@@ -4,7 +4,7 @@ Agent-first summary:
 - Run scenarios quickly: run_scenario(code, scope)
 - Run shipped verification: run_verify()
 - Read deep docs when needed: sources, gap audit, advisories
-- Every run_scenario call is checked against all 8 ADVISORIES.md conditions;
+- Every run_scenario call is checked against all detectable ADVISORIES.md conditions;
   hits ride along in the response and get appended to a durable log —
   inspect it later with get_advisory_log(). This is awareness, not
   enforcement: nothing here blocks or fixes anything, see advisory_detectors.py.
@@ -47,7 +47,7 @@ _VALID_SCOPES = {"core", "user-extension"}
 
 
 def _run_advisory_detection(ns: dict, scope: str, code: str) -> list[dict[str, str]]:
-    """Best-effort: scan the scenario's namespace, run all 8 detectors, log hits.
+    """Best-effort: scan the scenario namespace, run all detectors, log hits.
 
     Never raises — a detector bug must not break run_scenario's actual job.
     """

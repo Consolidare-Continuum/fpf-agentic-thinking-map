@@ -15,7 +15,7 @@ pip install -r dev_mcp/requirements.txt
 python -m dev_mcp.test_server
 ```
 
-Expect: `STATUS: ALL PASS` (29/29).
+Expect: `STATUS: ALL PASS` (42/42).
 
 ## Start MCP server
 
@@ -60,7 +60,7 @@ these tools actually fit together: [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 ## Advisory-trigger awareness (not a fix, not enforcement)
 
-Every `run_scenario` call is checked, after execution, against 9 of the 11
+Every `run_scenario` call is checked, after execution, against 13 of the 14
 conditions documented in `docs/deep/ADVISORIES.md` (`ADV-09` has no
 detector — it's about compliance mode itself, not something an
 `ActiveState` can exhibit). If any `ActiveState` object built by the

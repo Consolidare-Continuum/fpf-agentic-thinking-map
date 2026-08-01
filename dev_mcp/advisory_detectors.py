@@ -1,4 +1,4 @@
-"""Structural detectors for 10 of the 11 documented integrator advisories (docs/deep/ADVISORIES.md).
+"""Structural detectors for 13 of the 14 documented integrator advisories (docs/deep/ADVISORIES.md).
 ADV-09 has no detector — it's about compliance mode itself, not an ActiveState property.
 
 Not a fix. Not enforcement. Nothing here changes engine behavior or blocks
@@ -118,7 +118,11 @@ def _adv04_contradiction_opt_in(state: ActiveState, logic_layer: "LogicLayer | N
                 continue
             rule1 = next((r for r in logic_layer.rules if r.name == r1["rule"]), None)
             rule2 = next((r for r in logic_layer.rules if r.name == r2["rule"]), None)
-            declared = bool(rule1 and rule2 and (r2["action"] in rule1.exclusive_with or r1["action"] in rule2.exclusive_with))
+            declared = bool(
+                rule1
+                and rule2
+                and (r2["action"] in rule1.exclusive_with or r1["action"] in rule2.exclusive_with)
+            )
             if not declared:
                 return AdvisoryHit(
                     "ADV-04", "Contradiction detection is opt-in, not inferred from action names",
@@ -133,7 +137,7 @@ def _adv04_contradiction_opt_in(state: ActiveState, logic_layer: "LogicLayer | N
 
 
 def _adv05_degrade_granularity(state: ActiveState) -> AdvisoryHit | None:
-    """ADV-05 — gate DEGRADE only fires from a single GateCheck's own partial evidence, never aggregated."""
+    """ADV-05 — independent binary checks do not create aggregate DEGRADE."""
     for gate in state.semantic_map.gates.values():
         single_item_checks = [c for c in gate.checks if len(c.required_evidence) == 1]
         if len(single_item_checks) < 2:
@@ -144,25 +148,28 @@ def _adv05_degrade_granularity(state: ActiveState) -> AdvisoryHit | None:
         if has_pass and has_abstain:
             aggregate = gate.evaluate(state.available_evidence_ids)
             return AdvisoryHit(
-                "ADV-05", "Gate DEGRADE only distinguishes partial evidence within a single GateCheck",
+                "ADV-05", "Independent binary GateChecks do not create aggregate DEGRADE",
                 "anomaly",
                 f"gate '{gate.gate_id}' has {len(single_item_checks)} single-evidence checks with "
-                f"a mix of PASS/ABSTAIN ({decisions}) — genuinely partial completion, but the gate "
-                f"aggregate resolves to '{aggregate.value}', indistinguishable from every check "
-                f"being ABSTAIN. Group related evidence into one GateCheck if DEGRADE visibility matters here.",
+                f"a mix of PASS/ABSTAIN ({decisions}) — A.21's maximal join resolves the gate "
+                f"to '{aggregate.value}', not DEGRADE. Group evidence into one GateCheck for "
+                f"partial-completeness semantics, or set failure_decision explicitly when a "
+                f"missing independent check must BLOCK.",
             )
     return None
 
 
 def _adv06_agency_not_enforced(state: ActiveState) -> AdvisoryHit | None:
-    """ADV-06 — agency_level is descriptive metadata surfaced to the model; nothing gates on it by default."""
+    """ADV-06 — agency enum values remain descriptive; E.16 is transition-opt-in."""
     passive_roles = [r for r in state.active_roles if r.agency_level == AgencyLevel.PASSIVE]
     if passive_roles and state.possible_transitions:
         return AdvisoryHit(
-            "ADV-06", "agency_level is descriptive metadata, not an enforced permission", "structural-fact",
+            "ADV-06", "PASSIVE agency metadata is not an enforced permission", "structural-fact",
             f"role(s) {[r.role_id for r in passive_roles]} bound as PASSIVE, with "
             f"{len(state.possible_transitions)} transition(s) still exposed identically to a "
-            f"DELIBERATIVE-bound role — agency_level gates nothing by default in this engine.",
+            f"DELIBERATIVE-bound role. AUTONOMOUS also remains descriptive unless "
+            f"a transition opts into E.16 with requires_autonomy_budget_id; PASSIVE "
+            f"requires a domain role policy if it should constrain movement.",
         )
     return None
 
@@ -181,7 +188,7 @@ def _adv07_risk_case_sensitivity(state: ActiveState) -> AdvisoryHit | None:
 
 
 def _adv08_no_persistence_surface(state: ActiveState) -> AdvisoryHit | None:
-    """ADV-08 — ActiveState/RuntimeBinding/MoveTrace have no serialization surface; #28's backing store is init=False."""
+    """ADV-08 — runtime objects have no serialization surface; #28's backing store is init=False."""
     return AdvisoryHit(
         "ADV-08", "No persistence surface: session continuity is a harness responsibility", "structural-fact",
         f"this ActiveState (current_state={state.current_state!r}, visit_count={state.visit_count}) "
@@ -275,8 +282,58 @@ def _adv11_unsound_safe_alternative(state: ActiveState) -> AdvisoryHit | None:
     )
 
 
+def _adv12_legacy_scalar_assurance(state: ActiveState) -> AdvisoryHit | None:
+    """ADV-12 — numeric F/G is readable compatibility, not current FPF shape."""
+    legacy = [
+        evidence.evidence_id
+        for evidence in state.semantic_map.evidence.values()
+        if not evidence.fgr.is_structurally_typed
+    ]
+    if not legacy:
+        return None
+    return AdvisoryHit(
+        "ADV-12", "Legacy scalar F/G is not a typed assurance tuple", "anomaly",
+        f"evidence {legacy} uses numeric or absent F/G compatibility fields. Current "
+        f"C.2.3 F is FormalityLevel and A.2.6 G is a set-valued ClaimScope; numeric "
+        f"G is never interpreted as scope membership. Migrate before relying on scope.",
+    )
+
+
+def _adv13_invalid_work_attribution(state: ActiveState) -> AdvisoryHit | None:
+    """ADV-13 — F.6 attribution must recover exact Work and RoleAssignment."""
+    invalid: list[str] = []
+    for work in state.semantic_map.work_records.values():
+        errors = state.semantic_map.validate_work_attribution(work.work_id)
+        if errors:
+            invalid.append(f"{work.work_id}: {errors}")
+    if not invalid:
+        return None
+    return AdvisoryHit(
+        "ADV-13", "Performed work lacks exact F.6 attribution", "anomaly",
+        "work records cannot be relied on as performed-under-assignment: "
+        + "; ".join(invalid),
+    )
+
+
+def _adv14_may_is_not_permission(state: ActiveState) -> AdvisoryHit | None:
+    """ADV-14 — RFC MAY does not institute or exercise permission."""
+    may_ids = [
+        commitment.commitment_id
+        for commitment in state.semantic_map.commitments.values()
+        if commitment.modality.value == "may"
+    ]
+    if not may_ids:
+        return None
+    return AdvisoryHit(
+        "ADV-14", "MAY commitment is not a permission grant or authorization", "structural-fact",
+        f"commitments {may_ids} use MAY. This runtime retains MAY for RFC-style source "
+        f"compatibility only; it cannot satisfy requires_human_authorization, institute "
+        f"A.2.8.PER GrantedPermissionRelation, or prove non-prohibition.",
+    )
+
+
 def detect_advisories(state: ActiveState, logic_layer: "LogicLayer | None" = None) -> list[AdvisoryHit]:
-    """Run all 10 structural detectors (ADV-01..08, ADV-10, ADV-11) against one
+    """Run all 13 structural detectors (ADV-01..08, ADV-10..14) against one
 
     ActiveState (+ optional LogicLayer) and return the hits. ADV-09 has no
     detector here — it's about compliance mode itself, not something an
@@ -293,6 +350,9 @@ def detect_advisories(state: ActiveState, logic_layer: "LogicLayer | None" = Non
         _adv08_no_persistence_surface(state),
         _adv10_ungated_destructive_transition(state),
         _adv11_unsound_safe_alternative(state),
+        _adv12_legacy_scalar_assurance(state),
+        _adv13_invalid_work_attribution(state),
+        _adv14_may_is_not_permission(state),
     ]
     return [h for h in hits if h is not None]
 

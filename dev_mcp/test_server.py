@@ -25,7 +25,6 @@ from dev_mcp.server import (
     run_verify,
 )
 
-
 def check(name: str, fn) -> bool:
     try:
         fn()
@@ -428,6 +427,68 @@ result = "ok"
     assert "ADV-11" not in ids, f"sound, existing, ungated, non-denied alternative must not trigger ADV-11, got {ids}"
 
 
+def check_adv12_legacy_scalar_assurance_detected():
+    code = """
+sm = SemanticMap()
+sm.register_context(ContextPrimitive("ctx", "Test"))
+sm.register_evidence(EvidencePrimitive("legacy", "Legacy", "ctx", fgr=FGR(0.8, 0.6, 0.9)))
+engine = ThinkingMapTraversal(sm)
+state = engine.build_active_state(RuntimeBinding(active_context_id="ctx"), current_state="start")
+result = "ok"
+"""
+    out = json.loads(run_scenario(code, scope="core"))
+    ids = _triggered_ids(out)
+    assert "ADV-12" in ids, f"expected ADV-12 for scalar F/G, got {ids}"
+
+
+def check_adv12_typed_assurance_no_false_positive():
+    code = """
+sm = SemanticMap()
+sm.register_context(ContextPrimitive("ctx", "Test"))
+slice_ = ContextSlice("scheme-v1", ("tenant",), {"tenant": "a"})
+scope_ = ClaimScope("tenant-a", [slice_], interpretation_basis_ref="scheme-v1")
+sm.register_evidence(EvidencePrimitive(
+    "typed", "Typed", "ctx", fgr=FGR(FormalityLevel.F5, scope_, 0.9)
+))
+engine = ThinkingMapTraversal(sm)
+state = engine.build_active_state(RuntimeBinding(active_context_id="ctx"), current_state="start")
+result = "ok"
+"""
+    out = json.loads(run_scenario(code, scope="core"))
+    ids = _triggered_ids(out)
+    assert "ADV-12" not in ids, f"typed F/G must not trigger ADV-12, got {ids}"
+
+
+def check_adv13_invalid_work_attribution_detected():
+    code = """
+sm = SemanticMap()
+sm.register_context(ContextPrimitive("ctx", "Test"))
+sm.register_work(WorkPrimitive("work-1", "Work", "ctx", performed_under="missing-assignment"))
+engine = ThinkingMapTraversal(sm)
+state = engine.build_active_state(RuntimeBinding(active_context_id="ctx"), current_state="start")
+result = "ok"
+"""
+    out = json.loads(run_scenario(code, scope="core"))
+    ids = _triggered_ids(out)
+    assert "ADV-13" in ids, f"expected ADV-13 for dangling attribution, got {ids}"
+
+
+def check_adv14_may_not_permission_detected():
+    code = """
+sm = SemanticMap()
+sm.register_context(ContextPrimitive("ctx", "Test"))
+sm.register_commitment(CommitmentPrimitive(
+    "may-1", "May deploy", DeonticModality.MAY, "ctx"
+))
+engine = ThinkingMapTraversal(sm)
+state = engine.build_active_state(RuntimeBinding(active_context_id="ctx"), current_state="start")
+result = "ok"
+"""
+    out = json.loads(run_scenario(code, scope="core"))
+    ids = _triggered_ids(out)
+    assert "ADV-14" in ids, f"expected ADV-14 for MAY compatibility form, got {ids}"
+
+
 def check_advisory_log_persists_across_calls():
     code = """
 sm = SemanticMap()
@@ -600,7 +661,10 @@ def main() -> int:
         ("advisories: ADV-02 risk not filtering detected", check_adv02_risk_not_filtering_detected),
         ("advisories: ADV-03 context self-asserted detected", check_adv03_context_self_asserted_detected),
         ("advisories: ADV-04 contradiction opt-in detected", check_adv04_contradiction_opt_in_detected),
-        ("advisories: ADV-04 no false positive when declared exclusive", check_adv04_no_false_positive_when_declared_exclusive),
+        (
+            "advisories: ADV-04 no false positive when declared exclusive",
+            check_adv04_no_false_positive_when_declared_exclusive,
+        ),
         ("advisories: ADV-05 DEGRADE granularity detected", check_adv05_degrade_granularity_detected),
         ("advisories: ADV-06 agency not enforced detected", check_adv06_agency_not_enforced_detected),
         ("advisories: ADV-07 risk case sensitivity detected", check_adv07_risk_case_sensitivity_detected),
@@ -612,7 +676,14 @@ def main() -> int:
         ("advisories: ADV-11 dangling alternative detected", check_adv11_dangling_alternative_detected),
         ("advisories: ADV-11 gated alternative detected", check_adv11_gated_alternative_detected),
         ("advisories: ADV-11 denied alternative detected", check_adv11_denied_alternative_detected),
-        ("advisories: ADV-11 no false positive on sound alternative", check_adv11_no_false_positive_on_sound_alternative),
+        (
+            "advisories: ADV-11 no false positive on sound alternative",
+            check_adv11_no_false_positive_on_sound_alternative,
+        ),
+        ("advisories: ADV-12 scalar assurance detected", check_adv12_legacy_scalar_assurance_detected),
+        ("advisories: ADV-12 typed assurance accepted", check_adv12_typed_assurance_no_false_positive),
+        ("advisories: ADV-13 invalid work attribution detected", check_adv13_invalid_work_attribution_detected),
+        ("advisories: ADV-14 MAY is not permission", check_adv14_may_not_permission_detected),
         ("advisories: log persists across calls", check_advisory_log_persists_across_calls),
         ("compliance: off by default", check_compliance_off_by_default),
         ("compliance: fit recorded", check_compliance_fit_recorded),
