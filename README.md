@@ -54,7 +54,7 @@ into ordinary code:
 - cross-context bridges;
 - human authorization;
 - external dependencies and wake conditions;
-- concrete move identity and trace lineage.
+- concrete move identity and trace lineage;
 - typed claim scope and pathwise assurance;
 - tool-call plan closure and hard autonomy budgets.
 
@@ -86,20 +86,20 @@ application logic, retrieval, tools, or a task scheduler.
 | Tool-call planning | `CallPlanPrimitive`, `BudgetEnvelope`, `CheckpointReturn` | Incomplete or mismatched declared tool plans return `REVISE_PLAN` and cannot fire |
 | Autonomous enactment | `AutonomyBudgetDecl`, `AutonomyLedgerEntry` | A transition opts in with `requires_autonomy_budget_id`; failed assignment/gate/envelope returns `ESCALATE` and successful burn is recorded |
 | Performed-work attribution | `WorkPrimitive.performed_under`, `validate_work_attribution()` | Once a map declares RoleAssignments, a dangling or wrong-holder work record cannot satisfy completion |
-| Gate decisions | `GateDecision`, `GateCheck.failure_decision`, `OutcomeCause` | A.21 maximal join preserves reachable hard `BLOCK`; traversal keeps the compatible `ABSTAIN` action plus typed cause |
+| Gate decisions | `GateDecision`, `GateCheck.failure_decision`, `OutcomeCause` | `ABSTAIN` means the gate lacks enough basis to say yes; an explicit `BLOCK` means policy says no for the current evaluation. Traversal preserves the distinction as `cause=gate_block` without breaking the existing outcome enum |
 | Map integrity | `ThinkingMapTraversal.validate_map()` | Opt-in preflight fails on dangling gate/rule references; explicit unknown transition IDs return typed `ABSTAIN` |
 
 These are bounded runtime compilations, not a port of the full FPF framework.
 
 ## Live runtime visual
 
-[![Three test-backed traces of the traversal runtime](https://raw.githubusercontent.com/igareosh/fpf-agentic-thinking-map/main/docs/assets/three-runs-preview.png)](https://igareosh.github.io/fpf-agentic-thinking-map/demos/three-runs.html)
+[![Four test-backed traces of the traversal runtime](https://raw.githubusercontent.com/igareosh/fpf-agentic-thinking-map/main/docs/assets/three-runs-preview.png)](https://igareosh.github.io/fpf-agentic-thinking-map/demos/three-runs.html)
 
-**[Open the interactive three-run trace](https://igareosh.github.io/fpf-agentic-thinking-map/demos/three-runs.html)**
+**[Open the interactive four-run trace](https://igareosh.github.io/fpf-agentic-thinking-map/demos/three-runs.html)**
 
 The visual follows evidence recovery, `PendingInput`/`AWAIT`, `MoveIntent`,
-state-bound authorization, and successful traced movement in the current
-runtime.
+state-bound authorization, and the v1.9.5 distinction between an undecided
+gate (`ABSTAIN`) and an explicit hard denial (`BLOCK`).
 
 ## Minimal example
 
@@ -139,6 +139,7 @@ semantic_map.register_transition(
         "deploy",
         "candidate",
         "released",
+        required_gate_id="release_gate",
         required_evidence=["test_results"],
     )
 )
@@ -190,6 +191,19 @@ Gates test declared conditions. Guards enforce hard constraints. A small
 propositional layer composes facts without asking the model to reinterpret the
 rules on every step.
 
+When a gate cannot return `PASS`, v1.9.5 keeps two different situations apart:
+
+| Gate result | Plain-language meaning | Typical traversal response |
+| --- | --- | --- |
+| `ABSTAIN` (`"insufficient"`) | The gate does not have enough basis to say yes | `COLLECT_EVIDENCE` when the missing evidence is declared; otherwise a denied outcome |
+| `BLOCK` | A check explicitly says no under the current declared policy and state | denied with `cause=OutcomeCause.GATE_BLOCK` |
+
+`BLOCK` is hard for that evaluation, not necessarily permanent. It must not be
+downgraded by another check or treated as an invitation to guess, but the gate
+may evaluate differently after its declared evidence, state, or policy changes.
+Existing checks do not become hard blocks automatically; a check opts in with
+`failure_decision=GateDecision.BLOCK`.
+
 ### Validated bridges
 
 Cross-context movement is explicit. High-risk substitution without a
@@ -239,6 +253,7 @@ by expanding into a general agent framework.
 | v1.7 | State-bound, expiring authorization receipts |
 | v1.8 | External dependency tracking and `AWAIT` |
 | v1.9 | Concrete move identity, inspection, lineage, authorization-clock fix |
+| v1.9.5 "Ground Stop" | Correct A.21 gate join; explicit `BLOCK` versus insufficient `ABSTAIN`; typed denial causes; opt-in structural controls |
 
 The complete reader-facing history is in
 [docs/VERSION_TRACKER.md](https://github.com/igareosh/fpf-agentic-thinking-map/blob/main/docs/VERSION_TRACKER.md).
@@ -265,6 +280,19 @@ confused:
 python -m fpf_thinking_map.verify
 python -m fpf_thinking_map.examples
 ```
+
+The 1.9.5 gate distinction was also replayed through `dev_mcp` with the same
+missing `release_permit` under two policies:
+
+```text
+default check       -> gate: insufficient -> outcome: collect_evidence
+explicit BLOCK      -> gate: block        -> outcome: denied (cause: gate_block)
+permit present      -> gate: pass         -> outcome: continue
+```
+
+That is the release contract in one view: uncertainty requests a resolution
+path; a declared hard denial stops the move and remains identifiable to the
+caller.
 
 The compiled state slice was also measured against injecting the corresponding
 raw FPF sections at five shipped decision points. The measured slice was much

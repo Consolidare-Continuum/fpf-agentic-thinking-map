@@ -19,25 +19,27 @@ list: [`docs/deep/EXPANDED_PROVENANCE.md`](docs/deep/EXPANDED_PROVENANCE.md).
 
 ### Fixed
 
-- **A.21 gate lattice was not order-correct** ("Ground Stop"): a real hard
-  denial (`GateDecision.BLOCK`) is now distinguishable from a soft,
-  resolvable hold (`ABSTAIN`) at every layer — matching the FAA distinction
-  between a Ground Stop (no amount of new information lifts it) and a
-  Ground Delay Program (resolves once conditions improve), which is exactly
-  the gap this release closes. `GatePrimitive.evaluate()`
+- **A.21 gate lattice was not order-correct** ("Ground Stop"): the runtime
+  now keeps "not enough basis to say yes" (`ABSTAIN`) separate from "this
+  declared check says no" (`BLOCK`). `BLOCK` is a hard denial for the current
+  evaluation, not a claim that the decision can never change; a later change
+  in declared evidence, state, or policy can produce a different result. The
+  important guarantee is that an active `BLOCK` cannot be diluted by another
+  check or mistaken for ordinary uncertainty. `GatePrimitive.evaluate()`
   aggregated multiple `GateCheck` results by checking for `ABSTAIN` before
   `DEGRADE`, contradicting its own declared lattice (`abstain ≤ pass ≤
   degrade ≤ block`, where `BLOCK` should dominate). Confirmed by direct
   test: a mixed `[PASS, BLOCK]` result was silently returning `PASS`, and
   `[ABSTAIN, DEGRADE]` was returning `ABSTAIN` instead of `DEGRADE`. Fixed
   by an explicit `GateDecision.lattice_rank` and a proper `max()` join.
-  **Compatibility note**: a gate built from several single-evidence checks
-  where one check individually abstains and another individually degrades
-  will now aggregate to `DEGRADE` (→ `WARN`, allowed) rather than `ABSTAIN`
-  (→ `DENY`, blocked). Neither of this package's own example gates can
-  produce this mix (each check requires exactly one evidence item). If your
-  map needs "any missing evidence anywhere is a hard stop," set
-  `GateCheck(..., failure_decision=GateDecision.BLOCK)` on that check.
+  **What integrators will observe**: a default check with missing declared
+  evidence returns gate-level `ABSTAIN` (`"insufficient"`) and traversal can
+  return `COLLECT_EVIDENCE`. The same missing evidence on a check that opts
+  into `failure_decision=GateDecision.BLOCK` returns a denied outcome with
+  `cause=gate_block`. A gate built from several checks where one abstains and
+  another degrades now aggregates to `DEGRADE` (→ `WARN`, allowed), not
+  `ABSTAIN` (→ denial). If every missing independent requirement must stop the
+  move, declare `BLOCK` on each such check instead of relying on aggregation.
 - **`GateDecision.BLOCK` was unreachable.** No built-in check could ever
   produce it, and the (now-fixed) aggregation above would have silently
   discarded it if one had. `GateCheck.failure_decision: GateDecision | None

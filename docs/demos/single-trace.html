@@ -1,10 +1,10 @@
 <!--
   Original step() core-cascade trace for fpf-agentic-thinking-map.
   Three deploy runs (fail / loop / succeed) laid end to end on one
-  shared timeline. The current v1.9.2 surfaces live in three-runs.html.
+  shared timeline. The current v1.9.5 surfaces live in three-runs.html.
 
-  Copyright (c) 2026 igareosh.com <igareosh@igareosh.com> (@igareosh on GitHub and Telegram), built with Claude Code
-  (Anthropic claude-sonnet-5). MIT License — see ../../LICENSE.
+  Copyright (c) 2026 igareosh.com <igareosh@igareosh.com>.
+  MIT License — see ../../LICENSE.
 -->
 <title>step() — Single Trace</title>
 <style>
@@ -232,7 +232,7 @@
     <div class="title-block">
       <p class="eyebrow">fpf-agentic-thinking-map · original core cascade</p>
       <h1>step() — Single Trace</h1>
-      <p>The original dense traversal view: one context mismatch, one evidence loop, and one successful bridge. For PendingInput/AWAIT, MoveIntent, and AuthorizationReceipt, open the current three-run trace.</p>
+      <p>The original dense traversal view: one context mismatch, one evidence loop, and one successful bridge. For PendingInput/AWAIT, MoveIntent, AuthorizationReceipt, and the v1.9.5 ABSTAIN/BLOCK distinction, open the current four-run trace.</p>
     </div>
     <div class="readout">
       <div class="clock" id="clock">00.0<span>s</span></div>
@@ -254,11 +254,11 @@
   </div>
 
   <div class="chart-wrap">
-    <svg id="chart" viewBox="0 0 1200 610" role="img" aria-label="Timeline of three separate step() runs, showing every branch weighed, its score, the one taken, and a continuous trace of engine activity"></svg>
+    <svg id="chart" viewBox="0 0 1200 610" role="img" aria-label="Timeline of three separate step() runs, showing every branch considered, the one taken, and a continuous trace of engine activity"></svg>
   </div>
 
   <footer>
-    <span>X — elapsed seconds across 3 separate runs &nbsp;·&nbsp; Y — position in the decision cascade &nbsp;·&nbsp; hover any node for its rationale</span>
+    <span>X — elapsed seconds across 3 separate runs &nbsp;·&nbsp; Y — decision-cascade position &nbsp;·&nbsp; bars show visual emphasis, not runtime confidence &nbsp;·&nbsp; hover for rationale</span>
     <span id="progress">t = 0.0s / 48s</span>
   </footer>
 </div>
@@ -269,14 +269,14 @@
     stage:       { color: "#57c7bd", label: "Engine stage" },
     continue:    { color: "#59d18c", label: "CONTINUE" },
     collect:     { color: "#ffb454", label: "COLLECT_EVIDENCE" },
-    abstain:     { color: "#ff6f82", label: "ABSTAIN" },
+    abstain:     { color: "#ff6f82", label: "DENIED · OutcomeKind.ABSTAIN" },
     bridge:      { color: "#9c8cff", label: "BRIDGE (advisory)" },
     idle:        { color: "#8b929a", label: "IDLE" },
     changeframe: { color: "#e0b04a", label: "CHANGE_FRAME" }
   };
 
   var runs = [
-    { id:1, label:"RUN 1", tag:"ABSTAIN — mismatch", color:"#ff6f82", start:0,    end:6.5 },
+    { id:1, label:"RUN 1", tag:"DENIED — context mismatch", color:"#ff6f82", start:0, end:6.5 },
     { id:2, label:"RUN 2", tag:"3× COLLECT_EVIDENCE — loops", color:"#ffb454", start:7.5, end:26 },
     { id:3, label:"RUN 3", tag:"BRIDGE → deployed", color:"#59d18c", start:27, end:48 }
   ];
@@ -285,7 +285,7 @@
   // transition matches? -> evaluate logic rules -> consistent? -> run 9
   // guards -> guards allow? -> evidence gaps? -> transitions available?
   // Three independent runs of the original deploy scenario, each starting
-  // from a fresh bind(). The v1.9.2 trace lives in three-runs.html.
+  // from a fresh bind(). The current v1.9.5 trace lives in three-runs.html.
   var steps = [
     // ================= RUN 1 — fails fast on a context mismatch =================
     { kind:"start", t:0,   y:45, tool:"bind()", cat:"stage", desc:"run 1 — fresh RuntimeBinding, no evidence yet" },
@@ -295,7 +295,7 @@
         { tool:"CHANGE_FRAME", cat:"changeframe", y:97, score:5,  chosen:false, note:"rejected — only fires with no active context" }
       ]},
     { kind:"decision", t:3.6, evalStart:2.8, options:[
-        { tool:"ABSTAIN", cat:"abstain", y:12, score:82, chosen:true,  kind:"terminal", note:"chosen — focused-mode transition does not match this context. Run 1 ends here: needs a fresh bind()." },
+        { tool:"DENIED · context_mismatch", cat:"abstain", y:12, score:82, chosen:true, kind:"terminal", note:"chosen — OutcomeKind.ABSTAIN serializes as denied; typed cause identifies the context mismatch. Run 1 ends here: needs a fresh bind()." },
         { tool:"matches",  cat:"stage",   y:45, score:18, chosen:false, note:"rejected — would continue if context matched" }
       ]},
 
@@ -308,18 +308,18 @@
       ]},
     { kind:"decision", t:10.8, evalStart:10.0, options:[
         { tool:"matches",  cat:"stage",   y:45, score:93, chosen:true,  note:"chosen — transition found in active context" },
-        { tool:"ABSTAIN",  cat:"abstain", y:12, score:7,  chosen:false, note:"rejected — no mismatch this time" }
+        { tool:"DENIED",   cat:"abstain", y:12, score:7,  chosen:false, note:"rejected — no mismatch this time" }
       ]},
     { kind:"node", t:11.6, y:45, tool:"LOGIC", cat:"stage", desc:"evaluate_for(tags) — 6-operator rule composition" },
     { kind:"decision", t:12.6, evalStart:11.9, options:[
         { tool:"consistent", cat:"stage",   y:45, score:97, chosen:true,  note:"chosen — no ROUTE/BLOCK contradiction" },
-        { tool:"ABSTAIN",    cat:"abstain", y:12, score:3,  chosen:false, note:"rejected — only fires on exclusive_with conflict" }
+        { tool:"DENIED",     cat:"abstain", y:12, score:3,  chosen:false, note:"rejected — only fires on exclusive_with conflict" }
       ]},
     { kind:"node", t:13.4, y:45, tool:"GUARDS", cat:"stage", desc:"9 guards run — deploy_gate checked" },
     { kind:"decision", t:14.6, evalStart:13.8, options:[
         { tool:"COLLECT_EVIDENCE", cat:"collect", y:32, score:80, chosen:true,  note:"cycle 1 — chosen: deploy_gate denies, evidence path open: test_results missing" },
         { tool:"allow",            cat:"stage",   y:45, score:16, chosen:false, note:"rejected — not this call, a guard denied" },
-        { tool:"ABSTAIN",          cat:"abstain", y:12, score:22, chosen:false, note:"rejected — would need denial with no evidence path" }
+        { tool:"DENIED",           cat:"abstain", y:12, score:22, chosen:false, note:"rejected — would need denial with no evidence path" }
       ]},
     { kind:"node", t:16.4, y:45, tool:"retry: INC", cat:"stage", desc:"test_results attached — re-entering step()" },
     { kind:"node", t:17.2, y:45, tool:"GUARDS", cat:"stage", desc:"9 guards re-run with test_results" },
@@ -343,18 +343,18 @@
       ]},
     { kind:"decision", t:30.3, evalStart:29.5, options:[
         { tool:"matches",  cat:"stage",   y:45, score:94, chosen:true,  note:"chosen — transition found in active context" },
-        { tool:"ABSTAIN",  cat:"abstain", y:12, score:6,  chosen:false, note:"rejected — no mismatch this run" }
+        { tool:"DENIED",   cat:"abstain", y:12, score:6,  chosen:false, note:"rejected — no mismatch this run" }
       ]},
     { kind:"node", t:31.1, y:45, tool:"LOGIC", cat:"stage", desc:"evaluate_for(tags)" },
     { kind:"decision", t:32.1, evalStart:31.4, options:[
         { tool:"consistent", cat:"stage",   y:45, score:98, chosen:true,  note:"chosen — no contradiction" },
-        { tool:"ABSTAIN",    cat:"abstain", y:12, score:2,  chosen:false, note:"rejected" }
+        { tool:"DENIED",     cat:"abstain", y:12, score:2,  chosen:false, note:"rejected" }
       ]},
     { kind:"node", t:32.9, y:45, tool:"GUARDS", cat:"stage", desc:"9 guards run, all evidence present" },
     { kind:"decision", t:34.1, evalStart:33.3, options:[
         { tool:"allow",            cat:"stage",   y:45, score:95, chosen:true,  note:"chosen — deploy_gate passes on the first try" },
         { tool:"COLLECT_EVIDENCE", cat:"collect", y:32, score:5,  chosen:false, note:"rejected — nothing missing this run" },
-        { tool:"ABSTAIN",          cat:"abstain", y:12, score:3,  chosen:false, note:"rejected" }
+        { tool:"DENIED",           cat:"abstain", y:12, score:3,  chosen:false, note:"rejected" }
       ]},
     { kind:"decision", t:35.3, evalStart:34.5, options:[
         { tool:"ready?",           cat:"stage",  y:45, score:92, chosen:true,  note:"chosen — evidence complete" },
@@ -370,7 +370,7 @@
     { kind:"decision", t:40.5, evalStart:39.7, options:[
         { tool:"allow",            cat:"stage",   y:45, score:95, chosen:true,  note:"chosen — deploy_gate still passes" },
         { tool:"COLLECT_EVIDENCE", cat:"collect", y:32, score:6,  chosen:false, note:"rejected" },
-        { tool:"ABSTAIN",          cat:"abstain", y:12, score:4,  chosen:false, note:"rejected" }
+        { tool:"DENIED",           cat:"abstain", y:12, score:4,  chosen:false, note:"rejected" }
       ]},
     { kind:"decision", t:41.7, evalStart:40.9, options:[
         { tool:"ready?",           cat:"stage",  y:45, score:91, chosen:true,  note:"chosen — evidence still complete" },
@@ -446,7 +446,7 @@
   }
   gridG.appendChild(el("line", { x1: pad.l, x2: W - pad.r, y1: confBottom, y2: confBottom, class: "lane-rule" }));
   var confLbl = el("text", { x: pad.l - 10, y: confTop + 8, class: "lane-label", "text-anchor": "end" });
-  confLbl.textContent = "score";
+  confLbl.textContent = "visual";
   gridG.appendChild(confLbl);
   gridG.appendChild(el("line", { x1: pad.l, x2: W - pad.r, y1: actTop + actH/2, y2: actTop + actH/2, class: "lane-rule" }));
   var actLbl = el("text", { x: pad.l - 10, y: actTop + 8, class: "lane-label", "text-anchor": "end" });
@@ -587,7 +587,7 @@
         fill: color, class: "score-bar" + (bar.chosen ? " chosen" : " rejected")
       });
       var titleEl = el("title", {});
-      titleEl.textContent = bar.tool + " — score " + bar.score + "/100" + (bar.chosen ? " (chosen)" : " (rejected)");
+      titleEl.textContent = bar.tool + " — visual emphasis " + bar.score + "/100, not runtime confidence" + (bar.chosen ? " (chosen)" : " (rejected)");
       rect.appendChild(titleEl);
       svg.appendChild(rect);
       var lbl = el("text", { x: bx + barW / 2, y: confTop - 4, class: "score-label" + (bar.chosen ? " chosen" : ""), "text-anchor": "middle" });

@@ -1,18 +1,19 @@
 <!--
-  Three test-backed runtime traces for fpf-agentic-thinking-map v1.9.2.
+  Four test-backed runtime traces for fpf-agentic-thinking-map v1.9.5.
   The rows follow verified package behavior: evidence recovery,
-  PendingInput/AWAIT resolution, and MoveIntent plus AuthorizationReceipt.
+  PendingInput/AWAIT resolution, MoveIntent plus AuthorizationReceipt,
+  and the gate-level distinction between ABSTAIN and BLOCK.
 
-  Copyright (c) 2026 igareosh.com <igareosh@igareosh.com> (@igareosh on GitHub and Telegram), built with Claude Code
-  (Anthropic claude-sonnet-5). MIT License — see ../../LICENSE.
+  Copyright (c) 2026 igareosh.com <igareosh@igareosh.com>.
+  MIT License — see ../../LICENSE.
 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Three interactive, test-backed traces of the fpf-thinking-map v1.9.2 runtime.">
-<title>Traversal Runtime - Three Live Traces</title>
+<meta name="description" content="Four interactive, test-backed traces of the fpf-thinking-map v1.9.5 runtime, including ABSTAIN versus BLOCK.">
+<title>Traversal Runtime — Four Live Traces</title>
 <style>
   :root{
     color-scheme: dark;
@@ -204,7 +205,7 @@
     color: var(--ink-dim);
   }
 
-  /* ---------- chart primitives (shared across the 3 run charts) ---------- */
+  /* ---------- chart primitives (shared across the 4 run charts) ---------- */
   .grid-line{ stroke: var(--grid-line); stroke-width: 1; }
   .grid-line.strong{ stroke: var(--grid-line-strong); }
   .axis-label{ fill: var(--ink-faint); font-size: 10px; font-family: ui-monospace, "SF Mono", Consolas, monospace; }
@@ -284,9 +285,9 @@
 <div class="panel">
   <header>
     <div class="title-block">
-      <p class="eyebrow">fpf-agentic-thinking-map · v1.9.2 · test-backed traces</p>
-      <h1>Traversal runtime - three live traces</h1>
-      <p>Evidence recovery, external waiting, and state-bound authorized movement - the current runtime surfaces, animated from the package's shipped scenarios and verification checks.</p>
+      <p class="eyebrow">fpf-agentic-thinking-map · v1.9.5 “Ground Stop” · test-backed traces</p>
+      <h1>Traversal runtime — four live traces</h1>
+      <p>Recovery, waiting, state-bound authorization, and a direct comparison of an undecided gate with an explicit hard denial.</p>
     </div>
     <div class="readout">
       <div class="clock" id="clock">00.0<span>s</span></div>
@@ -309,7 +310,7 @@
   <div id="runs"></div>
 
   <footer>
-    <span>X - elapsed seconds within that trace &nbsp;·&nbsp; Y - position in the decision path &nbsp;·&nbsp; hover any node for its rationale</span>
+    <span>X — elapsed seconds &nbsp;·&nbsp; Y — decision-path position &nbsp;·&nbsp; bars show visual emphasis, not runtime confidence &nbsp;·&nbsp; hover for rationale</span>
     <span id="progress">t = 0.0s</span>
   </footer>
 </div>
@@ -320,7 +321,9 @@
     stage:       { color: "#57c7bd", label: "Engine stage" },
     continue:    { color: "#59d18c", label: "CONTINUE" },
     collect:     { color: "#ffb454", label: "COLLECT_EVIDENCE" },
-    abstain:     { color: "#ff6f82", label: "ABSTAIN" },
+    denied:      { color: "#ff6f82", label: "DENIED · OutcomeKind.ABSTAIN" },
+    abstain:     { color: "#f08cc4", label: "gate ABSTAIN · insufficient" },
+    block:       { color: "#ff3b4f", label: "BLOCK · hard denial" },
     bridge:      { color: "#9c8cff", label: "BRIDGE (advisory)" },
     await:       { color: "#62b7ff", label: "AWAIT" },
     idle:        { color: "#8b929a", label: "IDLE" },
@@ -330,7 +333,8 @@
     receipt:     { color: "#c7d86f", label: "AuthorizationReceipt" }
   };
 
-  // Each trace corresponds to behavior exercised by examples.py and verify.py.
+  // Each trace corresponds to behavior exercised by examples.py, verify.py,
+  // or a live core-scoped dev_mcp scenario against the 1.9.5 checkout.
   // Local time restarts at zero for each row.
   var runDefs = [
     {
@@ -346,18 +350,18 @@
           ]},
         { kind:"decision", t:3.3, evalStart:2.5, options:[
             { tool:"transition matches", cat:"stage",   y:45, score:94, chosen:true,  note:"chosen - ship belongs to deploy and starts at candidate" },
-            { tool:"ABSTAIN",           cat:"abstain", y:12, score:6,  chosen:false, note:"rejected - context and from-state match" }
+            { tool:"DENIED",            cat:"denied", y:12, score:6,  chosen:false, note:"rejected - context and from-state match" }
           ]},
         { kind:"node", t:4.1, y:45, tool:"LOGIC", cat:"stage", desc:"evaluate_for(tags) - 6-operator rule composition" },
         { kind:"decision", t:5.1, evalStart:4.3, options:[
             { tool:"consistent", cat:"stage",   y:45, score:98, chosen:true,  note:"chosen - no ROUTE/BLOCK contradiction" },
-            { tool:"ABSTAIN",    cat:"abstain", y:12, score:2,  chosen:false, note:"rejected - no logical conflict" }
+            { tool:"DENIED",     cat:"denied", y:12, score:2,  chosen:false, note:"rejected - no logical conflict" }
           ]},
         { kind:"node", t:5.9, y:45, tool:"GUARDS", cat:"stage", desc:"release gate checks declared evidence" },
         { kind:"decision", t:7.1, evalStart:6.3, options:[
             { tool:"COLLECT_EVIDENCE", cat:"collect", y:32, score:91, chosen:true,  note:"chosen - test_results is required but absent" },
             { tool:"allow",            cat:"stage",   y:45, score:9,  chosen:false, note:"rejected - evidence path is still open" },
-            { tool:"ABSTAIN",          cat:"abstain", y:12, score:3,  chosen:false, note:"rejected - the blocker is recoverable" }
+            { tool:"DENIED",           cat:"denied", y:12, score:3,  chosen:false, note:"rejected - the blocker is recoverable" }
           ]},
         { kind:"node", t:8.5, y:45, tool:"host: attach evidence", cat:"stage", desc:"test_results arrives outside the runtime" },
         { kind:"node", t:9.4, y:45, tool:"retry: INC", cat:"stage", desc:"step() runs again against updated state" },
@@ -409,7 +413,7 @@
         { kind:"node",  t:1.0, y:45, tool:"inspect_move()", cat:"intent", desc:"evaluate the proposal without changing state" },
         { kind:"decision", t:2.4, evalStart:1.6, options:[
             { tool:"move-specific slice", cat:"intent",  y:66, score:96, chosen:true,  note:"chosen - transition, parameters, evidence, and blockers are inspectable" },
-            { tool:"ABSTAIN",            cat:"abstain", y:12, score:4,  chosen:false, note:"rejected - the proposal matches context and state" }
+            { tool:"DENIED",             cat:"denied", y:12, score:4,  chosen:false, note:"rejected - the proposal matches context and state" }
           ]},
         { kind:"node", t:3.5, y:45, tool:"attempt_transition()", cat:"stage", desc:"first attempt has no human authorization" },
         { kind:"decision", t:4.9, evalStart:4.1, options:[
@@ -426,9 +430,42 @@
         { kind:"decision", t:11.4, evalStart:10.6, options:[
             { tool:"allow",            cat:"stage",   y:45, score:96, chosen:true,  note:"chosen - evidence, gate, and guards all pass" },
             { tool:"COLLECT_EVIDENCE", cat:"collect", y:32, score:4,  chosen:false, note:"rejected - required evidence is present" },
-            { tool:"ABSTAIN",          cat:"abstain", y:12, score:2,  chosen:false, note:"rejected - no legality failure" }
+            { tool:"DENIED",           cat:"denied", y:12, score:2,  chosen:false, note:"rejected - no legality failure" }
           ]},
         { kind:"terminal", t:13.1, y:82, tool:"CONTINUE -> published", cat:"continue", desc:"receipt consumed once; trace.move_id = move-019" }
+      ]
+    },
+    {
+      id: 4, color: "#ff3b4f", tag: "ABSTAIN ≠ BLOCK", outcome: "distinguished",
+      stats: ["same missing permit", "soft: collect", "hard: gate_block"],
+      story: "Both paths begin without release_permit. The default check returns gate-level ABSTAIN: the gate cannot say yes yet, and traversal returns COLLECT_EVIDENCE because the missing item is known. The explicit hard-policy check returns BLOCK, so traversal returns denied with cause=gate_block. BLOCK is hard for that evaluation, not eternal: after the declared permit is attached, both gates evaluate PASS and expose CONTINUE.",
+      steps: [
+        { kind:"start", t:0, y:45, tool:"same input: permit missing", cat:"stage", desc:"candidate state; release_permit is absent" },
+        { kind:"node", t:1.0, y:45, tool:"default GateCheck", cat:"stage", desc:"no failure_decision is declared" },
+        { kind:"decision", t:2.5, evalStart:1.6, options:[
+            { tool:"ABSTAIN / insufficient", cat:"abstain", y:18, score:96, chosen:true, note:"chosen — the check lacks enough evidence to say yes" },
+            { tool:"BLOCK", cat:"block", y:6, score:4, chosen:false, note:"rejected — this check did not declare a hard-failure policy" }
+          ]},
+        { kind:"decision", t:4.0, evalStart:3.1, options:[
+            { tool:"COLLECT_EVIDENCE", cat:"collect", y:32, score:95, chosen:true, note:"chosen — release_permit is a declared, recoverable evidence path" },
+            { tool:"denied / gate_block", cat:"block", y:6, score:5, chosen:false, note:"rejected — no explicit BLOCK was produced" }
+          ]},
+        { kind:"node", t:5.3, y:45, tool:"explicit hard-policy GateCheck", cat:"stage", desc:"failure_decision=GateDecision.BLOCK" },
+        { kind:"decision", t:6.8, evalStart:5.9, options:[
+            { tool:"BLOCK", cat:"block", y:6, score:98, chosen:true, note:"chosen — the declared policy says no while the permit is missing" },
+            { tool:"ABSTAIN / insufficient", cat:"abstain", y:18, score:2, chosen:false, note:"rejected — explicit hard policy replaces the default missing-evidence result" }
+          ]},
+        { kind:"decision", t:8.3, evalStart:7.4, options:[
+            { tool:"denied · cause=gate_block", cat:"block", y:6, score:98, chosen:true, note:"chosen — caller can distinguish hard gate denial from other denied outcomes" },
+            { tool:"COLLECT_EVIDENCE", cat:"collect", y:32, score:2, chosen:false, note:"rejected — traversal must not soften an active BLOCK" }
+          ]},
+        { kind:"node", t:9.7, y:45, tool:"host: attach release_permit", cat:"stage", desc:"the declared input changes; policy does not" },
+        { kind:"node", t:10.8, y:45, tool:"re-evaluate both gates", cat:"stage", desc:"the required evidence is now present" },
+        { kind:"decision", t:12.1, evalStart:11.3, options:[
+            { tool:"PASS", cat:"stage", y:56, score:97, chosen:true, note:"chosen — both checks now have their declared permit" },
+            { tool:"BLOCK forever", cat:"block", y:6, score:3, chosen:false, note:"rejected — BLOCK describes the current evaluation, not an immutable future" }
+          ]},
+        { kind:"terminal", t:13.4, y:82, tool:"CONTINUE", cat:"continue", desc:"with the declared condition satisfied, the move is lawful" }
       ]
     }
   ];
@@ -481,7 +518,7 @@
     }
     gridG.appendChild(el("line", { x1: pad.l, x2: W - pad.r, y1: confBottom, y2: confBottom, class: "lane-rule" }));
     var confLbl = el("text", { x: pad.l - 8, y: confTop + 7, class: "lane-label", "text-anchor": "end" });
-    confLbl.textContent = "score";
+    confLbl.textContent = "visual";
     gridG.appendChild(confLbl);
     gridG.appendChild(el("line", { x1: pad.l, x2: W - pad.r, y1: actTop + actH/2, y2: actTop + actH/2, class: "lane-rule" }));
     var actLbl = el("text", { x: pad.l - 8, y: actTop + 7, class: "lane-label", "text-anchor": "end" });
@@ -599,7 +636,7 @@
         var color = CATS[bar.cat].color;
         var rect = el("rect", { x: bx, y: confBottom, width: barW, height: 0, fill: color, class: "score-bar" + (bar.chosen ? " chosen" : " rejected") });
         var titleEl = el("title", {});
-        titleEl.textContent = bar.tool + " — score " + bar.score + "/100" + (bar.chosen ? " (chosen)" : " (rejected)");
+        titleEl.textContent = bar.tool + " — visual emphasis " + bar.score + "/100, not runtime confidence" + (bar.chosen ? " (chosen)" : " (rejected)");
         rect.appendChild(titleEl);
         svg.appendChild(rect);
         var lbl2 = el("text", { x: bx + barW / 2, y: confTop - 3, class: "score-label" + (bar.chosen ? " chosen" : ""), "text-anchor": "middle" });
@@ -710,7 +747,7 @@
     return { duration: DURATION, render: render, reset: reset };
   }
 
-  // ---------- assemble the 3 stacked rows ----------
+  // ---------- assemble the 4 stacked rows ----------
   var runsContainer = document.getElementById("runs");
   var runInstances = [];
   runDefs.forEach(function(runDef){
@@ -742,7 +779,7 @@
     item.innerHTML = swatchHTML + "<span>" + text + "</span>";
     legend.appendChild(item);
   }
-  ["stage","continue","collect","await","idle","escalate","intent","receipt"].forEach(function(key){
+  ["stage","continue","collect","denied","abstain","block","await","idle","escalate","intent","receipt"].forEach(function(key){
     var c = CATS[key];
     legendItem('<span class="swatch" style="background:' + c.color + '"></span>', c.label);
   });
@@ -750,7 +787,7 @@
   legendItem('<span class="swatch rejected"></span>', "Weighed, rejected");
   legendItem('<span class="swatch dead"></span>', "Declared, unreachable");
 
-  // ---------- shared playback across all three rows ----------
+  // ---------- shared playback across all four rows ----------
   var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   var maxDuration = Math.max.apply(null, runInstances.map(function(r){ return r.duration; }));
   var TIMELINE_PER_REAL_SEC = 1.3;

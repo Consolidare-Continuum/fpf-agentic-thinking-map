@@ -1,4 +1,4 @@
-# Version tracker — v1.0.0 through v1.9.2
+# Version tracker — v1.0.0 through v1.9.5
 
 Every released version, three practical/reader-facing benefits each — including
 doc-only and metadata-only releases, marked as such. This is a supplement to
@@ -11,6 +11,40 @@ There is no v0.x or v1.1.x — v1.0.0 is the first tagged release, and
 versioning jumps v1.0.1 → v1.2.0.
 
 ---
+
+## v1.9.5 — 2026-08-01 — Gate semantics ("Ground Stop")
+
+1. Separates an undecided gate from an explicit hard denial. A default missing
+   requirement produces gate-level `ABSTAIN` (`"insufficient"`) and can lead
+   to `COLLECT_EVIDENCE`; a check that declares `BLOCK` produces a denied
+   outcome with `cause=gate_block`.
+2. Repairs the A.21 join so the strongest declared decision wins regardless of
+   check order: `BLOCK > DEGRADE > PASS > ABSTAIN`. `BLOCK` is hard for the
+   current evaluation, not an assertion that evidence, state, or policy can
+   never change later.
+3. Adds opt-in structural controls for exact claim scope, tool-call plan
+   closure, performed-work attribution, autonomy budgets, and map-reference
+   validation without retroactively constraining legacy maps.
+
+## v1.9.4 — 2026-07-25 — Route-gated transitions
+
+1. Makes `TransitionPrimitive.guard_expression` operational by resolving it
+   to a named `DecisionRule` before a transition fires.
+2. Returns `REVISE_PLAN` with the map's recommended transition when routing
+   policy prefers a different move, keeping correction inside the map instead
+   of escalating unnecessarily.
+3. Preserves earlier integrations: a missing logic layer, dangling rule, or
+   rule with no active recommendation remains a runtime no-op in this release.
+
+## v1.9.3 — 2026-07-24 — Declared-graph reachability
+
+1. Adds discrete checks for graph roots, forward reachability, and unreachable
+   transitions over the map that is actually declared.
+2. Distinguishes an intentional external entry point from an accidentally dead
+   state, so a plausible-looking graph cleanup does not silently break a valid
+   integration boundary.
+3. Adds analysis only: traversal behavior is unchanged unless an integrator
+   chooses to act on the reachability report.
 
 ## v1.9.2 — 2026-07-23 — PyPI presentation alignment (docs-only)
 

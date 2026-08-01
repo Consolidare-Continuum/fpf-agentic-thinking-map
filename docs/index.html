@@ -91,9 +91,9 @@
 
   <div class="grid">
     <a class="card" href="./demos/three-runs.html">
-      <span class="tag">v1.9.2 · Current</span>
-      <h2>Traversal runtime - three live traces</h2>
-      <p>Test-backed paths through evidence recovery, PendingInput/AWAIT, MoveIntent, and state-bound authorization.</p>
+      <span class="tag">v1.9.5 · Current</span>
+      <h2>Traversal runtime — four live traces</h2>
+      <p>Test-backed paths through recovery, waiting, authorization, and the difference between an insufficient gate and an explicit hard block.</p>
     </a>
 
     <a class="card" href="./demos/single-trace.html">
@@ -110,7 +110,9 @@
   </div>
 
   <div class="note">
-    If you still see the old redirect, hard refresh the browser. GitHub Pages can lag a little behind the pushed docs.
+    New in 1.9.5: <strong>ABSTAIN</strong> means the gate lacks enough basis to
+    say yes; <strong>BLOCK</strong> means a declared check says no for the current
+    evaluation. The fourth trace shows both against the same missing permit.
   </div>
 
   <footer class="links">
