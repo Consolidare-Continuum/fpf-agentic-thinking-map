@@ -14,34 +14,24 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+from fpf_thinking_map.agentic_structure import (
+    ClaimScope,
+    ContextSlice,
+    FormalityLevel,
+    ReliabilityPath,
+)
 
 # ---------------------------------------------------------------------------
-# Operational Decision Frame — compiled scoping index, not an FPF U-kind
+# Product-native runtime frame (not an upstream U-kind)
 # ---------------------------------------------------------------------------
 
 @dataclass
 class ContextPrimitive:
-    """A bounded, compiled scoping frame — which transitions/gates/evidence/
-    roles are locally in play, and where cross-frame moves must go through
-    an explicit Bridge.
+    """Product-native frame for partitioning traversal state.
 
-    This is a runtime execution artifact, not a claim about FPF ontology.
-    Inspired by A.1.1 as it read pre-2026-07-26 (`U.BoundedContext` as a
-    U-kind); current upstream FPF explicitly forbids publishing
-    `U.BoundedContext` as a U-kind (`ailev/FPF` commit `60caecb`) and
-    replaces it with on-demand recovery of `ModelApplicabilityRelation` /
-    `ModelUseRelation` / `ModelExpressionCoherenceRelation`, bundled into a
-    named `BoundedModelUseStructure` only when their joint organization
-    changes one decision — never a standing container, never holding state
-    between calls. A deterministic engine still needs exactly that standing,
-    indexed frame at every step (see `SemanticMap._ctx_transition_idx`) —
-    that operational need is downstream of FPF's ontology, not an
-    implementation of current A.1.1. See
-    `docs/deep/FPF_THINKING_MAP_VS_AILEV_FPF_POSITIONING.md` (Operational
-    Decision Frame counter-proposal) for the full argument.
-
-    Contexts do not form holarchies — no containment or inheritance.
-    Cross-context relation goes through bridges only.
+    It is not FPF U.BoundedContext or BoundedModelUseStructure. context_id
+    references express runtime scoping only — not containment, parthood,
+    model applicability, or upstream boundary identity.
     """
     context_id: str
     label: str
@@ -58,10 +48,10 @@ class ContextPrimitive:
 
 @dataclass
 class ContextBridge:
-    """Explicit bridge between two bounded contexts.
+    """Product-native routing and translation record between runtime frames.
 
-    FPF A.6.9: cross-context sameness must go through bridges
-    with direction, substitution license, and loss notes.
+    Presence does not establish an upstream F.9 relation, a boundary, or
+    permission to rely on a translation.
     """
     target_context_id: str
     mapping: dict[str, str] = field(default_factory=dict)
@@ -144,6 +134,7 @@ class WorkPrimitive:
     context_id: str
     method_id: str | None = None
     performed_under: str | None = None
+    performed_by: str | None = None
     inputs: dict[str, Any] = field(default_factory=dict)
     outputs: dict[str, Any] = field(default_factory=dict)
     evidence_refs: list[str] = field(default_factory=list)
@@ -207,7 +198,12 @@ class SpeechActPrimitive:
 # ---------------------------------------------------------------------------
 
 class DeonticModality(Enum):
-    """RFC 2119 / BCP-14 aligned modalities."""
+    """RFC 2119 / BCP-14 aligned normative force.
+
+    MAY means non-binding allowance in the normative statement. It is not a
+    strong permission grant, proof of non-prohibition, or authorization to
+    enact a transition. Those remain separate relations and gates.
+    """
     MUST = "must"
     SHOULD = "should"
     MAY = "may"
@@ -217,12 +213,16 @@ class DeonticModality(Enum):
 
 @dataclass
 class CommitmentPrimitive:
-    """A deontic commitment — obligation, permission, or prohibition.
+    """A deontic commitment — obligation or prohibition.
 
     FPF A.2.8: commitments are scoped, have validity windows,
     require evidence refs, and have adjudication hooks.
     Separate from admissibility gates (those are structural,
     commitments are deontic).
+
+    DeonticModality.MAY is retained for RFC-style source compatibility but
+    never institutes A.2.8.PER granted permission and carries no execution
+    authority in this runtime.
     """
     commitment_id: str
     label: str
@@ -246,7 +246,7 @@ class CommitmentPrimitive:
 class GateDecision(Enum):
     """Gate outcome lattice — FPF A.21: abstain ≤ pass ≤ degrade ≤ block.
 
-    ABSTAIN = insufficient evidence to evaluate (resolvable by collecting evidence)
+    ABSTAIN = neutral/inactive or insufficient evidence (usually resolvable)
     PASS    = all checks satisfied
     DEGRADE = partial checks satisfied (proceed with caution)
     BLOCK   = hard denial (cannot proceed regardless of evidence)
@@ -256,18 +256,42 @@ class GateDecision(Enum):
     DEGRADE = "partial"
     BLOCK = "block"
 
+    @property
+    def lattice_rank(self) -> int:
+        """A.21 join order: abstain <= pass <= degrade <= block."""
+        return {
+            GateDecision.ABSTAIN: 0,
+            GateDecision.PASS: 1,
+            GateDecision.DEGRADE: 2,
+            GateDecision.BLOCK: 3,
+        }[self]
+
 
 @dataclass
 class GateCheck:
-    """A single check within a gate profile."""
+    """A single check within a gate profile.
+
+    ``failure_decision`` is an opt-in policy for a check whose required
+    evidence is not complete. Existing checks retain the legacy split:
+    partial evidence degrades and wholly absent evidence abstains. A
+    safety-critical check can now declare ``GateDecision.BLOCK`` without
+    changing the behavior of any pre-existing check.
+    """
     check_id: str
     description: str
     required_evidence: list[str] = field(default_factory=list)
+    failure_decision: GateDecision | None = None
+
+    def __post_init__(self) -> None:
+        if self.failure_decision == GateDecision.PASS:
+            raise ValueError("failure_decision cannot be PASS when evidence is missing")
 
     def evaluate(self, available_evidence: set[str]) -> GateDecision:
         missing = set(self.required_evidence) - available_evidence
         if not missing:
             return GateDecision.PASS
+        if self.failure_decision is not None:
+            return self.failure_decision
         if len(missing) < len(self.required_evidence):
             return GateDecision.DEGRADE
         return GateDecision.ABSTAIN
@@ -292,12 +316,7 @@ class GatePrimitive:
             return GateDecision.ABSTAIN if self.fail_closed else GateDecision.PASS
 
         decisions = [c.evaluate(available_evidence) for c in self.checks]
-
-        if GateDecision.ABSTAIN in decisions:
-            return GateDecision.ABSTAIN
-        if GateDecision.DEGRADE in decisions:
-            return GateDecision.DEGRADE
-        return GateDecision.PASS
+        return max(decisions, key=lambda decision: decision.lattice_rank)
 
     def missing_evidence(self, available_evidence: set[str]) -> list[str]:
         """Return only the evidence this gate is missing."""
@@ -353,18 +372,46 @@ class Freshness(Enum):
 
 @dataclass
 class FGR:
-    """Trust tuple — FPF B.3 Trust & Assurance Calculus.
+    """Typed assurance tuple with detectable legacy scalar compatibility.
 
-    F = formality level (how rigorous the evidence)
-    G = claim scope (how broad the claim)
-    R = reliability (how dependable the evidence source)
+    Current shape:
+      F = C.2.3 ordinal FormalityLevel
+      G = A.2.6 set-valued ClaimScope
+      R = C.2.2 pathwise effective reliability
+
+    Earlier releases accepted three floats. Numeric F/G remain readable so
+    stored maps do not crash, but `is_structurally_typed` is False and the
+    development MCP reports that form as drift. New maps should use the typed
+    objects; numeric G is never interpreted as a scope set.
     """
-    formality: float = 0.0
-    scope: float = 0.0
+    formality: FormalityLevel | float = FormalityLevel.F0
+    scope: ClaimScope | float | None = None
     reliability: float = 0.0
+    reliability_paths: list[ReliabilityPath] = field(default_factory=list)
+
+    @property
+    def formality_ratio(self) -> float:
+        if isinstance(self.formality, FormalityLevel):
+            return self.formality.normalized
+        return min(1.0, max(0.0, float(self.formality)))
+
+    @property
+    def effective_reliability(self) -> float:
+        if not self.reliability_paths:
+            return min(1.0, max(0.0, self.reliability))
+        values = [path.effective_reliability for path in self.reliability_paths]
+        if len(values) > 1 and not all(
+            path.independence_basis_ref for path in self.reliability_paths
+        ):
+            return min(values)
+        return max(values)
+
+    @property
+    def is_structurally_typed(self) -> bool:
+        return isinstance(self.formality, FormalityLevel) and isinstance(self.scope, ClaimScope)
 
     def sufficient(self, min_f: float = 0.0, min_r: float = 0.0) -> bool:
-        return self.formality >= min_f and self.reliability >= min_r
+        return self.formality_ratio >= min_f and self.effective_reliability >= min_r
 
 
 @dataclass
@@ -409,7 +456,7 @@ class EvidencePrimitive:
         if base is None:
             return None
         if self.semantic_floor == SemanticFloor.EVIDENTIARY:
-            trust_factor = self.fgr.formality * self.fgr.reliability
+            trust_factor = self.fgr.formality_ratio * self.fgr.effective_reliability
             return max(1, round(trust_factor * base))
         return base
 
@@ -474,10 +521,12 @@ class TransitionPrimitive:
     transition_id in the same turn — solution-seeking stays inside the
     map's own vocabulary, no external tool, no waiting on a person.
 
-    Silent no-op, matching required_gate_id's existing convention for a
-    dangling reference, when: no logic_layer is bound on the traversal,
-    the named rule doesn't exist in it, or the rule currently has no
-    active recommendation at all (condition false with no
+    For compatibility, runtime remains a silent no-op when no logic_layer is
+    bound or the named rule does not exist. New integrations should call
+    `ThinkingMapTraversal.validate_map()` after assembly; that opt-in preflight
+    fails closed on dangling `guard_expression` and `required_gate_id`
+    references before runtime. A valid rule with no active recommendation
+    (condition false with no
     action_if_false, or a HINT/WARN rule's vacuous-implication
     suppression) — "the policy has no opinion right now" defaults to
     allow, same as not setting guard_expression at all. Only an active
@@ -494,6 +543,13 @@ class TransitionPrimitive:
     guard_expression: str = ""
     requires_human_authorization: bool = False
     safe_alternatives: list[str] = field(default_factory=list)
+    tool_calls: list[str] = field(default_factory=list)
+    call_plan_id: str | None = None
+    requires_autonomy_budget_id: str | None = None
+    action_token_cost: int = 0
+    decision_token_cost: int = 0
+    resource_costs: dict[str, float] = field(default_factory=dict)
+    scope_target: ContextSlice | None = None
 
 
 # ---------------------------------------------------------------------------

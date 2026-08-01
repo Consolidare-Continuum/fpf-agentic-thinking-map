@@ -1,6 +1,6 @@
 """Deterministic guard engine — hard constraints the model cannot override.
 
-9 guards check structural and temporal validity before a move fires.
+12 guards check structural, scope, budget, and temporal validity before a move fires.
 If any guard says DENY, the action is blocked — no LLM reasoning can undo it.
 
 Guards are scoped (TRANSITION, ROLE, EVIDENCE, GLOBAL) so the engine evaluates
@@ -14,8 +14,8 @@ from enum import Enum
 from typing import Callable
 
 from fpf_thinking_map.primitives import (
-    GateDecision,
     Freshness,
+    GateDecision,
 )
 from fpf_thinking_map.state import ActiveState
 
@@ -75,7 +75,13 @@ def _guard_commitment_evidence(state: ActiveState, transition_id: str | None) ->
 
 
 def _guard_planning_not_enactment(state: ActiveState, transition_id: str | None) -> GuardResult:
-    """FPF A.4 + A.7: planning ≠ enactment."""
+    """FPF A.4 + A.7 + F.6: planning ≠ attributed enactment.
+
+    F.6 enforcement is opt-in at map level: maps with no RoleAssignment data
+    retain their pre-F.6 behavior. Once a map declares RoleAssignments, a
+    done/complete transition requires at least one validly attributed Work in
+    the active context.
+    """
     if not transition_id:
         return GuardResult("planning_not_enactment", GuardVerdict.ALLOW)
 
@@ -83,17 +89,21 @@ def _guard_planning_not_enactment(state: ActiveState, transition_id: str | None)
     if not t:
         return GuardResult("planning_not_enactment", GuardVerdict.ALLOW)
 
+    if not state.semantic_map.role_assignments:
+        return GuardResult("planning_not_enactment", GuardVerdict.ALLOW)
+
     if t.to_state.endswith("_done") or t.to_state.endswith("_complete"):
         ctx_id = state.binding.active_context_id or ""
         has_enactment = any(
             w.context_id == ctx_id
+            and not state.semantic_map.validate_work_attribution(w.work_id)
             for w in state.semantic_map.work_records.values()
         )
         if not has_enactment:
             return GuardResult(
                 "planning_not_enactment",
                 GuardVerdict.DENY,
-                "Cannot transition to done/complete without enactment work records",
+                "Cannot transition to done/complete without a valid F.6-attributed work record",
             )
     return GuardResult("planning_not_enactment", GuardVerdict.ALLOW)
 
@@ -147,7 +157,11 @@ def _guard_gate_pass(state: ActiveState, transition_id: str | None) -> GuardResu
 
 
 def _guard_scope_check(state: ActiveState, _transition_id: str | None) -> GuardResult:
-    """FPF A.2.6 (USM): actions must stay within context scope."""
+    """Product runtime rule: cross-frame action labels need a route record.
+
+    This is not A.2.6 ClaimScope membership. Exact USM-style membership is
+    represented separately by ContextSlice and ClaimScope.
+    """
     ctx = state.active_context
     if not ctx:
         return GuardResult("scope_check", GuardVerdict.WARN, "No active context")
@@ -249,6 +263,47 @@ def _guard_context_invariants(state: ActiveState, _transition_id: str | None) ->
     )
 
 
+def _guard_call_plan(state: ActiveState, transition_id: str | None) -> GuardResult:
+    """C.24: declared tool-call planning must close before enactment."""
+    if not transition_id:
+        return GuardResult("call_plan", GuardVerdict.ALLOW)
+    ok, reason = state.call_plan_status(transition_id)
+    return GuardResult(
+        "call_plan",
+        GuardVerdict.ALLOW if ok else GuardVerdict.DENY,
+        "" if ok else reason,
+    )
+
+
+def _guard_claim_scope(state: ActiveState, transition_id: str | None) -> GuardResult:
+    """A.2.6: required evidence must cover an exact declared move slice."""
+    if not transition_id:
+        return GuardResult("claim_scope", GuardVerdict.ALLOW)
+    ok, reason = state.claim_scope_status(transition_id)
+    return GuardResult(
+        "claim_scope",
+        GuardVerdict.ALLOW if ok else GuardVerdict.DENY,
+        "" if ok else reason,
+    )
+
+
+def _guard_autonomy_budget(state: ActiveState, transition_id: str | None) -> GuardResult:
+    """E.16: explicitly budgeted transitions enforce their envelope.
+
+    ``AgencyLevel.AUTONOMOUS`` predates E.16 and remains descriptive. A map
+    opts into enforcement by setting ``requires_autonomy_budget_id`` on the
+    transition; the enum value alone never retroactively changes legality.
+    """
+    if not transition_id:
+        return GuardResult("autonomy_budget", GuardVerdict.ALLOW)
+    ok, reason = state.autonomy_budget_status(transition_id)
+    return GuardResult(
+        "autonomy_budget",
+        GuardVerdict.ALLOW if ok else GuardVerdict.DENY,
+        "" if ok else reason,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Built-in guard registry
 # ---------------------------------------------------------------------------
@@ -263,6 +318,9 @@ BUILTIN_GUARDS = [
     Guard("context_invariants", GuardScope.GLOBAL, _guard_context_invariants),
     Guard("expired_assignment", GuardScope.ROLE, _guard_expired_assignment),
     Guard("speech_act_validity", GuardScope.EVIDENCE, _guard_speech_act_validity),
+    Guard("call_plan", GuardScope.TRANSITION, _guard_call_plan),
+    Guard("claim_scope", GuardScope.TRANSITION, _guard_claim_scope),
+    Guard("autonomy_budget", GuardScope.TRANSITION, _guard_autonomy_budget),
 ]
 
 

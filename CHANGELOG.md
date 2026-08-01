@@ -15,6 +15,83 @@ list: [`docs/deep/EXPANDED_PROVENANCE.md`](docs/deep/EXPANDED_PROVENANCE.md).
   finalized, not yet implemented. See
   [`docs/deep/DESIGN_TRAVERSAL_CHECKPOINT.md`](docs/deep/DESIGN_TRAVERSAL_CHECKPOINT.md).
 
+## [1.9.5] - 2026-08-01
+
+### Fixed
+
+- **A.21 gate lattice was not order-correct.** `GatePrimitive.evaluate()`
+  aggregated multiple `GateCheck` results by checking for `ABSTAIN` before
+  `DEGRADE`, contradicting its own declared lattice (`abstain ≤ pass ≤
+  degrade ≤ block`, where `BLOCK` should dominate). Confirmed by direct
+  test: a mixed `[PASS, BLOCK]` result was silently returning `PASS`, and
+  `[ABSTAIN, DEGRADE]` was returning `ABSTAIN` instead of `DEGRADE`. Fixed
+  by an explicit `GateDecision.lattice_rank` and a proper `max()` join.
+  **Compatibility note**: a gate built from several single-evidence checks
+  where one check individually abstains and another individually degrades
+  will now aggregate to `DEGRADE` (→ `WARN`, allowed) rather than `ABSTAIN`
+  (→ `DENY`, blocked). Neither of this package's own example gates can
+  produce this mix (each check requires exactly one evidence item). If your
+  map needs "any missing evidence anywhere is a hard stop," set
+  `GateCheck(..., failure_decision=GateDecision.BLOCK)` on that check.
+- **`GateDecision.BLOCK` was unreachable.** No built-in check could ever
+  produce it, and the (now-fixed) aggregation above would have silently
+  discarded it if one had. `GateCheck.failure_decision: GateDecision | None
+  = None` lets an individual check opt into emitting `BLOCK` when its
+  evidence is incomplete; every existing check keeps its exact prior
+  PASS/DEGRADE/ABSTAIN behavior since the field defaults to unset.
+- **`GateBlocked` tested `ABSTAIN`, not `BLOCK`.** Fixed to test the value
+  its name promises. A new `GateAbstained` proposition preserves the exact
+  old behavior (including returning `True` for a missing gate) for any
+  `DecisionRule` that was intentionally built on the old semantics — this
+  package's own shipped deploy-scenario rule was migrated to it.
+- **`step()`/`attempt_transition()` returned the same `CONTINUE`-shaped
+  result for a nonexistent `transition_id` as a valid one.** Now returns an
+  explicit `ABSTAIN` with `cause=OutcomeCause.UNKNOWN_TRANSITION`. Only
+  affects callers already passing an ID that doesn't resolve — not a state
+  any correct caller could have been relying on.
+- Corrected an audit record (`docs/deep/FPF_SOURCE_TO_CODE_RELATION_AUDIT.md`,
+  R40) that had marked this gate lattice work "resolved" before the
+  aggregation fix above existed. Now reads "partial, repaired" with the
+  specifics of what was wrong and what changed.
+
+### Added
+
+- `Outcome.cause: OutcomeCause | None` — additive typed reason distinguishing
+  `gate_block`, `unknown_transition`, `context_mismatch`, `logic_contradiction`,
+  `claim_scope_denial`, and generic guard denial, without changing any
+  existing `OutcomeKind` mapping. Existing callers routing on `OutcomeKind`
+  alone see no change; callers that want the distinction can inspect `cause`.
+- `ThinkingMapTraversal.validate_map()` / `validation_errors()` — opt-in
+  preflight that fails closed on a dangling `required_gate_id` or
+  `guard_expression` reference. Runtime traversal keeps its existing silent
+  no-op on an unresolved reference for full backward compatibility; new
+  integrations should call `validate_map()` once after assembly.
+- **Opt-in agentic structural primitives** (`fpf_thinking_map.agentic_structure`):
+  typed `ClaimScope`/`ContextSlice`/`FormalityLevel`/`ReliabilityPath`
+  alongside the existing scalar `FGR` (unchanged, still readable);
+  `CallPlanPrimitive`/`BudgetEnvelope`/`CheckpointReturn` for closed tool-call
+  planning (`REVISE_PLAN` on an absent/incomplete/mismatched plan);
+  `AutonomyBudgetDecl`/`AutonomyLedgerEntry` for a hard autonomy envelope a
+  transition opts into via `requires_autonomy_budget_id`.
+  **Everything here is opt-in at the map or transition level.** A map that
+  declares no `RoleAssignment`, no `AutonomyBudgetDecl`, and no call plan
+  behaves identically to 1.9.4 — verified directly against both original
+  regressions this line of work introduced and fixed before release (a
+  `WorkPrimitive` without `performed_under` on a legacy map, and an
+  `AgencyLevel.AUTONOMOUS` role with no budget declared, both confirmed
+  `allowed=True` exactly as in 1.9.4).
+- `WorkPrimitive.performed_under` + `SemanticMap.validate_work_attribution()`
+  (F.6): once a map declares any `RoleAssignment` at all, the
+  `planning_not_enactment` guard requires at least one validly-attributed
+  work record for a `_done`/`_complete` transition. A map with zero
+  `RoleAssignment`s anywhere retains exactly its 1.9.4 behavior.
+- `DeonticModality.MAY` documented and treated at runtime as non-binding
+  allowance only — not a permission grant, proof of non-prohibition, or
+  transition authorization. Those remain separate, explicit relations.
+- Three new advisories (`ADV-12`, `ADV-13`, `ADV-14`) covering legacy scalar
+  F/G drift, unresolved F.6 attribution, and MAY/permission confusion — see
+  `docs/deep/ADVISORIES.md`.
+
 ## [1.9.4] - 2026-07-25
 
 ### Fixed

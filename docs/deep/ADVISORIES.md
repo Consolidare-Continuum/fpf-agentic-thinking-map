@@ -7,7 +7,7 @@ Each advisory: what the default behavior actually is, why that's the default, an
 **Read these two first if you read nothing else here: [`ADV-03`](#adv-03--active_context_id-is-self-asserted-not-verified-against-how-you-got-there) (context claims aren't verified) and [`ADV-07`](#adv-07--riskaboves-string-matching-is-case-sensitive-and-fails-silently) (a routing rule built exactly as this doc recommends can still silently do the opposite of what you intended). Both are silent — no error, no warning — and both sit directly behind paths this document itself tells you to use.**
 
 **Testing against these directly?** [`dev_mcp`](../../dev_mcp/README.md)'s
-`run_scenario` checks every one of the 10 auto-detected advisories below
+`run_scenario` checks every one of the 13 auto-detected advisories below
 against whatever `ActiveState` your scenario builds, automatically — no
 need to reason by hand about whether your test case happens to sit in one
 of these blind spots. Hits are returned inline and logged
@@ -23,13 +23,16 @@ of that automatic scan — see its own entry for why not.
 | [`ADV-02`](#adv-02--risk_level-doesnt-filter-transitions-on-its-own) | risk doesn't route | `risk_level` alone changes nothing about which transitions show up |
 | [`ADV-03`](#adv-03--active_context_id-is-self-asserted-not-verified-against-how-you-got-there) | context is self-asserted | sharpest — nothing verifies you actually arrived where you claim to be |
 | [`ADV-04`](#adv-04--contradiction-detection-is-opt-in-not-inferred-from-action-names) | contradictions are opt-in | opposite actions only clash if `exclusive_with` says so |
-| [`ADV-05`](#adv-05--gate-degrade-only-distinguishes-partial-evidence-within-a-single-gatecheck) | DEGRADE needs grouping | split evidence across checks and `DEGRADE` can never fire |
-| [`ADV-06`](#adv-06--agency_level-is-descriptive-metadata-not-an-enforced-permission) | agency isn't enforced | `PASSIVE` and `DELIBERATIVE` fire the same transitions unless you gate it |
+| [`ADV-05`](#adv-05--independent-binary-gatechecks-do-not-create-aggregate-degrade) | DEGRADE needs grouping | split evidence across binary checks and the A.21 join resolves to the maximal check result, not aggregate partiality |
+| [`ADV-06`](#adv-06--passive-agency-metadata-is-not-an-enforced-permission) | agency labels aren't enforcement | enum values remain descriptive; E.16 is activated by a transition's budget reference |
 | [`ADV-07`](#adv-07--riskaboves-string-matching-is-case-sensitive-and-fails-silently) | case-sensitive risk | sharpest — `"CRITICAL"` silently reads as `"normal"`, no error |
 | [`ADV-08`](#adv-08--no-persistence-surface-session-continuity-is-a-harness-responsibility-not-an-engine-one) | no persistence | no `to_dict`/`from_dict` anywhere — session continuity is the harness's job |
 | [`ADV-09`](#adv-09--compliance-mode-is-a-witness-not-a-fix--and-cant-be-one-without-knowing-your-domain) | **no oracles, no future seers** | compliance mode can show you drift, it cannot know your domain well enough to fix it |
 | [`ADV-10`](#adv-10--requires_human_authorization-defaults-to-false-and-nothing-checks-whether-a-transitions-own-name-says-it-should-have-been-true) | ungated by default | `requires_human_authorization=False` is the default — nothing checks whether a destructive-sounding transition should have set it |
 | [`ADV-11`](#adv-11--safe_alternatives-declaration-doesnt-hold-up-structurally) | unsound alternative | `safe_alternatives` is declared and unvalidated — a dangling reference, a "safe" twin that's itself gated, or one already denied all pass silently |
+| [`ADV-12`](#adv-12--legacy-scalar-fg-is-not-a-typed-assurance-tuple) | scalar F/G drift | numeric F/G remains readable but is not current typed assurance semantics |
+| [`ADV-13`](#adv-13--performed-work-lacks-exact-f6-attribution) | attribution unresolved | Work must recover one exact RoleAssignment and matching holder/context |
+| [`ADV-14`](#adv-14--may-is-not-a-permission-grant-or-authorization) | MAY is not authority | RFC-style MAY cannot grant permission or authorize enactment |
 
 ---
 
@@ -75,23 +78,23 @@ of that automatic scan — see its own entry for why not.
 
 ---
 
-## ADV-05 — Gate `DEGRADE` only distinguishes partial evidence within a single `GateCheck`
+## ADV-05 — Independent binary `GateCheck`s do not create aggregate `DEGRADE`
 
-**What**: `GatePrimitive.evaluate()` returns `DEGRADE` only when at least one of its `GateCheck`s individually evaluates to `DEGRADE` — which only happens when *that check's own* `required_evidence` list has some, but not all, items present. A gate built from several single-evidence `GateCheck`s (one check per fact) can never produce `DEGRADE`: each check is binary (fully satisfied → `PASS`, or fully missing → `ABSTAIN`), so "one of three facts known" looks identical to "zero of three facts known" at the gate level — both `ABSTAIN`.
+**What**: `GatePrimitive.evaluate()` performs the A.21 maximal join `BLOCK > DEGRADE > PASS > ABSTAIN`. A gate built from several single-evidence checks can never infer aggregate partial completion: each check is binary (`PASS` or `ABSTAIN`), so any passing check makes the join `PASS`. This is not the same as saying every independent requirement was satisfied.
 
-**Why this is the default**: `DEGRADE` is a property of a single check's internal completeness, not an aggregate computed across independent checks — aggregating "3 truths, 4 known, 1 missing" would require a policy choice (a threshold? a weighting?) the library isn't in a position to guess.
+**Why this is the default**: A.21 declares `ABSTAIN` neutral and uses an order-independent join. Inferring "three of four is partial" across independent checks would add an undeclared threshold or weighting policy.
 
-**How to get partial visible as `DEGRADE`**: group evidence that should be assessed together into *one* `GateCheck`'s `required_evidence` list (e.g. `GateCheck("tests", "...", required_evidence=["unit_tests_passed", "integration_tests_passed"])`) rather than splitting related facts across separate checks. Confirmed: none → `insufficient`, partial (one of two, grouped) → `partial`, full → `pass` — exactly distinguishable, but only with this grouping.
+**How to express policy**: group evidence that forms one partial-completeness check into one `GateCheck`. If an independent missing requirement is a hard denial, set `failure_decision=GateDecision.BLOCK` on that check. Existing checks do not opt into BLOCK automatically.
 
 ---
 
-## ADV-06 — `agency_level` is descriptive metadata, not an enforced permission
+## ADV-06 — `PASSIVE` agency metadata is not an enforced permission
 
-**What**: `RolePrimitive.agency_level` (`PASSIVE` / `REACTIVE` / `AUTONOMOUS` / `DELIBERATIVE`) is surfaced to the model (`to_llm_prompt_state()`'s `active_roles[].agency`) but doesn't gate anything by default. A role bound as `PASSIVE` can fire the exact same transition as one bound `DELIBERATIVE` — identical `CONTINUE`, no distinction.
+**What**: `PASSIVE`, `DELIBERATIVE`, and `AUTONOMOUS` remain descriptive unless a domain rule says otherwise. E.16 enforcement begins only when a transition declares `requires_autonomy_budget_id`; that opted-in move then requires a valid `AutonomyBudgetDecl`, exact active assignment, passing budget gate, and remaining envelope.
 
 **Why this is the default**: same shape as `risk_level` (ADV-02) — whether "passive" should mean "cannot trigger this class of transition" is a domain policy question the primitive alone can't answer, because not every transition in every domain needs agency-gating.
 
-**How to enforce it**: write a guard (or `LogicLayer` rule) scoped to the transitions that should be agency-gated, checking `state.active_roles` for the required `agency_level` before allowing the move — the same pattern as wiring risk-based routing in ADV-02.
+**How to enforce passive/reactive restrictions**: write a guard (or `LogicLayer` rule) scoped to the transitions that should be agency-gated, checking `state.active_roles` for the required `agency_level`. For E.16, put `requires_autonomy_budget_id` on each transition that must consume an autonomy envelope.
 
 ---
 
@@ -161,4 +164,34 @@ This is a distinct question from whether the model reads or chooses to use a *va
 
 ---
 
-*v1 — 2026-07-08 (ADV-01/02), v2 — 2026-07-08 (ADV-03..06), v3 — 2026-07-08 (ADV-07), v4 — 2026-07-18 (ADV-08), v5 — 2026-07-18 (ADV-09), v6 — 2026-07-20 (ADV-10), v7 — 2026-07-20 (ADV-11). All found by actually running scenarios through `dev_mcp` (`scope="core"`) or reading the shipped source directly, not by inspection or guesswork — ADV-09 found while building and testing `dev_mcp`'s own compliance-mode tooling in the same session it shipped in; ADV-10 found by an end user reasoning through the `requires_human_authorization`/`authorized` polarity out loud; ADV-11 raised by the same end user drawing the line between validating a declaration and backdooring a model's choices, same session both shipped in. More advisories get added here the same way — dug up, not invented.*
+## ADV-12 — legacy scalar F/G is not a typed assurance tuple
+
+**What**: earlier releases represented F-G-R as three floats. Current semantics require ordinal `FormalityLevel`, set-valued `ClaimScope`, and pathwise reliability. The constructor still reads old numeric values, but `FGR.is_structurally_typed` is false and numeric G has no membership semantics.
+
+**Why compatibility remains**: rejecting every stored map would turn a semantic migration into an availability incident. Compatibility is acceptable only while the drift is explicit and detectable.
+
+**How to close the gap**: migrate evidence to `FormalityLevel`, exact `ContextSlice` values, `ClaimScope`, and `ReliabilityPath` where a justification spine exists. `ADV-12` stops firing when the tuple is structurally typed.
+
+---
+
+## ADV-13 — performed work lacks exact F.6 attribution
+
+**What**: `WorkPrimitive.performed_under` can name a missing, expired, cross-context, wrong-holder, or wrong-role assignment. Such a record cannot satisfy the planning-versus-enactment guard.
+
+**Why registration stays permissive**: maps may register records before assignments while assembling the static board. Registration therefore stays order-independent; reliance does not. `SemanticMap.validate_work_attribution()` supplies the exact diagnostic, and completion transitions count only validly attributed work.
+
+**How to close the gap**: register the exact assignment, role, context, and performer link; require an empty `validate_work_attribution(work_id)` result before relying on the work.
+
+---
+
+## ADV-14 — MAY is not a permission grant or authorization
+
+**What**: `DeonticModality.MAY` is retained to read RFC-style normative statements. It does not institute an A.2.8.PER granted-permission relation, establish non-prohibition, exercise a grant, or satisfy an Ignition Lock.
+
+**Why this stays explicit**: treating weak source wording as execution authority is a safety defect. Authorization receipts, speech acts, gates, and commitments retain separate identities.
+
+**How to close the gap**: use explicit authorization and gate structures for enactment. If a domain needs enduring permission grants and exercise relations, add those as a domain extension rather than overloading `MAY`.
+
+---
+
+*v1 — 2026-07-08 (ADV-01/02), v2 — 2026-07-08 (ADV-03..06), v3 — 2026-07-08 (ADV-07), v4 — 2026-07-18 (ADV-08), v5 — 2026-07-18 (ADV-09), v6 — 2026-07-20 (ADV-10), v7 — 2026-07-20 (ADV-11), v8 — 2026-08-01 (ADV-12..14). All were found by running scenarios or comparing shipped structures against their current source semantics; they are evidence-backed integration warnings, not speculative feature requests.*

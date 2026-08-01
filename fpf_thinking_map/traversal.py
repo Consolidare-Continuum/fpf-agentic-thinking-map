@@ -28,11 +28,11 @@ from enum import Enum
 from typing import Any
 
 from fpf_thinking_map.authorization import AuthorizationReceipt
-from fpf_thinking_map.move_intent import MoveIntent
-from fpf_thinking_map.primitives import GateDecision
-from fpf_thinking_map.state import ActiveState, SemanticMap, RuntimeBinding
 from fpf_thinking_map.guards import GuardEngine, GuardVerdict
 from fpf_thinking_map.logic import LogicLayer
+from fpf_thinking_map.move_intent import MoveIntent
+from fpf_thinking_map.primitives import GateDecision
+from fpf_thinking_map.state import ActiveState, RuntimeBinding, SemanticMap
 
 
 class OutcomeKind(Enum):
@@ -50,6 +50,26 @@ class OutcomeKind(Enum):
     AWAIT = "await"
 
 
+class OutcomeCause(Enum):
+    """Typed reason for an outcome when callers need more than its action."""
+    UNKNOWN_TRANSITION = "unknown_transition"
+    CONTEXT_MISMATCH = "context_mismatch"
+    STATE_MISMATCH = "state_mismatch"
+    LOGIC_CONTRADICTION = "logic_contradiction"
+    GATE_BLOCK = "gate_block"
+    CLAIM_SCOPE_DENIAL = "claim_scope_denial"
+    GUARD_DENIAL = "guard_denial"
+    TRANSITION_FAILURE = "transition_failure"
+
+
+class MapValidationError(ValueError):
+    """Raised only when a caller explicitly validates unresolved references."""
+
+    def __init__(self, errors: list[str]):
+        self.errors = tuple(errors)
+        super().__init__("Invalid semantic map:\n- " + "\n- ".join(errors))
+
+
 @dataclass
 class Outcome:
     """The result of one traversal step."""
@@ -63,12 +83,15 @@ class Outcome:
     pending_input_ids: list[str] = field(default_factory=list)
     wake_conditions: list[str] = field(default_factory=list)
     llm_prompt_state: dict = field(default_factory=dict)
+    cause: OutcomeCause | None = None
 
     def to_dict(self) -> dict[str, Any]:
         d: dict[str, Any] = {
             "outcome": self.kind.value,
             "reason": self.reason,
         }
+        if self.cause:
+            d["cause"] = self.cause.value
         if self.next_state:
             d["next_state"] = self.next_state
         if self.action:
@@ -107,6 +130,46 @@ class ThinkingMapTraversal:
         self.semantic_map = semantic_map
         self.guard_engine = guard_engine or GuardEngine()
         self.logic_layer = logic_layer
+
+    def validation_errors(self) -> list[str]:
+        """Return unresolved mandatory references without changing runtime.
+
+        Validation is deliberately opt-in for compatibility. Existing callers
+        keep their historical runtime behavior until they explicitly call
+        :meth:`validate_map`. New integrations should validate once after map
+        and LogicLayer assembly, before accepting work.
+        """
+        errors: list[str] = []
+        rule_names = {
+            rule.name for rule in self.logic_layer.rules
+        } if self.logic_layer is not None else set()
+        for transition in self.semantic_map.transitions.values():
+            if (
+                transition.required_gate_id
+                and transition.required_gate_id not in self.semantic_map.gates
+            ):
+                errors.append(
+                    f"transition '{transition.transition_id}' requires unknown gate "
+                    f"'{transition.required_gate_id}'"
+                )
+            if transition.guard_expression:
+                if self.logic_layer is None:
+                    errors.append(
+                        f"transition '{transition.transition_id}' requires logic rule "
+                        f"'{transition.guard_expression}', but no LogicLayer is bound"
+                    )
+                elif transition.guard_expression not in rule_names:
+                    errors.append(
+                        f"transition '{transition.transition_id}' requires unknown logic rule "
+                        f"'{transition.guard_expression}'"
+                    )
+        return errors
+
+    def validate_map(self) -> None:
+        """Fail closed on dangling gate/rule references when explicitly called."""
+        errors = self.validation_errors()
+        if errors:
+            raise MapValidationError(errors)
 
     def build_active_state(
         self,
@@ -206,6 +269,13 @@ class ThinkingMapTraversal:
         # just on a fire — see ActiveState._authorization_clock's docstring
         state._authorization_clock += 1
 
+        if transition_id and transition_id not in self.semantic_map.transitions:
+            return Outcome(
+                kind=OutcomeKind.ABSTAIN,
+                cause=OutcomeCause.UNKNOWN_TRANSITION,
+                reason=f"Transition '{transition_id}' not found",
+            )
+
         if not state.active_context:
             return Outcome(
                 kind=OutcomeKind.CHANGE_FRAME,
@@ -222,6 +292,7 @@ class ThinkingMapTraversal:
             if t and ctx_id and t.context_id != ctx_id:
                 return Outcome(
                     kind=OutcomeKind.ABSTAIN,
+                    cause=OutcomeCause.CONTEXT_MISMATCH,
                     reason=f"Transition '{transition_id}' belongs to context "
                            f"'{t.context_id}', active is '{ctx_id}'",
                 )
@@ -232,9 +303,12 @@ class ThinkingMapTraversal:
             if not consistency.get("consistent", True):
                 return Outcome(
                     kind=OutcomeKind.ABSTAIN,
+                    cause=OutcomeCause.LOGIC_CONTRADICTION,
                     reason=f"Logic contradiction: {consistency.get('contradictions', [])}",
                     warnings=consistency.get("contradictions", []),
-                    llm_prompt_state=self._build_prompt(state, logic_ctx, transition_id, include_full_state=include_full_state),
+                    llm_prompt_state=self._build_prompt(
+                        state, logic_ctx, transition_id, include_full_state=include_full_state,
+                    ),
                 )
 
         allowed, guard_results = self.guard_engine.is_action_allowed(state, transition_id)
@@ -242,6 +316,78 @@ class ThinkingMapTraversal:
         denials = [r.reason for r in guard_results if r.verdict == GuardVerdict.DENY]
 
         if not allowed:
+            gate_block_denial = None
+            if transition_id:
+                gate = state.gate_for_transition(transition_id)
+                if gate and gate.evaluate(state.available_evidence_ids) == GateDecision.BLOCK:
+                    gate_block_denial = next(
+                        (
+                            result.reason for result in guard_results
+                            if result.guard_name == "gate_pass"
+                            and result.verdict == GuardVerdict.DENY
+                        ),
+                        f"Gate '{gate.gate_id}' blocks — hard denial",
+                    )
+            if gate_block_denial:
+                return Outcome(
+                    kind=OutcomeKind.ABSTAIN,
+                    cause=OutcomeCause.GATE_BLOCK,
+                    reason=gate_block_denial,
+                    warnings=warnings,
+                    llm_prompt_state=self._build_prompt(
+                        state, logic_ctx, transition_id, guard_blockers=denials,
+                        include_full_state=include_full_state,
+                    ),
+                )
+            autonomy_denial = next(
+                (r.reason for r in guard_results
+                 if r.guard_name == "autonomy_budget" and r.verdict == GuardVerdict.DENY),
+                None,
+            )
+            if autonomy_denial:
+                return Outcome(
+                    kind=OutcomeKind.ESCALATE,
+                    reason=f"E.16 autonomy gate blocks: {autonomy_denial}",
+                    warnings=warnings,
+                    llm_prompt_state=self._build_prompt(
+                        state, logic_ctx, transition_id, guard_blockers=denials,
+                        include_full_state=include_full_state,
+                    ),
+                )
+            call_plan_denial = next(
+                (r.reason for r in guard_results
+                 if r.guard_name == "call_plan" and r.verdict == GuardVerdict.DENY),
+                None,
+            )
+            if call_plan_denial:
+                return Outcome(
+                    kind=OutcomeKind.REVISE_PLAN,
+                    reason=f"C.24 call-plan closure failed: {call_plan_denial}",
+                    warnings=warnings,
+                    llm_prompt_state=self._build_prompt(
+                        state, logic_ctx, transition_id, guard_blockers=denials,
+                        include_full_state=include_full_state,
+                    ),
+                )
+            claim_scope_denial = next(
+                (
+                    result.reason for result in guard_results
+                    if result.guard_name == "claim_scope"
+                    and result.verdict == GuardVerdict.DENY
+                ),
+                None,
+            )
+            if claim_scope_denial:
+                return Outcome(
+                    kind=OutcomeKind.ABSTAIN,
+                    cause=OutcomeCause.CLAIM_SCOPE_DENIAL,
+                    reason=f"A.2.6 claim-scope reliance failed: {claim_scope_denial}",
+                    warnings=warnings,
+                    llm_prompt_state=self._build_prompt(
+                        state, logic_ctx, transition_id, guard_blockers=denials,
+                        include_full_state=include_full_state,
+                    ),
+                )
             if transition_id:
                 missing = state.missing_evidence_for(transition_id)
             else:
@@ -259,6 +405,7 @@ class ThinkingMapTraversal:
                 )
             return Outcome(
                 kind=OutcomeKind.ABSTAIN,
+                cause=OutcomeCause.GUARD_DENIAL,
                 reason=f"Guards deny, no evidence path: {'; '.join(denials)}",
                 warnings=warnings,
                 llm_prompt_state=self._build_prompt(
@@ -276,7 +423,9 @@ class ThinkingMapTraversal:
                 reason=f"Evidence gaps: {missing}",
                 missing_evidence=missing,
                 warnings=warnings,
-                llm_prompt_state=self._build_prompt(state, logic_ctx, transition_id, include_full_state=include_full_state),
+                llm_prompt_state=self._build_prompt(
+                    state, logic_ctx, transition_id, include_full_state=include_full_state,
+                ),
             )
 
         transitions = state.possible_transitions
@@ -286,7 +435,9 @@ class ThinkingMapTraversal:
                     kind=OutcomeKind.CONTINUE,
                     reason="No transitions but actions available",
                     warnings=warnings,
-                    llm_prompt_state=self._build_prompt(state, logic_ctx, transition_id, include_full_state=include_full_state),
+                    llm_prompt_state=self._build_prompt(
+                        state, logic_ctx, transition_id, include_full_state=include_full_state,
+                    ),
                 )
 
             bridge_opts = self.semantic_map.bridge_options(ctx_id)
@@ -314,14 +465,18 @@ class ThinkingMapTraversal:
                     wake_conditions=list(dict.fromkeys(
                         wc for pi in unresolved for wc in pi.wake_conditions
                     )),
-                    llm_prompt_state=self._build_prompt(state, logic_ctx, transition_id, include_full_state=include_full_state),
+                    llm_prompt_state=self._build_prompt(
+                        state, logic_ctx, transition_id, include_full_state=include_full_state,
+                    ),
                 )
 
             return Outcome(
                 kind=OutcomeKind.IDLE,
                 reason="At rest — no transitions, no actions, no bridges, no pending input",
                 warnings=warnings,
-                llm_prompt_state=self._build_prompt(state, logic_ctx, transition_id, include_full_state=include_full_state),
+                llm_prompt_state=self._build_prompt(
+                    state, logic_ctx, transition_id, include_full_state=include_full_state,
+                ),
             )
 
         return Outcome(
@@ -379,6 +534,7 @@ class ThinkingMapTraversal:
         if not t:
             return Outcome(
                 kind=OutcomeKind.ABSTAIN,
+                cause=OutcomeCause.UNKNOWN_TRANSITION,
                 reason=f"Transition '{transition_id}' not found",
             )
 
@@ -386,6 +542,7 @@ class ThinkingMapTraversal:
         if ctx_id and t.context_id != ctx_id:
             return Outcome(
                 kind=OutcomeKind.ABSTAIN,
+                cause=OutcomeCause.CONTEXT_MISMATCH,
                 reason=f"Transition '{transition_id}' belongs to context '{t.context_id}', "
                        f"active is '{ctx_id}'",
             )
@@ -393,6 +550,7 @@ class ThinkingMapTraversal:
         if t.from_state != state.current_state:
             return Outcome(
                 kind=OutcomeKind.ABSTAIN,
+                cause=OutcomeCause.STATE_MISMATCH,
                 reason=f"Transition requires state '{t.from_state}', current is '{state.current_state}'",
             )
 
@@ -442,6 +600,7 @@ class ThinkingMapTraversal:
                 if decision == GateDecision.BLOCK:
                     return Outcome(
                         kind=OutcomeKind.ABSTAIN,
+                        cause=OutcomeCause.GATE_BLOCK,
                         reason=f"Gate '{t.required_gate_id}' blocks — hard denial",
                     )
                 if decision == GateDecision.ABSTAIN:
@@ -451,13 +610,36 @@ class ThinkingMapTraversal:
                         missing_evidence=gate.missing_evidence(state.available_evidence_ids),
                     )
 
+        autonomy_ok, autonomy_reason = state.autonomy_budget_status(transition_id)
+        if not autonomy_ok:
+            return Outcome(
+                kind=OutcomeKind.ESCALATE,
+                reason=f"E.16 autonomy gate blocks: {autonomy_reason}",
+            )
+
+        claim_scope_ok, claim_scope_reason = state.claim_scope_status(transition_id)
+        if not claim_scope_ok:
+            return Outcome(
+                kind=OutcomeKind.ABSTAIN,
+                cause=OutcomeCause.CLAIM_SCOPE_DENIAL,
+                reason=f"A.2.6 claim-scope reliance failed: {claim_scope_reason}",
+            )
+
+        call_plan_ok, call_plan_reason = state.call_plan_status(transition_id)
+        if not call_plan_ok:
+            return Outcome(
+                kind=OutcomeKind.REVISE_PLAN,
+                reason=f"C.24 call-plan closure failed: {call_plan_reason}",
+            )
+
         if t.guard_expression and self.logic_layer:
             rule = next(
                 (r for r in self.logic_layer.rules if r.name == t.guard_expression),
                 None,
             )
-            # dangling rule name: same silent no-op as an unresolved
-            # required_gate_id above — a missing reference doesn't block.
+            # Compatibility runtime: dangling refs remain no-op unless the
+            # caller uses validate_map() during assembly. The validator makes
+            # this fail closed before work without changing existing runs.
             if rule:
                 _, recommended = rule.evaluate(state)
                 # no active recommendation right now ("" from a false
@@ -483,6 +665,7 @@ class ThinkingMapTraversal:
             denials = [r.reason for r in guard_results if r.verdict == GuardVerdict.DENY]
             return Outcome(
                 kind=OutcomeKind.ABSTAIN,
+                cause=OutcomeCause.GUARD_DENIAL,
                 reason=f"Guards deny: {'; '.join(denials)}",
             )
 
@@ -504,6 +687,7 @@ class ThinkingMapTraversal:
 
         return Outcome(
             kind=OutcomeKind.ABSTAIN,
+            cause=OutcomeCause.TRANSITION_FAILURE,
             reason="Transition failed",
         )
 

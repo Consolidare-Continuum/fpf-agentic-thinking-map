@@ -8,7 +8,7 @@ A transdisciplinary specification for reasoning, assurance, and evolution — an
 
 - **Author**: Anatoly Levenchuk (with LLM assistance)
 - **Repository**: [github.com/ailev/FPF](https://github.com/ailev/FPF)
-- **Spec**: `FPF-Spec.md` (~51,000 lines) — not included in this repository; see the original repo
+- **Inspected edition**: `FPF-Spec.md` at upstream commit `1eb56cd` (102,678 lines) — not included in this repository
 - **Status**: Normative kernel, "eternal alpha" — used in working projects
 - **Prior Python model**: `py-fpf` in the original repo (basic graph model with CSV artifacts — not used directly, but informed the design)
 - **Carrier vs. framework**: [E.4.FPF — Form and Publication-or-Access Carrier Assembly](https://fpf.sh/generated/patterns/E.4.FPF) — the normative pattern distinguishing the FPF framework edition from its carriers (publication formats, skill packs, MCP services, retrieval routes). This package is a carrier under that definition, not an alternate edition of FPF.
@@ -17,28 +17,34 @@ A transdisciplinary specification for reasoning, assurance, and evolution — an
 
 | What we built | FPF spec section(s) | What the spec section defines |
 |--------------|---------------------|------------------------------|
-| `ContextPrimitive` | A.1.1 as it read pre-2026-07-26 (`U.BoundedContext`) | A bounded area where words have specific local meanings. Cross-context use requires explicit bridges with declared translation loss. **Provenance note (2026-08-01):** `ailev/FPF` commit `60caecb` now forbids publishing `U.BoundedContext` as a U-kind, replacing it with on-demand recovery of `ModelApplicabilityRelation`/`ModelUseRelation`/`ModelExpressionCoherenceRelation`, optionally bundled as `BoundedModelUseStructure` — never a standing container. `ContextPrimitive` is a downstream execution artifact (an "Operational Decision Frame" — see `FPF_THINKING_MAP_VS_AILEV_FPF_POSITIONING.md`), not a current implementation of A.1.1. |
-| `ContextBridge` | A.6.9 CrossContextSamenessDisambiguation | How to connect two contexts: direction, mapping, substitution license, loss notes. |
+| `ContextPrimitive` | Product-native; informed by local-meaning and model-use concerns, but **not** A.1.1 `U.BoundedContext` | Runtime partition for state, roles, gates, transitions, and evidence. No upstream container, holon, or boundary identity is claimed. |
+| `ContextBridge` | Product-native routing record; not an obtaining F.9 relation | Runtime route, mapping, substitution flag, and loss note. Presence does not authorize reliance on translation. |
 | `RolePrimitive` | A.2 Role Taxonomy, A.2.1 U.RoleAssignment, A.2.7 U.RoleAlgebra, A.13 AgentialRole | Roles as assignments (not identities). Specialization (≤), incompatibility (⊥), bundles (⊗). Agency as a spectrum (passive → deliberative). |
 | `WorkPrimitive` | A.15 U.Planning, A.15.1 U.Work, A.15.2 U.WorkPlan | The strict distinction between a plan (intent) and an enactment (what actually happened). A plan is NOT done work. |
 | `WorkPlanPrimitive` | A.15.2 U.WorkPlan | A schedule of intent, kept as its own type from `WorkPrimitive` — the type distinction IS the enforcement; a plan existing does not mean the work was executed. |
 | `RoleAssignment` | A.2.1 U.RoleAssignment | The binding of a holder to a role inside a context, kept distinct from `RolePrimitive` (the role definition) and from role enactment (work done under the assignment). Can expire. |
 | `SpeechActPrimitive` | A.2.9 U.SpeechAct | A communicative work occurrence — approval, authorization, revocation. Turns evidence IDs like "owner_approval" from magic strings into a checkable act: who approved, when, what it institutes, whether it's still valid. |
-| `CommitmentPrimitive` | A.2.8 U.Commitment | Deontic obligations: MUST, SHOULD, MAY, MUST_NOT, SHOULD_NOT. Scoped, with validity windows and evidence refs. Separate from gates (deontic vs structural). |
-| `GatePrimitive` | A.21 GateProfilization, A.19.UNM (tri-state guard) | Operational gates that aggregate checks. Four outcomes: abstain, pass, degrade, block. Fail-closed by default. |
-| `EvidencePrimitive` | A.10 Evidence Graph, A.2.4 U.EvidenceRole, B.3 Trust & Assurance (F-G-R), B.3.4 Evidence Decay | Evidence with provenance. Trust is a computed tuple: Formality (how rigorous), scope (how broad), Reliability (how dependable). Evidence can go stale. |
+| `CommitmentPrimitive` | A.2.8 U.Commitment | Obligations/prohibitions with RFC-style force. MAY is compatibility wording, not A.2.8.PER permission or authorization. |
+| `GatePrimitive` | A.21 GateProfilization, A.19.UNM (tri-state guard) | Operational gates aggregate four outcomes with the A.21 maximal join. `GateCheck.failure_decision` makes an explicit hard BLOCK reachable; no existing check opts in automatically. |
+| `EvidencePrimitive` + typed F-G-R | A.10, A.2.6, C.2.2, C.2.3, B.3.4 | Evidence with ordinal Formality, exact set-valued ClaimScope, pathwise Reliability, provenance, and decay. Legacy scalar F/G is readable but detected as drift. |
+| `ContextSlice`, `ClaimScope`, `ReliabilityPath` | A.2.6, C.2.2, C.2.3 | Exact scope membership, ordinal F0...F9, weakest-link reliability paths, and explicit unknown evaluation when interpretation is unavailable. |
+| `CallPlanPrimitive`, `BudgetEnvelope`, `CheckpointReturn` | C.24 | Enactment-facing tool-call plan closure: objective, routes, ex-ante ceilings, stop/replan condition, next move, and fixed prior choice. |
+| `AutonomyBudgetDecl`, `AutonomyLedgerEntry` | E.16 | Named autonomy envelope, exact assignment/role/gate checks, hard depletion, and immutable consumption record. |
 | `TransitionPrimitive` | A.3.3 U.Dynamics, B.4 Canonical Evolution Loop, A.2.5 U.RoleStateGraph | State transitions with optional gate requirements and required evidence. The canonical loop: Run → Observe → Refine → Deploy. |
 | `PublicationPrimitive` | E.17 MVPK Multi-View Publication Kit | Same content, different audiences: plain, technical, interop, assurance. Views do not add new semantics. |
 | Guard: commitment evidence | A.2.8 + A.10 | Binding commitments (MUST/MUST_NOT) require evidence refs to be present. |
-| Guard: plan ≠ enactment | A.4 Temporal Duality, A.7 Strict Distinction | Having a plan does not mean the work is done. Cannot transition to "done" without enactment records. |
+| Guard: plan ≠ enactment | A.15 + F.6 | When a map declares RoleAssignments, completion requires a valid Work → assignment attribution. Pre-assignment maps retain legacy behavior. |
 | Guard: role conflict | A.2.7 U.RoleAlgebra (⊥) | Incompatible roles cannot be active at the same time. |
 | Guard: gate pass | A.21 GateProfilization | Gate must pass (or at least degrade, not abstain/block) before a guarded transition fires. |
-| Guard: scope check | A.2.6 USM (Unified Scope Mechanism) | Actions must stay within the active context. Cross-context action requires a bridge. |
+| Guard: runtime-frame route | Product-native | Cross-frame action labels require a declared ContextBridge. This is not A.2.6 ClaimScope membership. |
+| Guard: exact claim scope | A.2.6 | When a transition declares `scope_target`, every relied-on required evidence item must have a typed ClaimScope that returns true for that exact slice. UNKNOWN is not coerced to false but still cannot authorize reliance. |
+| Guard: call-plan closure | C.24 | Tool-use transitions with declared routes cannot fire through an absent, incomplete, or mismatched plan. |
+| Guard: autonomy budget | E.16 | A transition opts in through `requires_autonomy_budget_id`; that move then requires exact assignment, named valid budget, passing gate, and remaining envelope. Agency labels alone remain descriptive. |
 | Guard: evidence freshness | B.3.4 Evidence Decay | Stale or expired evidence triggers a warning before decisions. |
 
 ### What we did NOT take from FPF
 
-The full FPF spec is ~51,000 lines covering dozens of patterns across 7 parts (A through G). We extracted the objects and guard rules in the table above. Everything else in the spec (the full ontology, the mathematical formalism, the publication kit details, the SoTA harvesting, the ethics framework, the explore-exploit calculus) was left out intentionally. FPF is a transdisciplinary, all-encompassing specification; this package was never meant to copy it, and does not try to. It is a distillation of the small slice that changes what a model does on one runtime move, not a port.
+The inspected FPF edition is 102,678 lines across 7 parts (A through G). We compile only structures that change one lawful runtime move. The full ontology, pattern-authoring governance, publication ecosystem, and most calculi remain outside the shipped core. This package is a decision-relevant distillation, not a port.
 
 ### What we invented (not extracted from FPF)
 

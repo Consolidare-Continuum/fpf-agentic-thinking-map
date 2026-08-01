@@ -10,12 +10,13 @@ graph LR
     A[authorization.py<br/>receipt scoped to one transition + state]
     PI[pending_input.py<br/>declared external dependency]
     MI[move_intent.py<br/>concrete move identity]
+    AS[agentic_structure.py<br/>scope + assurance + call plans + autonomy]
     S[state.py<br/>binding + active state + slice]
-    G[guards.py<br/>9 hard constraints]
+    G[guards.py<br/>12 hard constraints]
     L[logic.py<br/>6 operators + rules]
     T[traversal.py<br/>step engine + 11 declared outcomes]
     E[examples.py<br/>8 scenarios]
-    V[verify.py<br/>26 checks]
+    V[verify.py<br/>32 checks]
 
     P --> S
     P --> G
@@ -23,6 +24,8 @@ graph LR
     A --> S
     PI --> S
     MI --> S
+    AS --> P
+    AS --> S
     S --> G
     S --> L
     S --> T
@@ -43,12 +46,14 @@ graph LR
     A --> V
     PI --> V
     MI --> V
+    AS --> V
     E --> V
 
     style P fill:#2d5016,color:#fff
     style A fill:#5c3a1a,color:#fff
     style PI fill:#3a5c3a,color:#fff
     style MI fill:#5c1a4a,color:#fff
+    style AS fill:#403070,color:#fff
     style S fill:#1a3a5c,color:#fff
     style G fill:#5c1a1a,color:#fff
     style L fill:#4a3728,color:#fff
@@ -59,19 +64,24 @@ graph LR
 
 ## How a step works
 
-`step()` is the normal runtime path. It can return 7 of the 11 declared outcomes. `ASK`, `PUBLISH`, and `REVISE_PLAN` exist in `OutcomeKind`, but nothing returns them yet. `ESCALATE` comes from two places: `attempt_bridge()` (below) and `attempt_transition()`'s Ignition Lock check (next section) — `step()` itself never returns it, since it only scans what's possible, it doesn't attempt a specific move.
+`step()` is the normal inspection path. Besides the ordinary movement outcomes,
+focused inspection can return `REVISE_PLAN` for an incomplete C.24 call plan,
+`ESCALATE` for a failed opted-in E.16 budget, and typed `ABSTAIN` for an unknown
+transition or hard gate decision.
 
 ```mermaid
 flowchart TD
     START([step called]) --> INC[step_count++<br/>drives TTL decay]
-    INC --> CTX{active<br/>context?}
+    INC --> TREF{explicit transition id<br/>registered?}
+    TREF -->|no| ABSTAIN
+    TREF -->|yes / none supplied| CTX{active<br/>context?}
     CTX -->|no| CF[CHANGE_FRAME]
     CTX -->|yes| XCTX{focused mode:<br/>transition in<br/>active context?}
     XCTX -->|no, mismatch| ABSTAIN[ABSTAIN]
     XCTX -->|yes| LOGIC["evaluate logic rules<br/>(6-operator composition,<br/>see next section)"]
     LOGIC --> CONSIST{consistent?}
     CONSIST -->|contradiction| ABSTAIN
-    CONSIST -->|ok| GUARDS[run 9 guards]
+    CONSIST -->|ok| GUARDS[run 12 guards]
     GUARDS --> GPASS{all<br/>allow?}
     GPASS -->|deny + evidence path| CE1[COLLECT_EVIDENCE]
     GPASS -->|deny + no path| ABSTAIN
@@ -115,9 +125,18 @@ flowchart LR
 `attempt_transition()` is simpler than `step()`, but has one more branch than it used to:
 
 - returns `ABSTAIN` if the move is invalid (wrong context, wrong `from_state`)
+- returns typed `ABSTAIN(cause=unknown_transition)` for an unknown transition ID
+- returns `ABSTAIN(cause=gate_block)` when the required gate publishes hard `BLOCK`
 - returns `ESCALATE` if `requires_human_authorization` is set and `authorized` wasn't passed — **before** evidence or gates are even checked (below)
 - returns `COLLECT_EVIDENCE` if required evidence is missing
+- returns `REVISE_PLAN` when a C.24 tool plan is absent, incomplete, or names another next move
+- returns `ESCALATE` when an E.16 autonomy budget, assignment, gate, or remaining envelope fails
 - returns `CONTINUE` if the transition succeeds
+
+`Outcome.cause` is additive: existing consumers can keep routing on
+`OutcomeKind`, while consumers needing the distinction can inspect typed causes
+such as `gate_block`, `unknown_transition`, `context_mismatch`, or
+`logic_contradiction`.
 
 ### Ignition Lock — the authorization check inside `attempt_transition()`
 
@@ -197,7 +216,7 @@ graph TB
         EA["EvidencePresent<br/>owner_approval"]
         ET["EvidencePresent<br/>test_results"]
         GD["GatePasses<br/>deploy_gate"]
-        GB["GateBlocked<br/>deploy_gate"]
+        GB["GateAbstained<br/>deploy_gate"]
         HG["HasMissingEvidence"]
         RA["RoleActive<br/>analyst"]
         RP["RoleActive<br/>approver"]
@@ -215,7 +234,7 @@ graph TB
 
     GB --> I1{IMPLIES}
     HG --> I1
-    I1 --> R2["gate_blocked_implies_collect — HINT<br/>collect_evidence"]
+    I1 --> R2["gate_abstained_implies_collect — HINT<br/>collect_evidence"]
 
     EA --> N1{NOT}
     N1 --> R3["evidence_gap_detected — WARN<br/>request_approval"]
@@ -366,7 +385,7 @@ graph TD
 
 ```mermaid
 graph LR
-    subgraph RAW["Raw FPF (51k lines)"]
+    subgraph RAW["Raw FPF (102k+ lines)"]
         direction TB
         R1[Pass 1: Parse<br/>holon? episteme? ontic?]
         R2[Pass 2: Aggregate<br/>FPF vocabulary → task vocabulary]
@@ -424,7 +443,7 @@ sequenceDiagram
         T->>S: check context, transitions
         T->>L: evaluate logic rules
         L-->>T: facts + actions + consistency
-        T->>G: run 9 guards
+        T->>G: run 12 guards
         G-->>T: allow/deny/warn per guard
         T->>S: build slice(transition_id)
         S-->>T: {move, gate, evidence, blockers, response_contract}

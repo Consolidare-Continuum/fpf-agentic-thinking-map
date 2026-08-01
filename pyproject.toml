@@ -1,6 +1,6 @@
 [project]
 name = "fpf-thinking-map"
-version = "1.9.4"
+version = "1.9.5"
 description = "Deterministic Python runtime for lawful agent traversal with explicit state, evidence, authorization, waiting, and move identity."
 readme = "README.md"
 license = "MIT"

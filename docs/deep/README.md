@@ -21,16 +21,16 @@ The point is not to make the model "more intelligent." The point is to make its 
 
 FPF is strong material for humans, but too large to hand to a model raw and expect clean operational behavior. A model tends to absorb the vocabulary, imitate the posture of rigor, and still miss the simple thing it needed to do.
 
-So we did not port the whole framework. We extracted what was useful for bounded traversal, made it executable, and left out the parts that would inflate runtime payload or trigger open-ended academic-pattern generation. This package is not "FPF but more." It is "the part of FPF that helps agents behave better, compiled into something they can actually use."
+So we do not ship the whole framework in the runtime. We extract what is useful for bounded traversal, make that executable, and leave out parts that would inflate the per-move payload or trigger open-ended academic-pattern generation. This package is not "FPF but more." It is "the part of FPF that helps agents behave better, compiled into something they can actually use."
 
 ## Where this comes from
 
 Two sources, both real academic material:
 
 **Source 1: [FPF (First Principles Framework)](https://github.com/ailev/FPF)**
-- A transdisciplinary specification (~51,000 lines) by Anatoly Levenchuk — "operating system for thought"
+- A transdisciplinary specification that had grown to 102,678 lines at inspected commit `1eb56cd` — "operating system for thought"
 - It defines how to structure reasoning about systems: what roles exist, what evidence is needed, what gates must pass, how to transition between states
-- We did NOT copy the whole spec. We extracted 10 objects from it and turned them into Python dataclasses
+- We do NOT copy the whole spec into the package. The runtime keeps a curated set of objects extracted from it and turned into Python dataclasses
 - The full spec lives in the [ailev/FPF](https://github.com/ailev/FPF) repository
 
 **Source 2: Computational logic lectures (Mitev L.)**
@@ -45,12 +45,13 @@ Two sources, both real academic material:
 ```
 fpf_thinking_map/
 │
-├── primitives.py            10 semantic objects + 5 semantic floors from FPF
+├── primitives.py            Core runtime objects + 5 product semantic floors
+├── agentic_structure.py     Typed scope/assurance + call plans + autonomy budgets
 ├── state.py                 Binding, state, TTL tracking, evidence status, slice
-├── guards.py                9 deterministic guards the model cannot break
+├── guards.py                12 deterministic guards the model cannot break
 ├── logic.py                 6 logic operators + EvidenceFresh + decision rules
-├── traversal.py             Step engine with 10 lawful outcomes (incl. IDLE, BRIDGE)
-├── verify.py                Self-test: run it, if 22/22 pass, package works
+├── traversal.py             Step engine with 11 lawful outcomes (incl. IDLE, BRIDGE)
+├── verify.py                Self-test: run it, if 35/35 pass, package works
 │
 ├── examples.py              5 deploy decision scenarios (all features in action)
 │
@@ -59,20 +60,25 @@ fpf_thinking_map/
 └── SOURCES.md               Detailed source attribution
 ```
 
-## The 10 objects from FPF (primitives.py)
+## Runtime semantic objects
 
-These are Python dataclasses. Each one was extracted from a specific section of the FPF spec. v1.1: includes SemanticFloor (5 vertical levels) and FGR-modulated TTL decay.
+These are Python dataclasses and runtime frames. Some compile current FPF
+semantics; product-native frames are labelled as such rather than presented as
+upstream kinds.
 
 | Object | What it is | Plain example |
 |--------|-----------|---------------|
-| `ContextPrimitive` | A bounded area where words have specific meanings | "Project Delivery" context where "deploy" means "push to production" |
+| `ContextPrimitive` | Product-native runtime partition, not upstream `U.BoundedContext` | "Project Delivery" execution frame where "deploy" has a local runtime meaning |
 | `RolePrimitive` | A role someone plays in a context, with conflicts | "Analyst" role — cannot also be "Approver" (separation of duties) |
-| `WorkPrimitive` | A record of something planned or actually done | "Deployment plan" (plan) vs "Deployment executed at 3pm" (enactment) |
-| `CommitmentPrimitive` | A rule: MUST, SHOULD, or MAY do something | "MUST have test results before deploying" |
+| `WorkPrimitive` | A record of dated enactment, distinct from `WorkPlanPrimitive` | "Deployment executed at 3pm under assignment A" |
+| `CommitmentPrimitive` | An obligation/prohibition; MAY is not permission authority | "MUST have test results before deploying" |
 | `GatePrimitive` | A checkpoint with pass/degrade/abstain outcome | "Deployment gate" — checks if tests passed AND approval obtained |
-| `EvidencePrimitive` | A piece of evidence with a trust score (F-G-R) | "Test results from CI pipeline" — formality: 0.8, reliability: 0.9 |
+| `EvidencePrimitive` | Evidence with typed F-G-R and freshness | Test results at `F6`, exact production scope, pathwise `R=0.9` |
 | `TransitionPrimitive` | A move from one state to another, may require a gate | "ready_for_decision → deploying" requires deploy_gate to pass |
 | `PublicationPrimitive` | A way to show results to an audience | "Assurance view for stakeholders" — only available after gate passes |
+| `ClaimScope` / `ContextSlice` | Exact set-valued applicability | Tenant A in EU under scheme v1 |
+| `CallPlanPrimitive` | Closed plan for intended tool calls, not executed Work | inspect → patch → test under declared ceilings |
+| `AutonomyBudgetDecl` | Hard autonomy envelope | one action token under a passing safety gate |
 
 ## The 6 logic operators (logic.py)
 
@@ -84,7 +90,7 @@ These are the standard logic operators from computer science. They evaluate to t
 | AND | ∧ | Both must be true | `tests_pass AND approval_obtained` → true only when both exist |
 | OR | ∨ | At least one true | `rollback_plan OR not_at_deploy` → true if either holds |
 | XOR | ⊕ | Exactly one true | `analyst XOR approver` → true when exactly one role is active |
-| IMPLIES | → | If A then B | `gate_blocked IMPLIES gaps_exist` → false only when gate is blocked but no gaps |
+| IMPLIES | → | If A then B | `gate_abstained IMPLIES gaps_exist` → false only when the gate abstains but no gaps exist |
 | IFF | ↔ | Both same value | `ready_state IFF gate_passes` → true when both true or both false |
 
 These get composed into `DecisionRule` objects. Each rule has:
@@ -97,14 +103,14 @@ These get composed into `DecisionRule` objects. Each rule has:
 
 Rules are collected in a `LogicLayer` and evaluated together. The layer checks for consistency (no contradictory actions firing at the same time).
 
-## The 9 guards (guards.py)
+## The 12 guards (guards.py)
 
 These are hard constraints. The model cannot override them. If a guard says DENY, the action is blocked.
 
 | Guard | What it prevents |
 |-------|-----------------|
 | `commitment_evidence` | You cannot claim a MUST commitment is met without the evidence it requires |
-| `planning_not_enactment` | Having a plan does not mean the work is done — cannot transition to "done" without enactment records |
+| `planning_not_enactment` | Once a map declares RoleAssignments, done/complete needs a valid F.6-attributed Work record; legacy maps without assignments are unchanged |
 | `role_conflict` | Two incompatible roles cannot be active at the same time (e.g., analyst and approver) |
 | `gate_pass` | If a transition requires a gate and the gate abstains (insufficient evidence), the transition is blocked |
 | `scope_check` | You cannot act in another context without an explicit bridge between contexts |
@@ -112,6 +118,9 @@ These are hard constraints. The model cannot override them. If a guard says DENY
 | `context_invariants` | Context invariants are surfaced as warnings for the model to consider |
 | `expired_assignment` | Expired role assignments cannot authorize new work |
 | `speech_act_validity` | Expired or revoked speech acts (approvals, authorizations) trigger denial |
+| `call_plan` | A C.24 tool-use transition cannot enact through an absent, incomplete, or mismatched call plan |
+| `claim_scope` | Required evidence cannot support a move outside its exact ClaimScope; UNKNOWN remains blocking but distinct from false |
+| `autonomy_budget` | A transition naming `requires_autonomy_budget_id` opts into E.16; failed gates, missing assignments, and depleted envelopes hard-block that move |
 
 Each guard has a `GuardScope` (TRANSITION, ROLE, EVIDENCE, or GLOBAL). The engine can evaluate only guards relevant to a specific move.
 

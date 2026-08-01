@@ -17,7 +17,7 @@ the move is valid.
 [![Python](https://img.shields.io/pypi/pyversions/fpf-thinking-map?style=flat-square&label=Python&color=f0b429)](https://github.com/igareosh/fpf-agentic-thinking-map/blob/main/pyproject.toml)
 [![License](https://img.shields.io/pypi/l/fpf-thinking-map?style=flat-square&label=license&color=57c7bd)](https://github.com/igareosh/fpf-agentic-thinking-map/blob/main/LICENSE)
 [![Zero dependencies](https://img.shields.io/badge/dependencies-0-ff9f43?style=flat-square)](https://github.com/igareosh/fpf-agentic-thinking-map/blob/main/pyproject.toml)
-[![Verification](https://img.shields.io/badge/verify-28%2F28-59d18c?style=flat-square)](https://github.com/igareosh/fpf-agentic-thinking-map/blob/main/fpf_thinking_map/verify.py)
+[![Verification](https://img.shields.io/badge/verify-35%2F35-59d18c?style=flat-square)](https://github.com/igareosh/fpf-agentic-thinking-map/blob/main/fpf_thinking_map/verify.py)
 [![Live demo](https://img.shields.io/badge/live-demo-dd8cff?style=flat-square)](https://igareosh.github.io/fpf-agentic-thinking-map/demos/three-runs.html)
 
 ```bash
@@ -55,6 +55,8 @@ into ordinary code:
 - human authorization;
 - external dependencies and wake conditions;
 - concrete move identity and trace lineage.
+- typed claim scope and pathwise assurance;
+- tool-call plan closure and hard autonomy budgets.
 
 This is not another reasoning prompt. It is a compact control surface around
 reasoning.
@@ -75,6 +77,19 @@ The division of responsibility is deliberate:
 
 The map constrains movement, not meaning. It does not replace the model,
 application logic, retrieval, tools, or a task scheduler.
+
+## Structural agentic controls
+
+| Concern | Runtime structure | Enforced effect |
+| --- | --- | --- |
+| Claim applicability and assurance | `ContextSlice`, `ClaimScope`, `FormalityLevel`, `ReliabilityPath` | Numeric G is no longer treated as scope; unknown membership stays unknown; R folds pathwise |
+| Tool-call planning | `CallPlanPrimitive`, `BudgetEnvelope`, `CheckpointReturn` | Incomplete or mismatched declared tool plans return `REVISE_PLAN` and cannot fire |
+| Autonomous enactment | `AutonomyBudgetDecl`, `AutonomyLedgerEntry` | A transition opts in with `requires_autonomy_budget_id`; failed assignment/gate/envelope returns `ESCALATE` and successful burn is recorded |
+| Performed-work attribution | `WorkPrimitive.performed_under`, `validate_work_attribution()` | Once a map declares RoleAssignments, a dangling or wrong-holder work record cannot satisfy completion |
+| Gate decisions | `GateDecision`, `GateCheck.failure_decision`, `OutcomeCause` | A.21 maximal join preserves reachable hard `BLOCK`; traversal keeps the compatible `ABSTAIN` action plus typed cause |
+| Map integrity | `ThinkingMapTraversal.validate_map()` | Opt-in preflight fails on dangling gate/rule references; explicit unknown transition IDs return typed `ABSTAIN` |
+
+These are bounded runtime compilations, not a port of the full FPF framework.
 
 ## Live runtime visual
 

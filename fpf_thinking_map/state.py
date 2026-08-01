@@ -19,25 +19,32 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from fpf_thinking_map.primitives import (
-    ContextPrimitive,
-    RolePrimitive,
-    RoleAssignment,
-    WorkPrimitive,
-    WorkPlanPrimitive,
-    SpeechActPrimitive,
-    CommitmentPrimitive,
-    DeonticModality,
-    GatePrimitive,
-    EvidencePrimitive,
-    TransitionPrimitive,
-    PublicationPrimitive,
-    GateDecision,
-    Freshness,
+from fpf_thinking_map.agentic_structure import (
+    AutonomyBudgetDecl,
+    AutonomyLedgerEntry,
+    CallPlanPrimitive,
+    ClaimScope,
+    MembershipJudgment,
 )
 from fpf_thinking_map.authorization import AuthorizationReceipt, compute_state_fingerprint
-from fpf_thinking_map.pending_input import PendingInput, PendingInputStatus
 from fpf_thinking_map.move_intent import MoveIntent
+from fpf_thinking_map.pending_input import PendingInput
+from fpf_thinking_map.primitives import (
+    CommitmentPrimitive,
+    ContextPrimitive,
+    DeonticModality,
+    EvidencePrimitive,
+    Freshness,
+    GateDecision,
+    GatePrimitive,
+    PublicationPrimitive,
+    RoleAssignment,
+    RolePrimitive,
+    SpeechActPrimitive,
+    TransitionPrimitive,
+    WorkPlanPrimitive,
+    WorkPrimitive,
+)
 
 
 @dataclass
@@ -66,6 +73,10 @@ class RuntimeBinding:
     fpf_thinking_map.pending_input. Empty by default: maps that never
     declare one behave exactly as before, no AWAIT ever fires.
     """
+    paused_autonomy_budget_ids: list[str] = field(default_factory=list)
+    """Host-owned E.16 pause state. The core consumes it as a hard stop;
+    authentication and lifecycle of override speech acts remain host-owned.
+    """
 
 
 @dataclass
@@ -86,6 +97,8 @@ class SemanticMap:
     evidence: dict[str, EvidencePrimitive] = field(default_factory=dict)
     transitions: dict[str, TransitionPrimitive] = field(default_factory=dict)
     publications: dict[str, PublicationPrimitive] = field(default_factory=dict)
+    call_plans: dict[str, CallPlanPrimitive] = field(default_factory=dict)
+    autonomy_budgets: dict[str, AutonomyBudgetDecl] = field(default_factory=dict)
     _ctx_transition_idx: dict[str, dict[str, list[TransitionPrimitive]]] | None = field(
         default=None, init=False, repr=False,
     )
@@ -131,6 +144,50 @@ class SemanticMap:
 
     def register_publication(self, p: PublicationPrimitive) -> None:
         self.publications[p.publication_id] = p
+
+    def register_call_plan(self, plan: CallPlanPrimitive) -> None:
+        self.call_plans[plan.plan_id] = plan
+
+    def register_autonomy_budget(self, budget: AutonomyBudgetDecl) -> None:
+        self.autonomy_budgets[budget.budget_id] = budget
+
+    def validate_work_attribution(self, work_id: str) -> list[str]:
+        """F.6 exact Work -> RoleAssignment attribution diagnostics.
+
+        Registration order stays flexible, so invalid records are reported
+        rather than rejected while a map is being assembled. Runtime uses can
+        require an empty result before treating the work as attributed.
+        """
+        work = self.work_records.get(work_id)
+        if not work:
+            return [f"work '{work_id}' is not registered"]
+        if not work.performed_under:
+            return ["performed_under assignment is missing"]
+        assignment = self.role_assignments.get(work.performed_under)
+        if not assignment:
+            return [f"assignment '{work.performed_under}' is not registered"]
+        errors: list[str] = []
+        if assignment.expired:
+            errors.append(f"assignment '{assignment.assignment_id}' is expired")
+        if assignment.context_id != work.context_id:
+            errors.append(
+                f"work context '{work.context_id}' differs from assignment context "
+                f"'{assignment.context_id}'"
+            )
+        if work.performed_by and work.performed_by != assignment.holder_id:
+            errors.append(
+                f"performer '{work.performed_by}' differs from assignment holder "
+                f"'{assignment.holder_id}'"
+            )
+        role = self.roles.get(assignment.role_id)
+        if not role:
+            errors.append(f"role '{assignment.role_id}' is not registered")
+        elif role.context_id != assignment.context_id:
+            errors.append(
+                f"role context '{role.context_id}' differs from assignment context "
+                f"'{assignment.context_id}'"
+            )
+        return errors
 
     def roles_in_context(self, context_id: str) -> list[RolePrimitive]:
         return [r for r in self.roles.values() if r.context_id == context_id]
@@ -229,6 +286,7 @@ class ActiveState:
     accept a receipt it already spent in a previous process.
     """
     denied_authorizations: dict[str, str] = field(default_factory=dict)
+    autonomy_ledger: list[AutonomyLedgerEntry] = field(default_factory=list)
     """transition_id -> reason, for every requires_human_authorization
 
     transition a human has explicitly said no to. Same visibility principle
@@ -316,6 +374,162 @@ class ActiveState:
     @property
     def available_evidence_ids(self) -> set[str]:
         return set(self.binding.current_evidence)
+
+    def autonomy_usage(self, budget_id: str) -> dict[str, Any]:
+        entries = [entry for entry in self.autonomy_ledger if entry.budget_id == budget_id]
+        resource_usage: dict[str, float] = {}
+        for entry in entries:
+            for name, value in entry.resource_deltas.items():
+                resource_usage[name] = resource_usage.get(name, 0.0) + value
+        return {
+            "actions": sum(entry.action_delta for entry in entries),
+            "decisions": sum(entry.decision_delta for entry in entries),
+            "resources": resource_usage,
+        }
+
+    def call_plan_status(self, transition_id: str) -> tuple[bool, str]:
+        """C.24 closure check for a transition that invokes tool routes."""
+        transition = self.semantic_map.transitions.get(transition_id)
+        if not transition:
+            return False, f"transition '{transition_id}' is not registered"
+        if not transition.tool_calls and not transition.call_plan_id:
+            return True, "not a call-planning transition"
+        if not transition.call_plan_id:
+            return False, "tool-use transition has no call_plan_id"
+        plan = self.semantic_map.call_plans.get(transition.call_plan_id)
+        if not plan:
+            return False, f"call plan '{transition.call_plan_id}' is not registered"
+        errors = plan.validation_errors()
+        if errors:
+            return False, f"call plan '{plan.plan_id}' incomplete: {errors}"
+        if plan.context_id != transition.context_id:
+            return False, "call plan and transition belong to different contexts"
+        if plan.next_planned_transition_id != transition_id:
+            return False, (
+                f"call plan next action is '{plan.next_planned_transition_id}', "
+                f"not '{transition_id}'"
+            )
+        missing_routes = sorted(set(transition.tool_calls) - set(plan.route_refs_in_order))
+        if missing_routes:
+            return False, f"call plan omits declared tool routes: {missing_routes}"
+        return True, "call plan complete"
+
+    def claim_scope_status(self, transition_id: str) -> tuple[bool, str]:
+        """A.2.6 membership check for evidence relied on by this move."""
+        transition = self.semantic_map.transitions.get(transition_id)
+        if not transition:
+            return False, f"transition '{transition_id}' is not registered"
+        target = transition.scope_target
+        if target is None:
+            return True, "transition declares no exact scope target"
+        for evidence_id in transition.required_evidence:
+            if evidence_id not in self.available_evidence_ids:
+                continue
+            evidence = self.semantic_map.evidence.get(evidence_id)
+            if not evidence:
+                return False, f"required evidence '{evidence_id}' is not registered"
+            scope = evidence.fgr.scope
+            if not isinstance(scope, ClaimScope):
+                return False, (
+                    f"required evidence '{evidence_id}' has no typed ClaimScope; "
+                    "membership is unresolved"
+                )
+            judgment = scope.evaluate_membership(target)
+            if judgment == MembershipJudgment.UNKNOWN:
+                return False, (
+                    f"required evidence '{evidence_id}' scope membership is UNKNOWN "
+                    "because its interpretation basis is unavailable"
+                )
+            if judgment == MembershipJudgment.FALSE:
+                return False, (
+                    f"required evidence '{evidence_id}' does not cover the exact "
+                    "transition scope target"
+                )
+        return True, "required evidence covers the exact scope target"
+
+    def autonomy_budget_status(self, transition_id: str) -> tuple[bool, str]:
+        """E.16 hard-gate status for transitions that explicitly opt in."""
+        transition = self.semantic_map.transitions.get(transition_id)
+        if not transition:
+            return False, f"transition '{transition_id}' is not registered"
+        budget_id = transition.requires_autonomy_budget_id
+        if not budget_id:
+            return True, "transition does not opt into E.16 budget enforcement"
+        budget = self.semantic_map.autonomy_budgets.get(budget_id)
+        if not budget:
+            return False, f"autonomy budget '{budget_id}' is not registered"
+        errors = budget.validation_errors()
+        if errors:
+            return False, f"autonomy budget '{budget_id}' invalid: {errors}"
+        if budget.context_id != transition.context_id:
+            return False, "autonomy budget and transition belong to different contexts"
+        if transition.scope_target is not None:
+            scope_judgment = budget.scope.evaluate_membership(transition.scope_target)
+            if scope_judgment != MembershipJudgment.TRUE:
+                return False, (
+                    f"autonomy budget scope membership is {scope_judgment.value}; "
+                    "exact move scope is not covered"
+                )
+        if budget_id in self.binding.paused_autonomy_budget_ids:
+            return False, f"autonomy budget '{budget_id}' is paused"
+        active_role_ids = {role.role_id for role in self.active_roles}
+        if budget.consumer_role_id not in active_role_ids:
+            return False, f"consumer role '{budget.consumer_role_id}' is not active"
+        covering = [
+            assignment for assignment in self.active_assignments
+            if assignment.role_id == budget.consumer_role_id
+        ]
+        if not covering:
+            return False, "no exact active RoleAssignment covers autonomous work"
+        levels = {"low": 0, "normal": 1, "high": 2, "critical": 3}
+        current_risk = levels.get(self.binding.risk_level, 1)
+        ceiling = levels.get(budget.risk_ceiling, 1)
+        if current_risk > ceiling:
+            return False, (
+                f"risk '{self.binding.risk_level}' exceeds budget ceiling "
+                f"'{budget.risk_ceiling}'"
+            )
+        gate = self.semantic_map.gates.get(budget.admissibility_gate_id)
+        if not gate:
+            return False, f"budget gate '{budget.admissibility_gate_id}' is not registered"
+        if gate.evaluate(self.available_evidence_ids) != GateDecision.PASS:
+            return False, f"budget gate '{budget.admissibility_gate_id}' does not pass"
+        usage = self.autonomy_usage(budget_id)
+        if budget.action_limit is not None:
+            if usage["actions"] + transition.action_token_cost > budget.action_limit:
+                return False, f"autonomy action budget '{budget_id}' depleted"
+        if budget.decision_limit is not None:
+            if usage["decisions"] + transition.decision_token_cost > budget.decision_limit:
+                return False, f"autonomy decision budget '{budget_id}' depleted"
+        for name, cost in transition.resource_costs.items():
+            cap = budget.resource_caps.get(name)
+            if cap is None:
+                return False, f"resource '{name}' has no declared autonomy cap"
+            if usage["resources"].get(name, 0.0) + cost > cap:
+                return False, f"autonomy resource cap '{name}' depleted"
+        return True, "autonomy budget passes"
+
+    def _record_autonomy_consumption(self, transition_id: str, move_ref: str) -> None:
+        transition = self.semantic_map.transitions[transition_id]
+        budget_id = transition.requires_autonomy_budget_id
+        if not budget_id:
+            return
+        budget = self.semantic_map.autonomy_budgets[budget_id]
+        assignment = next(
+            assignment for assignment in self.active_assignments
+            if assignment.role_id == budget.consumer_role_id
+        )
+        self.autonomy_ledger.append(AutonomyLedgerEntry(
+            move_ref=move_ref,
+            transition_id=transition_id,
+            performed_under_assignment_id=assignment.assignment_id,
+            budget_id=budget_id,
+            budget_version=budget.version,
+            action_delta=transition.action_token_cost,
+            decision_delta=transition.decision_token_cost,
+            resource_deltas=dict(transition.resource_costs),
+            guard_verdicts={budget.admissibility_gate_id: "pass"},
+        ))
 
     @property
     def unresolved_pending_inputs(self) -> list[PendingInput]:
@@ -423,7 +637,13 @@ class ActiveState:
         return self.semantic_map.gates.get(t.required_gate_id)
 
     def missing_evidence_for(self, transition_id: str) -> list[str]:
-        """#3/#7: per-transition evidence + readiness check."""
+        """#3/#7: hard transition evidence plus unresolved gate evidence.
+
+        Gate evidence is a direct blocker only while the aggregate decision is
+        ABSTAIN. Under A.21's join, DEGRADE and PASS are actionable values and
+        BLOCK is already a conclusive hard denial; laundering any of those back
+        into a generic evidence gap would erase the published gate decision.
+        """
         t = self.semantic_map.transitions.get(transition_id)
         if not t:
             return []
@@ -431,7 +651,10 @@ class ActiveState:
         needed.update(t.readiness_refs)
         if t.required_gate_id:
             gate = self.semantic_map.gates.get(t.required_gate_id)
-            if gate:
+            if (
+                gate
+                and gate.evaluate(self.available_evidence_ids) == GateDecision.ABSTAIN
+            ):
                 needed.update(
                     eid for check in gate.checks for eid in check.required_evidence
                 )
@@ -522,6 +745,15 @@ class ActiveState:
             authorized = True
         if t.requires_human_authorization and not authorized:
             return False
+        call_plan_ok, _ = self.call_plan_status(transition_id)
+        if not call_plan_ok:
+            return False
+        claim_scope_ok, _ = self.claim_scope_status(transition_id)
+        if not claim_scope_ok:
+            return False
+        autonomy_ok, _ = self.autonomy_budget_status(transition_id)
+        if not autonomy_ok:
+            return False
         if t.required_evidence:
             if set(t.required_evidence) - self.available_evidence_ids:
                 return False
@@ -546,6 +778,10 @@ class ActiveState:
             parent_move_id=matching_intent.parent_move_id if matching_intent else None,
         )
         self.current_state = t.to_state
+        self._record_autonomy_consumption(
+            transition_id,
+            matching_intent.move_id if matching_intent else transition_id,
+        )
         # every actual fire is a real change in the world, whether or not a
         # step() call happened first — a receipt issued against the state
         # before this fire must not survive it indefinitely just because
@@ -590,11 +826,9 @@ class ActiveState:
     def cross_bridge(self, target_context_id: str, entry_state: str) -> tuple[bool, str]:
         """#26: validated writeback for a cross-context bridge crossing.
 
-        FPF A.6.9 gives bridges an explicit fidelity contract — substitution_license
-        and translation_loss — but until now that contract was surfaced only as
-        advisory metadata in bridge_options(); nothing enforced it before the LLM
-        wandered into the target context. This closes that gap: the engine, not
-        the model, decides whether a crossing is licensed.
+        ContextBridge's product-native fidelity contract — substitution_license
+        and translation_loss — is enforced before writeback. This does not claim
+        that crossing establishes an upstream boundary or relation occurrence.
 
         An unlicensed bridge (substitution_license=False) is fine for low/normal
         risk moves — the translation_loss is real but tolerable. At high/critical
@@ -715,6 +949,9 @@ class ActiveState:
         gate = self.gate_for_transition(transition_id)
         gate_decision = gate.evaluate(self.available_evidence_ids) if gate else None
         missing = self.missing_evidence_for(transition_id)
+        call_plan_ok, call_plan_reason = self.call_plan_status(transition_id)
+        claim_scope_ok, claim_scope_reason = self.claim_scope_status(transition_id)
+        autonomy_ok, autonomy_reason = self.autonomy_budget_status(transition_id)
 
         blockers: list[str] = []
         if missing:
@@ -728,8 +965,14 @@ class ActiveState:
             blockers.append(f"gate '{gate.gate_id}' blocks — hard denial")
         if guard_blockers:
             blockers.extend(guard_blockers)
+        if not call_plan_ok:
+            blockers.append(call_plan_reason)
+        if not claim_scope_ok:
+            blockers.append(claim_scope_reason)
+        if not autonomy_ok:
+            blockers.append(autonomy_reason)
 
-        can_fire = len(missing) == 0 and (
+        can_fire = len(missing) == 0 and call_plan_ok and claim_scope_ok and autonomy_ok and (
             gate_decision not in (GateDecision.ABSTAIN, GateDecision.BLOCK)
             if gate_decision else True
         ) and not t.requires_human_authorization
@@ -753,6 +996,10 @@ class ActiveState:
                 "safe_alternatives": t.safe_alternatives,
                 "previously_denied": self.denied_authorizations.get(t.transition_id),
                 "currently_pending": t.transition_id in self.pending_authorizations,
+                "tool_calls": t.tool_calls,
+                "call_plan_id": t.call_plan_id,
+                "autonomy_budget_id": t.requires_autonomy_budget_id,
+                "scope_target": t.scope_target.to_dict() if t.scope_target else None,
             },
             "gate": {
                 "id": gate.gate_id,
@@ -784,6 +1031,11 @@ class ActiveState:
                 "is_stagnant": self.is_stagnant,
             },
             "response_contract": self.response_contract(transition_id),
+            "agentic_controls": {
+                "call_plan": {"ok": call_plan_ok, "reason": call_plan_reason},
+                "claim_scope": {"ok": claim_scope_ok, "reason": claim_scope_reason},
+                "autonomy_budget": {"ok": autonomy_ok, "reason": autonomy_reason},
+            },
         }
 
     def to_llm_prompt_state(self) -> dict:
@@ -831,6 +1083,10 @@ class ActiveState:
                     "missing_evidence": self.missing_evidence_for(t.transition_id),
                     "requires_human_authorization": t.requires_human_authorization,
                     "safe_alternatives": t.safe_alternatives,
+                    "tool_calls": t.tool_calls,
+                    "call_plan_id": t.call_plan_id,
+                    "autonomy_budget_id": t.requires_autonomy_budget_id,
+                    "scope_target": t.scope_target.to_dict() if t.scope_target else None,
                 }
                 for t in transitions
             ],
@@ -860,4 +1116,5 @@ class ActiveState:
                 }
                 for pi in sorted(self.unresolved_pending_inputs, key=lambda p: p.input_id)
             ],
+            "autonomy_ledger_size": len(self.autonomy_ledger),
         }

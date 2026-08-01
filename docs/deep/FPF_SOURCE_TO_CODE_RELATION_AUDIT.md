@@ -16,20 +16,29 @@ Legend:
 - `missing` = relation not represented as a first-class structure or check
 - `partial` = relation is hinted at but structurally compressed or under-enforced
 - `wrong-shape` = relation exists but in a shape that contradicts source discipline
+- `resolved` = scenario-tested runtime repair is present
+- `bounded` = inspected and explicitly outside the runtime subject or activation threshold
+- `superseded` = the cited upstream shape was removed or materially replaced
+
+**Edition note (2026-08-01):** R01-R50 preserve the earlier audit against the
+then-current source and line numbers. They are historical evidence, not a claim
+that removed upstream kinds still exist. R51-R57 are the current-edition
+structural addendum, reviewed against a full-corpus structural compilation of
+the upstream spec kept as internal dev tooling, not shipped in this repository.
 
 ## Backlog
 
 | ID | Status | Source lines | Source evidence | Code target | Address |
 | --- | --- | --- | --- | --- | --- |
-| R01 | wrong-shape | `FPF-Spec.md:1078-1150` | "`U.BoundedContext` is a `U.Holon`" and "declares a `U.Boundary`" | `primitives.py:23-35` | `ContextPrimitive` has no `holon` / `boundary` representation. Add explicit boundary-bearing shape or equivalent marker. |
-| R02 | wrong-shape | `FPF-Spec.md:1100-1114` | "contexts do not form holarchies with each other" and "no is-a or containment relations" | `primitives.py:31` | `parent_context_id` encodes forbidden context containment/inheritance. Remove or replace with explicit bridge-based relation only. |
+| R01 | superseded | historical pre-`60caecb` A.1.1 | Former `U.BoundedContext` holon/boundary shape was removed upstream | `primitives.py:ContextPrimitive` | Do **not** add holon/boundary identity. `ContextPrimitive` is product-native runtime scoping; see Runtime Frame Doctrine. |
+| R02 | resolved | historical pre-`60caecb` context prohibition | Context containment/is-a was forbidden and the upstream container kind was later removed | `primitives.py:ContextPrimitive` | No `parent_context_id` exists. Runtime `context_id` references are scoping keys, not containment. |
 | R03 | partial | `FPF-Spec.md:1087-1096` | Context local constitution includes `Glossary`, `Invariants`, `Roles`, `Bridges` | `primitives.py:32-34` | `Roles` are not structurally attached to the context object, only globally indexed by `context_id`. Add direct local taxonomy attachment or explicit context-side role registry. |
 | R04 | partial | `FPF-Spec.md:1093-1096` | Bridges carry explicit cross-context relations with "loss/fit notes" and congruence examples | `primitives.py:44-53` | `ContextBridge` has `translation_loss` but no fit / congruence level field. Add explicit fit relation carrier. |
 | R05 | missing | `FPF-Spec.md:1118-1123` | "Any invariant authored in a Context applies only to holons and processes operating within that Context" | `primitives.py:33`, `state.py:267-305`, `traversal.py:112-209` | Invariants are stored as free-text strings but never evaluated or scoped as operational constraints. Add context-local invariant enforcement path. |
 | R06 | partial | `FPF-Spec.md:1078-1086` | "Cross-context sameness is never inferred from spelling; alignment only via explicit Bridge artifacts" | `primitives.py:36-40`, `state.py:97-112` | Local glossary resolution exists, but no bridge-mediated term translation path is executable. Add bridge-aware relation lookup instead of local-only term resolution. |
-| R07 | missing | `FPF-Spec.md:1122-1124` | "`U.RoleAssignment` references exactly one `U.BoundedContext` in its `context` field" | `state.py:35-54`, `state.py:142-153` | No `RoleAssignment` object exists; runtime binding of `actor_role_ids` cannot carry assignment-local context cardinality or issuance evidence. |
-| R08 | missing | `FPF-Spec.md:1450-1456` | "`U.RoleAssignment` binds holder holon to role inside a bounded context, optionally within a time window" | `state.py:35-54`, `primitives.py:68-89` | Introduce first-class `RoleAssignment` primitive instead of binding roles directly on runtime input. |
-| R09 | missing | `FPF-Spec.md:1452-1454`, `1508-1515` | "Separates that binding from `U.RoleEnactment`" and "`RoleEnactment ::= <work, by: RoleAssignment>`" | `primitives.py:102-121`, `state.py:79-80` | No enactment object or explicit `work -> role assignment` relation exists. Add enactment relation or equivalent reference field. |
+| R07 | resolved | current `A.2.1`, `F.6` | Assignment is distinct from role definition and performed work | `RoleAssignment`, `ActiveState.active_assignments` | First-class assignment exists; direct `actor_role_ids` remains compatibility fallback only. |
+| R08 | resolved | current `A.2.1`, `F.6` | Exact holder, role, runtime locus, and validity state must be recoverable | `RoleAssignment` | First-class assignment and expired-state enforcement are present. Full interval arithmetic remains separate follow-up work. |
+| R09 | resolved | current `F.6` | `performedUnderAssignment(Work, RoleAssignment)` is the direct attribution | `WorkPrimitive.performed_under`, `validate_work_attribution()` | Exact assignment, holder, role, and context are checked; no duplicate RoleEnactment object was created. |
 | R10 | missing | `FPF-Spec.md:1481-1486` | "Behavioural roles: holder is a `U.System`" and "Status roles: holder is a `U.Episteme`" | `primitives.py:68-89`, `state.py:42-54` | No holder-kind eligibility model exists. Add holder kind and role kind checks. |
 | R11 | missing | `FPF-Spec.md:1479-1480` | "`holder ∉ {U.Role, U.RoleAssignment}`" | `state.py:42-54`, `primitives.py:68-89` | No holder typing means this prohibition cannot be checked. Add typed holder binding and validation. |
 | R12 | missing | `FPF-Spec.md:1486-1488` | "If `window` is present, enactments occur within it" | `state.py:35-54`, `primitives.py:102-121` | No assignment window or enactment time window discipline exists. Add assignment window and check it during work / transition decisions. |
@@ -50,7 +59,7 @@ Legend:
 | R27 | missing | `FPF-Spec.md:14595-14599`, `14646-14649` | Design-time `MethodDescription` and run-time `Work` traces must not mix in one EPV-DAG instance | `primitives.py:102-121`, `primitives.py:250-265` | No explicit scope separation in evidence layer. Add node scope / relation type or distinct graphs. |
 | R28 | missing | `FPF-Spec.md:14600-14602`, `14650-14652` | Evidencing `TransformerRole` must be external to the holon under evaluation | `primitives.py:250-265`, `guards.py:35-201` | No external-transformer relation exists for evidence production. Add evidencer identity and externality check. |
 | R29 | partial | `FPF-Spec.md:14612-14617` | `Γ_method` run-time traces record `happenedBefore` and point to the `MethodDescription` they instantiate | `primitives.py:117`, `state.py:115-121` | `method_id` exists, but no ordered trace relation or method instantiation card exists. |
-| R30 | missing | `FPF-Spec.md:15359-15425` | Strict distinction among `U.Role`, `U.Method`, `U.MethodDescription`, `U.Capability`, `U.WorkPlan`, `U.Work` | `primitives.py:96-121`, `state.py:66`, `state.py:79-80` | `WorkPrimitive(kind=PLAN)` compresses `WorkPlan` into `Work`, breaking source type separation. Split `WorkPlan` into distinct primitive. |
+| R30 | resolved | current `A.15.1`, `A.15.2` | `U.WorkPlan` and `U.Work` are distinct | `WorkPlanPrimitive`, `WorkPrimitive` | Separate Python types enforce plan ≠ enactment; no `WorkKind.PLAN` remains. |
 | R31 | missing | `FPF-Spec.md:15407-15418` | "`U.Work` is execution of a `U.MethodDescription` by a Holder acting under a `U.RoleAssignment`" | `primitives.py:102-121` | `WorkPrimitive` lacks holder / assignment / execution-chain structure strong enough for the canonical relation chain. |
 | R32 | missing | `FPF-Spec.md:15420-15427` | Every `U.Work` declares `primaryTarget` and a kind: Operational / Communicative / Epistemic | `primitives.py:102-121` | Add `primary_target` and source-aligned work-kind taxonomy. |
 | R33 | missing | `FPF-Spec.md:15464-15487`, `15609-15616` | Canonical relations include `performedBy`, `isExecutionOf`, `describes`, `bindsCapability` | `primitives.py:102-121`, `state.py:64-71` | These relations are only implicit via loose IDs, not represented as first-class links. |
@@ -60,7 +69,7 @@ Legend:
 | R37 | missing | `FPF-Spec.md:15700-15740` | CAC checks: context, assignment, standard | `state.py:194-216`, `traversal.py:211-260` | Transition and traversal checks cover context and evidence partially, but no explicit work acceptance against spec-standard chain exists. |
 | R38 | missing | `FPF-Spec.md:15945-16018` | `U.WorkPlan` has planned windows, dependencies, intended performers, budgets, acceptance targets, variance dimensions | `primitives.py:102-121`, `state.py:66`, `guards.py:83-105` | Planning is treated as one `WorkPrimitive`; add dedicated `WorkPlan` / `PlanItem` structures and fulfilment / variance relations. |
 | R39 | partial | `FPF-Spec.md:15983-16003` | Work may fulfil, partially fulfil, deviate from, or be unplanned against a plan item | `primitives.py:102-121`, `state.py:79-80` | No explicit `plannedAs` / fulfilment / variance relation exists between actual work and plan items. |
-| R40 | wrong-shape | `FPF-Spec.md:20569-20605` | Gate decision lattice is `abstain ≤ pass ≤ degrade ≤ block` | `primitives.py:164-168`, `logic.py:168-177`, `traversal.py:246-255` | `GateDecision` lacks `BLOCK`, and `ABSTAIN` is used as blocked/fail-closed. Restore source lattice explicitly. |
+| R40 | partial, repaired | current `A.21` | Gate decision lattice distinguishes abstain, pass, degrade, and block | `GateDecision`, `GateCheck.failure_decision`, `GatePrimitive.evaluate`, `OutcomeCause` | The former “resolved” row was false: built-in checks could not emit BLOCK, aggregation ignored BLOCK and privileged ABSTAIN, and traversal collapsed the cause. The gate layer now uses the maximal join and can emit BLOCK. Traversal intentionally retains the compatible `OutcomeKind.ABSTAIN` action while preserving `OutcomeCause.GATE_BLOCK`; therefore BLOCK is still not a separate traversal outcome kind. |
 | R41 | missing | `FPF-Spec.md:20605-20635` | `OperationalGate(profile)` and `GateCheckRef` / profile-bound folds are first-class | `primitives.py:171-218` | Gate model has checks but no gate profile, no fold policy object, no check references distinct from inline checks. |
 | R42 | missing | `FPF-Spec.md:20636-20660` | Distinction between CV and GF is explicit in gate semantics | `primitives.py:188-218`, `guards.py:122-147` | No explicit CV/GF layer split exists. Add gate-evaluation dimension if source compliance matters. |
 | R43 | missing | `FPF-Spec.md:20661-20730` | Gate system includes decision log, equivalence witness, scope merge semantics | `primitives.py:188-218`, `state.py:223-265` | Current gate evaluation returns only final decision and missing evidence. Add decision log / witness / merge trace if source relation should be preserved. |
@@ -71,14 +80,21 @@ Legend:
 | R48 | missing | `FPF-Spec.md:37190-37220`, `15760-15795` | Across-run comparisons forbid hidden scalarization and require declared comparator sets | `primitives.py:305-319`, `logic.py:227-240` | Risk and logic outputs are scalar/simple, but no publication comparison discipline exists. |
 | R49 | partial | `FPF-Spec.md:14621-14623`, `37026-37225` | Publication / rendering / upload is work by an external transformer on carriers, cited in SCR | `primitives.py:305-319`, `primitives.py:102-121` | Publication object is detached from actual publication work and carriers. Add explicit publication-work anchor. |
 | R50 | partial | `FPF-Spec.md:15549-16020`, `20569-20840` | Runtime should stay bite-sized, but semantic enforcement still depends on typed relations, not just string labels | `state.py:223-265`, `traversal.py:97-110` | Slice-first runtime is good horizontally, but the slice is still built from compressed primitives. Next pass should enrich primitives without widening prompt payload. |
+| R51 | resolved | `A.2.6`, `C.2.2`, `C.2.3` at upstream `1eb56cd` | G is set-valued scope; F is ordinal F0...F9; R is pathwise weakest-link warrant | `agentic_structure.py`, `primitives.py:FGR` | Added exact `ContextSlice`/`ClaimScope`, `FormalityLevel`, `ReliabilityPath`, and `ADV-12` for legacy scalar drift. |
+| R52 | resolved | `C.24` | Tool-call planning keeps route description, plan, budget, choice, and executed work distinct | `agentic_structure.py`, `state.py`, `traversal.py` | Incomplete/mismatched call planning returns `REVISE_PLAN`; direct state mutation also refuses it. |
+| R53 | resolved | `E.16` | Autonomous enactment requires named budget, exact assignment, guards, remaining envelope, and ledger | `agentic_structure.py`, `state.py`, `guards.py` | Added hard autonomy gate and immutable consumption ledger; depletion returns `ESCALATE`. |
+| R54 | resolved | `F.6` | Performed work attribution is direct Work → RoleAssignment with matching holder and context | `WorkPrimitive`, `SemanticMap.validate_work_attribution()` | Completion counts only validly attributed work; `ADV-13` reports unresolved attribution. |
+| R55 | resolved | `A.2.8.PER` | MAY/non-prohibition/grant/exercise/authorization are not interchangeable | `CommitmentPrimitive`, `ADV-14` | Corrected MAY documentation and runtime meaning; no permission authority is inferred. |
+| R56 | bounded | `A.16*`, `A.20`, `C.11`, `B.1.2`, `C.27`, `A.2.3` | High-signal names touch moves, flow, choice, time, holons, or promises but govern different subjects | internal dev triage record, not shipped in this repository | Recorded explicit non-isomorphism and activation triggers instead of decorative core objects. |
+| R57 | bounded | Part G, most Part E, `A.6.2-A.6.S`, `A.19.*` | Framework authoring, publication ecosystem, morphism precision, and measurement construction are not automatically next-move runtime concerns | internal dev compiler + triage record, not shipped in this repository | Held open; promote only when a scenario changes admissibility, routing, waiting, authorization, or evidence reliance. |
 
-## Lowest-friction next pass
+## Historical lowest-friction list (superseded where marked by R51-R57)
 
 These are the highest-value relation repairs that do not require widening the runtime chew:
 
 1. Add first-class `RoleAssignment` and keep `actor_role_ids` as derived runtime convenience, not the semantic source of truth.
 2. Split `WorkPlan` from `WorkPrimitive`; stop using `WorkKind.PLAN` as a substitute for the source distinction.
-3. Restore gate lattice with explicit `BLOCK`; stop overloading `ABSTAIN` as the only hard denial outcome.
+3. Preserve the repaired gate lattice and typed `gate_block` cause; consider a distinct traversal outcome only if callers demonstrate that the additive cause is insufficient.
 4. Add `primary_target`, source-aligned work kinds, and explicit `performedBy` / `isExecutionOf` references.
 5. Add a minimal typed evidence graph layer with `verifiedBy` / `validatedBy` and external evidencer identity.
 6. Remove `parent_context_id` or demote it out of kernel semantics; use bridges only for cross-context relation.

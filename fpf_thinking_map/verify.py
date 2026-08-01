@@ -7,11 +7,26 @@ Exit 0 = all checks pass. Exit 1 = failure.
 
 from __future__ import annotations
 
-import sys
-import io
 import contextlib
+import io
+import sys
 import traceback
 
+from fpf_thinking_map.agentic_structure import (
+    AutonomyBudgetDecl,
+    BudgetEnvelope,
+    CallPlanPrimitive,
+    ClaimScope,
+    ContextSlice,
+    FormalityLevel,
+    MembershipJudgment,
+    ReliabilityPath,
+)
+from fpf_thinking_map.authorization import (
+    AuthorizationReceipt,
+    compute_state_fingerprint,
+    issue_authorization_receipt,
+)
 from fpf_thinking_map.examples import (
     build_deploy_decision_map,
     build_deploy_rules,
@@ -22,32 +37,29 @@ from fpf_thinking_map.examples import (
     run_scenario_role_conflict,
     run_truth_table_demo,
 )
-from fpf_thinking_map.reachability import unreachable_transitions
-from fpf_thinking_map.authorization import (
-    AuthorizationReceipt,
-    compute_state_fingerprint,
-    issue_authorization_receipt,
-)
-from fpf_thinking_map.pending_input import PendingInput, PendingInputStatus
-from fpf_thinking_map.move_intent import MoveIntent
 from fpf_thinking_map.guards import GuardEngine, GuardScope, GuardVerdict
 from fpf_thinking_map.logic import (
+    CustomProp,
     DecisionRule,
     EvidenceFresh,
     EvidencePresent,
+    GateAbstained,
+    GateBlocked,
     LogicLayer,
-    RuleKind,
     RiskAbove,
-    CustomProp,
+    RuleKind,
 )
+from fpf_thinking_map.move_intent import MoveIntent
+from fpf_thinking_map.pending_input import PendingInput, PendingInputStatus
 from fpf_thinking_map.primitives import (
-    ContextBridge,
-    ContextPrimitive,
-    CommitmentPrimitive,
-    DeonticModality,
-    EvidencePrimitive,
     FGR,
     FLOOR_BASE_TTL,
+    AgencyLevel,
+    CommitmentPrimitive,
+    ContextBridge,
+    ContextPrimitive,
+    DeonticModality,
+    EvidencePrimitive,
     Freshness,
     GateCheck,
     GateDecision,
@@ -60,8 +72,15 @@ from fpf_thinking_map.primitives import (
     TransitionPrimitive,
     WorkPrimitive,
 )
+from fpf_thinking_map.reachability import unreachable_transitions
 from fpf_thinking_map.state import ActiveState, MoveTrace, RuntimeBinding, SemanticMap
-from fpf_thinking_map.traversal import OutcomeKind, ThinkingMapTraversal
+from fpf_thinking_map.traversal import (
+    MapValidationError,
+    Outcome,
+    OutcomeCause,
+    OutcomeKind,
+    ThinkingMapTraversal,
+)
 
 
 def check(name: str, fn):
@@ -77,19 +96,49 @@ def check(name: str, fn):
 
 def check_imports():
     from fpf_thinking_map import (
-        ContextPrimitive, RolePrimitive, WorkPrimitive,
-        CommitmentPrimitive, GatePrimitive, EvidencePrimitive,
-        TransitionPrimitive, PublicationPrimitive, Freshness,
-        RuntimeBinding, ActiveState, SemanticMap, MoveTrace,
-        GuardEngine, GuardVerdict, GuardScope, Guard,
-        LogicLayer, RuleKind, Prop, EvidencePresent, GatePasses,
-        GateBlocked, RoleActive, InState, CommitmentMet,
-        HasMissingEvidence, RiskAbove, TransitionAvailable,
-        CustomProp, DecisionRule,
-        ThinkingMapTraversal, Outcome, OutcomeKind,
-        AuthorizationReceipt, compute_state_fingerprint, issue_authorization_receipt,
-        PendingInput, PendingInputStatus,
+        ActiveState,
+        AuthorizationReceipt,
+        CommitmentMet,
+        CommitmentPrimitive,
+        ContextPrimitive,
+        CustomProp,
+        DecisionRule,
+        EvidencePresent,
+        EvidencePrimitive,
+        Freshness,
+        GateAbstained,
+        GateBlocked,
+        GatePasses,
+        GatePrimitive,
+        Guard,
+        GuardEngine,
+        GuardScope,
+        GuardVerdict,
+        HasMissingEvidence,
+        InState,
+        LogicLayer,
+        MapValidationError,
         MoveIntent,
+        MoveTrace,
+        Outcome,
+        OutcomeCause,
+        OutcomeKind,
+        PendingInput,
+        PendingInputStatus,
+        Prop,
+        PublicationPrimitive,
+        RiskAbove,
+        RoleActive,
+        RolePrimitive,
+        RuleKind,
+        RuntimeBinding,
+        SemanticMap,
+        ThinkingMapTraversal,
+        TransitionAvailable,
+        TransitionPrimitive,
+        WorkPrimitive,
+        compute_state_fingerprint,
+        issue_authorization_receipt,
     )
 
 
@@ -178,13 +227,16 @@ def check_guards():
     results_focused = engine.evaluate(s, transition_id="ready_to_deploy")
     assert len(results_focused) > 0
 
-    # Gate guard should deny (missing approval)
+    # Correct A.21 join: PASS outranks neutral ABSTAIN. The transition's own
+    # required_evidence still exposes owner_approval as missing, so fixing the
+    # gate lattice does not manufacture the evidence or make the move fire.
     gate_results = engine.evaluate(
         s, transition_id="ready_to_deploy",
         scopes={GuardScope.TRANSITION},
     )
     denials = [r for r in gate_results if r.verdict == GuardVerdict.DENY]
-    assert len(denials) > 0
+    assert len(denials) == 0
+    assert s.missing_evidence_for("ready_to_deploy") == ["owner_approval"]
 
     # Role conflict
     b2 = RuntimeBinding(
@@ -1830,6 +1882,431 @@ def check_route_gated_transition():
     )
 
 
+def check_typed_assurance_scope():
+    slice_a = ContextSlice(
+        reference_scheme="runtime.v1",
+        selector_schema=("tenant", "region"),
+        selectors={"tenant": "alpha", "region": "eu"},
+    )
+    slice_b = ContextSlice(
+        reference_scheme="runtime.v1",
+        selector_schema=("tenant", "region"),
+        selectors={"tenant": "beta", "region": "eu"},
+    )
+    scope = ClaimScope(
+        "alpha-eu",
+        [slice_a],
+        interpretation_basis_ref="runtime-scope-scheme-v1",
+    )
+    assert scope.evaluate_membership(slice_a) == MembershipJudgment.TRUE
+    assert scope.evaluate_membership(slice_b) == MembershipJudgment.FALSE
+    assert scope.evaluate_membership(
+        slice_a, interpretation_available=False,
+    ) == MembershipJudgment.UNKNOWN
+    scope_b = ClaimScope(
+        "beta-eu", [slice_b], interpretation_basis_ref="runtime-scope-scheme-v1",
+    )
+    try:
+        ClaimScope.span_union([scope, scope_b], "both", independence_basis_ref="")
+        raise AssertionError("SpanUnion without an independence basis must fail")
+    except ValueError:
+        pass
+    combined = ClaimScope.span_union(
+        [scope, scope_b],
+        "both",
+        independence_basis_ref="independent-tenant-lines-v1",
+    )
+    assert combined.contains(slice_a) and combined.contains(slice_b)
+    assert "independent-tenant-lines-v1" in combined.support_basis_refs
+
+    path = ReliabilityPath(
+        "path-1",
+        spine_reliabilities=[0.95, 0.8],
+        congruence_penalties=[0.1],
+    )
+    fgr = FGR(
+        FormalityLevel.F6,
+        scope,
+        reliability=0.99,
+        reliability_paths=[path],
+    )
+    assert fgr.is_structurally_typed
+    assert fgr.formality_ratio == FormalityLevel.F6.normalized
+    assert abs(fgr.effective_reliability - 0.7) < 1e-9
+
+    legacy = FGR(0.8, 0.6, 0.9)
+    assert not legacy.is_structurally_typed
+    assert legacy.sufficient(0.7, 0.8)
+
+    sm = SemanticMap()
+    sm.register_context(ContextPrimitive("scope-ctx", "Scope"))
+    sm.register_evidence(EvidencePrimitive(
+        "scoped-evidence", "Scoped", "scope-ctx", fgr=fgr,
+    ))
+    sm.register_transition(TransitionPrimitive(
+        "in-scope", "In scope", "scope-ctx", "start", "done",
+        required_evidence=["scoped-evidence"], scope_target=slice_a,
+    ))
+    sm.register_transition(TransitionPrimitive(
+        "out-of-scope", "Out of scope", "scope-ctx", "start", "done",
+        required_evidence=["scoped-evidence"], scope_target=slice_b,
+    ))
+    engine = ThinkingMapTraversal(sm)
+    outside_state = engine.build_active_state(RuntimeBinding(
+        active_context_id="scope-ctx", current_evidence=["scoped-evidence"],
+    ), current_state="start")
+    outside = engine.attempt_transition(outside_state, "out-of-scope")
+    assert outside.kind == OutcomeKind.ABSTAIN
+    assert "does not cover" in outside.reason
+    assert not outside_state.transition_to("out-of-scope")
+
+    inside_state = engine.build_active_state(RuntimeBinding(
+        active_context_id="scope-ctx", current_evidence=["scoped-evidence"],
+    ), current_state="start")
+    inside = engine.attempt_transition(inside_state, "in-scope")
+    assert inside.kind == OutcomeKind.CONTINUE
+
+
+def check_work_attribution_relation():
+    sm = SemanticMap()
+    sm.register_context(ContextPrimitive("work-ctx", "Work"))
+    sm.register_role(RolePrimitive("operator", "Operator", "work-ctx"))
+    sm.register_role_assignment(RoleAssignment(
+        "assign-op", "system-1", "operator", "work-ctx",
+    ))
+    sm.register_work(WorkPrimitive(
+        "work-good", "Run", "work-ctx",
+        performed_under="assign-op",
+        performed_by="system-1",
+    ))
+    sm.register_work(WorkPrimitive(
+        "work-wrong-holder", "Run", "work-ctx",
+        performed_under="assign-op",
+        performed_by="system-2",
+    ))
+    assert sm.validate_work_attribution("work-good") == []
+    assert "differs from assignment holder" in " ".join(
+        sm.validate_work_attribution("work-wrong-holder")
+    )
+
+    invalid_map = SemanticMap()
+    invalid_map.register_context(ContextPrimitive("invalid-work", "Invalid Work"))
+    invalid_map.register_role(RolePrimitive("operator", "Operator", "invalid-work"))
+    invalid_map.register_role_assignment(RoleAssignment(
+        "assignment", "system-1", "operator", "invalid-work",
+    ))
+    invalid_map.register_work(WorkPrimitive(
+        "wrong-work", "Wrong", "invalid-work",
+        performed_under="assignment",
+        performed_by="system-2",
+    ))
+    invalid_map.register_transition(TransitionPrimitive(
+        "finish", "Finish", "invalid-work", "running", "report_done",
+    ))
+    invalid_state = ActiveState(
+        invalid_map,
+        RuntimeBinding(active_context_id="invalid-work"),
+        current_state="running",
+    )
+    allowed, results = GuardEngine().is_action_allowed(invalid_state, "finish")
+    assert not allowed
+    assert any(
+        result.guard_name == "planning_not_enactment"
+        and result.verdict == GuardVerdict.DENY
+        for result in results
+    )
+
+
+def check_call_plan_closure():
+    sm = SemanticMap()
+    sm.register_context(ContextPrimitive("tools", "Tools"))
+    sm.register_transition(TransitionPrimitive(
+        "run_tools", "Run tools", "tools", "start", "done",
+        tool_calls=["repo.inspect", "tests.run"],
+        call_plan_id="plan-1",
+    ))
+    engine = ThinkingMapTraversal(sm)
+    state = engine.build_active_state(
+        RuntimeBinding(active_context_id="tools"), current_state="start",
+    )
+    inspected_missing = engine.step(state, transition_id="run_tools")
+    assert inspected_missing.kind == OutcomeKind.REVISE_PLAN
+    missing = engine.attempt_transition(state, "run_tools")
+    assert missing.kind == OutcomeKind.REVISE_PLAN
+    assert state.current_state == "start"
+
+    sm.register_call_plan(CallPlanPrimitive(
+        plan_id="plan-1",
+        objective="inspect, patch, and verify",
+        context_id="tools",
+        route_refs_in_order=["repo.inspect", "tests.run"],
+        budget=BudgetEnvelope(
+            time_limit=60,
+            compute_limit=2,
+            cost_limit=5,
+            risk_ceiling="normal",
+        ),
+        stop_conditions=["tests pass"],
+        replan_conditions=["same failure repeats twice"],
+        next_planned_transition_id="run_tools",
+        policy_ref="tool-policy-v1",
+        choice_result_ref="choice-run-tools-v1",
+    ))
+    assert state.slice("run_tools")["agentic_controls"]["call_plan"]["ok"]
+    fired = engine.attempt_transition(state, "run_tools")
+    assert fired.kind == OutcomeKind.CONTINUE
+    assert state.current_state == "done"
+
+
+def check_autonomy_budget_enforcement():
+    sm = SemanticMap()
+    sm.register_context(ContextPrimitive("auto", "Autonomy"))
+    sm.register_role(RolePrimitive(
+        "navigator", "Navigator", "auto", agency_level=AgencyLevel.AUTONOMOUS,
+    ))
+    sm.register_role(RolePrimitive("supervisor", "Supervisor", "auto"))
+    sm.register_role_assignment(RoleAssignment(
+        "nav-assignment", "robot-7", "navigator", "auto",
+    ))
+    sm.register_gate(GatePrimitive(
+        "auto-gate", "Autonomy Gate", "auto",
+        checks=[GateCheck("safe", "Safety evidence", ["safe-envelope"])],
+    ))
+    scope = ClaimScope(
+        "warehouse-zone-a",
+        [ContextSlice(
+            "warehouse-v1", ("zone",), {"zone": "A"},
+        )],
+        interpretation_basis_ref="warehouse-scope-v1",
+    )
+    sm.register_autonomy_budget(AutonomyBudgetDecl(
+        budget_id="nav-budget",
+        version="1",
+        context_id="auto",
+        scope=scope,
+        consumer_role_id="navigator",
+        action_limit=1,
+        decision_limit=2,
+        risk_ceiling="normal",
+        admissibility_gate_id="auto-gate",
+        override_protocol_ref="nav-override-v1",
+        override_role_ids=["supervisor"],
+    ))
+    for transition_id, source, target in (
+        ("move-1", "start", "mid"),
+        ("move-2", "mid", "end"),
+    ):
+        sm.register_transition(TransitionPrimitive(
+            transition_id, transition_id, "auto", source, target,
+            requires_autonomy_budget_id="nav-budget",
+            action_token_cost=1,
+            decision_token_cost=1,
+            scope_target=scope.extension[0],
+        ))
+    engine = ThinkingMapTraversal(sm)
+    paused_state = engine.build_active_state(RuntimeBinding(
+        actor="robot-7",
+        active_context_id="auto",
+        current_evidence=["safe-envelope"],
+        paused_autonomy_budget_ids=["nav-budget"],
+    ), current_state="start")
+    paused = engine.attempt_transition(paused_state, "move-1")
+    assert paused.kind == OutcomeKind.ESCALATE
+    assert "paused" in paused.reason
+    assert paused_state.current_state == "start"
+
+    state = engine.build_active_state(RuntimeBinding(
+        actor="robot-7",
+        active_context_id="auto",
+        current_evidence=["safe-envelope"],
+    ), current_state="start")
+
+    first = engine.attempt_transition(state, "move-1")
+    assert first.kind == OutcomeKind.CONTINUE
+    assert len(state.autonomy_ledger) == 1
+    assert state.autonomy_usage("nav-budget")["actions"] == 1
+
+    inspected_depleted = engine.step(state, transition_id="move-2")
+    assert inspected_depleted.kind == OutcomeKind.ESCALATE
+    depleted = engine.attempt_transition(state, "move-2")
+    assert depleted.kind == OutcomeKind.ESCALATE
+    assert "depleted" in depleted.reason
+    assert state.current_state == "mid"
+    assert len(state.autonomy_ledger) == 1
+
+
+def check_agentic_guards_are_opt_in():
+    """F.6 and E.16 must not rewrite legality for pre-existing maps."""
+    legacy = SemanticMap()
+    legacy.register_context(ContextPrimitive("legacy", "Legacy"))
+    legacy.register_role(RolePrimitive(
+        "legacy-agent", "Legacy agent", "legacy",
+        agency_level=AgencyLevel.AUTONOMOUS,
+    ))
+    legacy.register_work(WorkPrimitive(
+        "legacy-work", "Legacy work", "legacy", performed_under=None,
+    ))
+    legacy.register_transition(TransitionPrimitive(
+        "legacy-finish", "Finish", "legacy", "running", "task_done",
+    ))
+    legacy_engine = ThinkingMapTraversal(legacy)
+    legacy_state = legacy_engine.build_active_state(RuntimeBinding(
+        active_context_id="legacy", actor_role_ids=["legacy-agent"],
+    ), current_state="running")
+
+    allowed, results = GuardEngine().is_action_allowed(legacy_state, "legacy-finish")
+    assert allowed, [result.reason for result in results]
+    assert legacy_state.autonomy_budget_status("legacy-finish")[0]
+    assert legacy_engine.attempt_transition(
+        legacy_state, "legacy-finish",
+    ).kind == OutcomeKind.CONTINUE
+
+    # The explicit transition reference, not AgencyLevel, activates E.16.
+    explicit = SemanticMap()
+    explicit.register_context(ContextPrimitive("explicit", "Explicit"))
+    explicit.register_transition(TransitionPrimitive(
+        "budgeted", "Budgeted", "explicit", "start", "end",
+        requires_autonomy_budget_id="missing-budget",
+    ))
+    explicit_state = ActiveState(
+        explicit, RuntimeBinding(active_context_id="explicit"), "start",
+    )
+    allowed_explicit, explicit_results = GuardEngine().is_action_allowed(
+        explicit_state, "budgeted",
+    )
+    assert not allowed_explicit
+    assert any(
+        result.guard_name == "autonomy_budget"
+        and "not registered" in result.reason
+        for result in explicit_results
+    )
+
+
+def check_gate_lattice_and_typed_cause():
+    """A.21 maximum join, reachable BLOCK, and compatibility proposition."""
+    positional = Outcome(OutcomeKind.ABSTAIN, "legacy", "next-state")
+    assert positional.next_state == "next-state" and positional.cause is None
+
+    block_gate = GatePrimitive(
+        "hard-gate", "Hard gate", "gates",
+        checks=[
+            GateCheck("ordinary", "Ordinary pass", []),
+            GateCheck(
+                "safety", "Safety must be evidenced", ["safety-clear"],
+                failure_decision=GateDecision.BLOCK,
+            ),
+        ],
+    )
+    assert block_gate.checks[1].evaluate(set()) == GateDecision.BLOCK
+    assert block_gate.evaluate(set()) == GateDecision.BLOCK
+    try:
+        GateCheck(
+            "invalid", "Missing evidence cannot mean pass", ["evidence"],
+            failure_decision=GateDecision.PASS,
+        )
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("failure_decision=PASS must be rejected")
+
+    # Compatibility-visible case: the correct maximal join changes the old
+    # ABSTAIN result into DEGRADE, which is actionable with a warning.
+    degraded_gate = GatePrimitive(
+        "degraded-gate", "Degraded gate", "gates",
+        checks=[
+            GateCheck("partial", "Two facts", ["a", "b"]),
+            GateCheck("absent", "One absent fact", ["c"]),
+        ],
+    )
+    assert degraded_gate.evaluate({"a"}) == GateDecision.DEGRADE
+    pass_gate = GatePrimitive(
+        "pass-gate", "Pass gate", "gates",
+        checks=[
+            GateCheck("pass", "No requirements", []),
+            GateCheck("abstain", "Unavailable", ["not-present"]),
+        ],
+    )
+    assert pass_gate.evaluate(set()) == GateDecision.PASS
+
+    sm = SemanticMap()
+    sm.register_context(ContextPrimitive("gates", "Gates"))
+    sm.register_gate(block_gate)
+    sm.register_gate(GatePrimitive(
+        "abstain-gate", "Abstain gate", "gates",
+        checks=[GateCheck("unknown", "Unknown", ["unknown-evidence"])],
+    ))
+    sm.register_transition(TransitionPrimitive(
+        "blocked-move", "Blocked", "gates", "start", "end",
+        required_gate_id="hard-gate",
+    ))
+    state = ActiveState(sm, RuntimeBinding(active_context_id="gates"), "start")
+    assert GateBlocked("hard-gate").evaluate(state)
+    assert not GateBlocked("abstain-gate").evaluate(state)
+    assert not GateBlocked("missing-gate").evaluate(state)
+    assert GateAbstained("abstain-gate").evaluate(state)
+    assert GateAbstained("missing-gate").evaluate(state)  # exact old behavior
+
+    engine = ThinkingMapTraversal(sm)
+    inspected = engine.step(state, transition_id="blocked-move")
+    assert inspected.kind == OutcomeKind.ABSTAIN
+    assert inspected.cause == OutcomeCause.GATE_BLOCK
+    attempted = engine.attempt_transition(state, "blocked-move")
+    assert attempted.kind == OutcomeKind.ABSTAIN
+    assert attempted.cause == OutcomeCause.GATE_BLOCK
+    assert attempted.to_dict()["cause"] == "gate_block"
+    assert state.current_state == "start"
+
+
+def check_map_validation_and_unknown_transition():
+    """Validation is opt-in; explicit bad transition IDs are never CONTINUE."""
+    sm = SemanticMap()
+    sm.register_context(ContextPrimitive("validation", "Validation"))
+    sm.register_transition(TransitionPrimitive(
+        "dangling", "Dangling", "validation", "start", "end",
+        required_gate_id="missing-gate", guard_expression="missing-rule",
+    ))
+    engine = ThinkingMapTraversal(sm)
+    errors = engine.validation_errors()
+    assert len(errors) == 2
+    assert "unknown gate" in errors[0]
+    assert "no LogicLayer" in errors[1]
+    try:
+        engine.validate_map()
+    except MapValidationError as exc:
+        assert exc.errors == tuple(errors)
+    else:
+        raise AssertionError("validate_map must fail closed on dangling references")
+
+    # Existing maps are not silently switched into strict validation.
+    state = engine.build_active_state(
+        RuntimeBinding(active_context_id="validation"), current_state="start",
+    )
+    assert engine.step(state, transition_id="dangling").kind == OutcomeKind.CONTINUE
+
+    unknown_step = engine.step(state, transition_id="typo")
+    assert unknown_step.kind == OutcomeKind.ABSTAIN
+    assert unknown_step.cause == OutcomeCause.UNKNOWN_TRANSITION
+    assert unknown_step.to_dict()["cause"] == "unknown_transition"
+    unknown_attempt = engine.attempt_transition(state, "typo")
+    assert unknown_attempt.kind == OutcomeKind.ABSTAIN
+    assert unknown_attempt.cause == OutcomeCause.UNKNOWN_TRANSITION
+
+    valid = SemanticMap()
+    valid.register_context(ContextPrimitive("valid", "Valid"))
+    valid.register_gate(GatePrimitive("gate", "Gate", "valid", checks=[]))
+    valid.register_transition(TransitionPrimitive(
+        "route", "Route", "valid", "start", "end",
+        required_gate_id="gate", guard_expression="route-rule",
+    ))
+    logic = LogicLayer()
+    logic.add_rule(DecisionRule(
+        "route-rule", CustomProp("always", lambda _state: True), "route",
+    ))
+    valid_engine = ThinkingMapTraversal(valid, logic_layer=logic)
+    assert valid_engine.validation_errors() == []
+    assert valid_engine.validate_map() is None
+
+
 def main():
     print("FPF Thinking Map — Self-verification (horizontal)")
     print("=" * 55)
@@ -1862,7 +2339,17 @@ def main():
         ("pending input / AWAIT (distinct from IDLE)", check_pending_input_await),
         ("move intent / inspect_move (concrete move identity)", check_move_intent),
         ("reachability (discrete graph analysis, val.pdf ch.10)", check_reachability),
-        ("route-gated transition (guard_expression -> DecisionRule, REVISE_PLAN not ESCALATE)", check_route_gated_transition),
+        (
+            "route-gated transition (guard_expression -> DecisionRule, REVISE_PLAN not ESCALATE)",
+            check_route_gated_transition,
+        ),
+        ("typed F-G-R scope and pathwise reliability", check_typed_assurance_scope),
+        ("performed-work attribution (Work -> RoleAssignment)", check_work_attribution_relation),
+        ("agentic call-plan closure (C.24)", check_call_plan_closure),
+        ("autonomy budget hard gate and ledger (E.16)", check_autonomy_budget_enforcement),
+        ("agentic structural guards are opt-in", check_agentic_guards_are_opt_in),
+        ("A.21 gate lattice, BLOCK reachability, and typed cause", check_gate_lattice_and_typed_cause),
+        ("map validation and unknown transition IDs", check_map_validation_and_unknown_transition),
     ]
 
     passed = sum(check(name, fn) for name, fn in checks)

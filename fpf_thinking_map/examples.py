@@ -2,7 +2,7 @@
 
 Demonstrates 10 scenarios:
 
-  1. Missing evidence    — gate blocks, evidence collected, retry succeeds
+  1. Missing evidence    — transition requirement collects evidence, retry succeeds
   2. Role conflict       — analyst ⊥ approver, guard denies
   3. Full traversal      — assessing → ready → deploying (demo walk)
   4. Ignition Lock       — delete is legal (evidence+gate pass), still
@@ -30,13 +30,14 @@ Build map: from fpf_thinking_map.examples import build_deploy_decision_map
 
 import json
 
+from fpf_thinking_map.agentic_structure import ClaimScope, ContextSlice, FormalityLevel
 from fpf_thinking_map.authorization import issue_authorization_receipt
 from fpf_thinking_map.logic import (
     CustomProp,
     DecisionRule,
     EvidenceFresh,
     EvidencePresent,
-    GateBlocked,
+    GateAbstained,
     GatePasses,
     HasMissingEvidence,
     InState,
@@ -49,13 +50,13 @@ from fpf_thinking_map.logic import (
 from fpf_thinking_map.move_intent import MoveIntent
 from fpf_thinking_map.pending_input import PendingInput, PendingInputStatus
 from fpf_thinking_map.primitives import (
+    FGR,
     AgencyLevel,
     CommitmentPrimitive,
     ContextBridge,
     ContextPrimitive,
     DeonticModality,
     EvidencePrimitive,
-    FGR,
     Freshness,
     GateCheck,
     GatePrimitive,
@@ -72,6 +73,16 @@ from fpf_thinking_map.traversal import OutcomeKind, ThinkingMapTraversal
 def build_deploy_decision_map() -> SemanticMap:
     """Build a semantic map for a deployment decision scenario."""
     sm = SemanticMap()
+
+    production_scope = ClaimScope(
+        scope_id="project_delivery.production",
+        extension=[ContextSlice(
+            reference_scheme="project_delivery.v1",
+            selector_schema=("environment",),
+            selectors={"environment": "production"},
+        )],
+        interpretation_basis_ref="project_delivery.scope_scheme.v1",
+    )
 
     sm.register_context(ContextPrimitive(
         context_id="project_delivery",
@@ -164,7 +175,11 @@ def build_deploy_decision_map() -> SemanticMap:
         context_id="project_delivery",
         claim="code changes pass all tests",
         source="CI pipeline",
-        fgr=FGR(formality=0.8, scope=0.6, reliability=0.9),
+        fgr=FGR(
+            formality=FormalityLevel.F7,
+            scope=production_scope,
+            reliability=0.9,
+        ),
         freshness=Freshness.CURRENT,
         semantic_floor=SemanticFloor.EVIDENTIARY,
         supports=["no_deploy_without_evidence"],
@@ -176,7 +191,11 @@ def build_deploy_decision_map() -> SemanticMap:
         context_id="project_delivery",
         claim="owner authorizes deployment",
         source="approval gate / speech act",
-        fgr=FGR(formality=0.9, scope=0.8, reliability=0.95),
+        fgr=FGR(
+            formality=FormalityLevel.F8,
+            scope=production_scope,
+            reliability=0.95,
+        ),
         freshness=Freshness.CURRENT,
         semantic_floor=SemanticFloor.EVIDENTIARY,
         supports=["no_deploy_without_evidence"],
@@ -188,7 +207,11 @@ def build_deploy_decision_map() -> SemanticMap:
         context_id="project_delivery",
         claim="rollback procedure exists and is tested",
         source="runbook",
-        fgr=FGR(formality=0.7, scope=0.5, reliability=0.8),
+        fgr=FGR(
+            formality=FormalityLevel.F6,
+            scope=production_scope,
+            reliability=0.8,
+        ),
         freshness=Freshness.CURRENT,
         semantic_floor=SemanticFloor.EVIDENTIARY,
     ))
@@ -706,7 +729,7 @@ def build_deploy_rules() -> LogicLayer:
     ev_tests_fresh = EvidenceFresh("test_results")
     ev_approval_fresh = EvidenceFresh("owner_approval")
     gate_deploy = GatePasses("deploy_gate")
-    gate_blocked = GateBlocked("deploy_gate")
+    gate_abstained = GateAbstained("deploy_gate")
     role_analyst = RoleActive("analyst")
     role_approver = RoleActive("approver")
     has_gaps = HasMissingEvidence()
@@ -724,8 +747,8 @@ def build_deploy_rules() -> LogicLayer:
         exclusive_with=["block_transition"],
     ))
     logic.add_rule(DecisionRule(
-        name="gate_blocked_implies_collect",
-        condition=gate_blocked.IMPLIES(has_gaps),
+        name="gate_abstained_implies_collect",
+        condition=gate_abstained.IMPLIES(has_gaps),
         action_if_true="collect_evidence",
         kind=RuleKind.HINT,
         tags=["deploy", "evidence"],

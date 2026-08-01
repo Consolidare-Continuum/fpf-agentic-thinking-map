@@ -16,9 +16,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Callable
 
+from fpf_thinking_map.primitives import Freshness, GateDecision
 from fpf_thinking_map.state import ActiveState
-from fpf_thinking_map.primitives import GateDecision, Freshness
-
 
 # ---------------------------------------------------------------------------
 # Propositional atoms — facts extracted from active state
@@ -185,6 +184,27 @@ class GatePasses(Prop):
 
 @dataclass
 class GateBlocked(Prop):
+    """True only for an explicit A.21 hard BLOCK decision."""
+    gate_id: str
+
+    def evaluate(self, state: ActiveState) -> bool:
+        gate = state.semantic_map.gates.get(self.gate_id)
+        if not gate:
+            return False
+        return gate.evaluate(state.available_evidence_ids) == GateDecision.BLOCK
+
+    def __repr__(self) -> str:
+        return f"gate_blocked({self.gate_id})"
+
+
+@dataclass
+class GateAbstained(Prop):
+    """Compatibility proposition for GateBlocked's pre-fix behavior.
+
+    Before the A.21 repair, ``GateBlocked`` actually tested ABSTAIN and also
+    returned true for a missing gate. Existing rules that intentionally relied
+    on that behavior can migrate to this accurately named proposition.
+    """
     gate_id: str
 
     def evaluate(self, state: ActiveState) -> bool:
@@ -194,7 +214,7 @@ class GateBlocked(Prop):
         return gate.evaluate(state.available_evidence_ids) == GateDecision.ABSTAIN
 
     def __repr__(self) -> str:
-        return f"gate_blocked({self.gate_id})"
+        return f"gate_abstained({self.gate_id})"
 
 
 @dataclass
@@ -441,4 +461,3 @@ class LogicLayer:
             "unsatisfied_rules": self.unsatisfied_rules(state, tags),
             "consistency": consistency,
         }
-
