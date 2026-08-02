@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/igareosh/fpf-agentic-thinking-map/main/docs/assets/fpf-agentic-thinking-map-header.png" alt="FPF Agentic Thinking Map - Agent freedom. Explicit movement rules." width="100%" />
+  <img src="https://raw.githubusercontent.com/Consolidare-Continuum/fpf-agentic-thinking-map/main/docs/assets/fpf-agentic-thinking-map-header.png" alt="FPF Agentic Thinking Map - Agent freedom. Explicit movement rules." width="100%" />
 </p>
 
 # FPF Agentic Thinking Map
@@ -14,10 +14,10 @@ the move is valid.
 
 [![PyPI](https://img.shields.io/pypi/v/fpf-thinking-map?style=flat-square&label=PyPI&color=3775A9)](https://pypi.org/project/fpf-thinking-map/)
 [![Downloads (honest)](https://img.shields.io/badge/downloads%20%28honest%29-4k-1f6feb?style=flat-square)](https://pypistats.org/packages/fpf-thinking-map)
-[![Python](https://img.shields.io/pypi/pyversions/fpf-thinking-map?style=flat-square&label=Python&color=f0b429)](https://github.com/igareosh/fpf-agentic-thinking-map/blob/main/pyproject.toml)
-[![License](https://img.shields.io/pypi/l/fpf-thinking-map?style=flat-square&label=license&color=57c7bd)](https://github.com/igareosh/fpf-agentic-thinking-map/blob/main/LICENSE)
-[![Zero dependencies](https://img.shields.io/badge/dependencies-0-ff9f43?style=flat-square)](https://github.com/igareosh/fpf-agentic-thinking-map/blob/main/pyproject.toml)
-[![Verification](https://img.shields.io/badge/verify-35%2F35-59d18c?style=flat-square)](https://github.com/igareosh/fpf-agentic-thinking-map/blob/main/fpf_thinking_map/verify.py)
+[![Python](https://img.shields.io/pypi/pyversions/fpf-thinking-map?style=flat-square&label=Python&color=f0b429)](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/pyproject.toml)
+[![License](https://img.shields.io/pypi/l/fpf-thinking-map?style=flat-square&label=license&color=57c7bd)](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/LICENSE)
+[![Zero dependencies](https://img.shields.io/badge/dependencies-0-ff9f43?style=flat-square)](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/pyproject.toml)
+[![Verification](https://img.shields.io/badge/verify-35%2F35-59d18c?style=flat-square)](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/fpf_thinking_map/verify.py)
 [![Live demo](https://img.shields.io/badge/live-demo-dd8cff?style=flat-square)](https://igareosh.github.io/fpf-agentic-thinking-map/demos/three-runs.html)
 
 ```bash
@@ -27,13 +27,13 @@ python -m fpf_thinking_map.verify
 
 ## Important links
 
-- [ARCHITECTURE.md](https://github.com/igareosh/fpf-agentic-thinking-map/blob/main/ARCHITECTURE.md)
-- [VERSION_TRACKER.md](https://github.com/igareosh/fpf-agentic-thinking-map/blob/main/docs/VERSION_TRACKER.md)
-- [TRIPLE_TAX_CALCULUS.md](https://github.com/igareosh/fpf-agentic-thinking-map/blob/main/docs/deep/TRIPLE_TAX_CALCULUS.md)
-- [REFLECTIONS.md](https://github.com/igareosh/fpf-agentic-thinking-map/blob/main/docs/deep/REFLECTIONS.md)
-- [CONTRIBUTING.md](https://github.com/igareosh/fpf-agentic-thinking-map/blob/main/CONTRIBUTING.md)
-- [ADVISORIES.md](https://github.com/igareosh/fpf-agentic-thinking-map/blob/main/docs/deep/ADVISORIES.md)
-- [`dev_mcp/`](https://github.com/igareosh/fpf-agentic-thinking-map/tree/main/dev_mcp)
+- [ARCHITECTURE.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/ARCHITECTURE.md)
+- [VERSION_TRACKER.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/VERSION_TRACKER.md)
+- [TRIPLE_TAX_CALCULUS.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/deep/TRIPLE_TAX_CALCULUS.md)
+- [REFLECTIONS.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/deep/REFLECTIONS.md)
+- [CONTRIBUTING.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/CONTRIBUTING.md)
+- [ADVISORIES.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/deep/ADVISORIES.md)
+- [`dev_mcp/`](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/tree/main/dev_mcp)
 
 The `dev_mcp` development and compliance harness is genuinely tested against
 the package and updated whenever runtime behavior, compliance checks, or
@@ -111,7 +111,7 @@ These are bounded runtime compilations, not a port of the full FPF framework.
 
 ## Live runtime visual
 
-[![Four test-backed traces of the traversal runtime](https://raw.githubusercontent.com/igareosh/fpf-agentic-thinking-map/main/docs/assets/three-runs-preview.png)](https://igareosh.github.io/fpf-agentic-thinking-map/demos/three-runs.html)
+[![Four test-backed traces of the traversal runtime](https://raw.githubusercontent.com/Consolidare-Continuum/fpf-agentic-thinking-map/main/docs/assets/three-runs-preview.png)](https://igareosh.github.io/fpf-agentic-thinking-map/demos/three-runs.html)
 
 **[Open the interactive four-run trace](https://igareosh.github.io/fpf-agentic-thinking-map/demos/three-runs.html)**
 
@@ -274,11 +274,11 @@ by expanding into a general agent framework.
 | v1.9.5 "Ground Stop" | Correct A.21 gate join; explicit `BLOCK` versus insufficient `ABSTAIN`; typed denial causes; opt-in structural controls |
 
 The complete reader-facing history is in
-[docs/VERSION_TRACKER.md](https://github.com/igareosh/fpf-agentic-thinking-map/blob/main/docs/VERSION_TRACKER.md).
+[docs/VERSION_TRACKER.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/VERSION_TRACKER.md).
 Technical changes are in
-[CHANGELOG.md](https://github.com/igareosh/fpf-agentic-thinking-map/blob/main/CHANGELOG.md),
+[CHANGELOG.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/CHANGELOG.md),
 and full release bodies remain in
-[GitHub Releases](https://github.com/igareosh/fpf-agentic-thinking-map/releases).
+[GitHub Releases](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/releases).
 
 This separation is intentional: the README describes the stable product; the
 tracker records how that product became stronger.
@@ -316,11 +316,11 @@ The compiled state slice was also measured against injecting the corresponding
 raw FPF sections at five shipped decision points. The measured slice was much
 smaller, but this is a traversal-context result, not a claim about general
 intelligence or total application cost. Method and limitations:
-[TRIPLE_TAX_CALCULUS.md](https://github.com/igareosh/fpf-agentic-thinking-map/blob/main/docs/deep/TRIPLE_TAX_CALCULUS.md).
+[TRIPLE_TAX_CALCULUS.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/deep/TRIPLE_TAX_CALCULUS.md).
 
 For the authorization experiments, threat boundaries, failures found, and
 claims deliberately not made, see
-[IGNITION_LOCK_WIND_TUNNEL.md](https://github.com/igareosh/fpf-agentic-thinking-map/blob/main/docs/deep/IGNITION_LOCK_WIND_TUNNEL.md).
+[IGNITION_LOCK_WIND_TUNNEL.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/deep/IGNITION_LOCK_WIND_TUNNEL.md).
 
 ## Scope
 
@@ -345,19 +345,19 @@ Do not use it as:
 
 Correct map authoring and correct host integration remain part of the trust
 boundary. Known sharp edges and deliberate non-goals are recorded in
-[ADVISORIES.md](https://github.com/igareosh/fpf-agentic-thinking-map/blob/main/docs/deep/ADVISORIES.md).
+[ADVISORIES.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/deep/ADVISORIES.md).
 
 ## Repository guide
 
 | Path | Purpose |
 | --- | --- |
-| [`fpf_thinking_map/`](https://github.com/igareosh/fpf-agentic-thinking-map/tree/main/fpf_thinking_map) | Zero-dependency runtime published to PyPI |
-| [`dev_mcp/`](https://github.com/igareosh/fpf-agentic-thinking-map/tree/main/dev_mcp) | Separate development and compliance-testing harness |
-| [ARCHITECTURE.md](https://github.com/igareosh/fpf-agentic-thinking-map/blob/main/ARCHITECTURE.md) | Verified control flow and module architecture |
-| [docs/VERSION_TRACKER.md](https://github.com/igareosh/fpf-agentic-thinking-map/blob/main/docs/VERSION_TRACKER.md) | Every release, with three practical consequences |
-| [docs/DECISIONS_REJECTIONS_ADOPTIONS.md](https://github.com/igareosh/fpf-agentic-thinking-map/blob/main/docs/DECISIONS_REJECTIONS_ADOPTIONS.md) | Design provenance and rejected scope |
-| [docs/deep/ADVISORIES.md](https://github.com/igareosh/fpf-agentic-thinking-map/blob/main/docs/deep/ADVISORIES.md) | Integration boundaries and known sharp edges |
-| [SHA256SUMS](https://github.com/igareosh/fpf-agentic-thinking-map/blob/main/SHA256SUMS) | Repository-wide source fingerprints |
+| [`fpf_thinking_map/`](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/tree/main/fpf_thinking_map) | Zero-dependency runtime published to PyPI |
+| [`dev_mcp/`](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/tree/main/dev_mcp) | Separate development and compliance-testing harness |
+| [ARCHITECTURE.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/ARCHITECTURE.md) | Verified control flow and module architecture |
+| [docs/VERSION_TRACKER.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/VERSION_TRACKER.md) | Every release, with three practical consequences |
+| [docs/DECISIONS_REJECTIONS_ADOPTIONS.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/DECISIONS_REJECTIONS_ADOPTIONS.md) | Design provenance and rejected scope |
+| [docs/deep/ADVISORIES.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/deep/ADVISORIES.md) | Integration boundaries and known sharp edges |
+| [SHA256SUMS](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/SHA256SUMS) | Repository-wide source fingerprints |
 
 ## Design rules
 
@@ -379,14 +379,14 @@ FPF provides the broad conceptual frame. This package compiles a selected part
 of that frame into a practical traversal runtime. It may omit or reject
 patterns that do not improve this package's observable agent behavior.
 
-See [NOTICE](https://github.com/igareosh/fpf-agentic-thinking-map/blob/main/NOTICE)
-and [SOURCES.md](https://github.com/igareosh/fpf-agentic-thinking-map/blob/main/docs/deep/SOURCES.md)
+See [NOTICE](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/NOTICE)
+and [SOURCES.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/deep/SOURCES.md)
 for attribution and scope boundaries.
 
 ## License and contact
 
 MIT License. See
-[LICENSE](https://github.com/igareosh/fpf-agentic-thinking-map/blob/main/LICENSE).
+[LICENSE](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/LICENSE).
 
 Maintained by [igareosh.com](https://igareosh.com) ·
 [@igareosh](https://github.com/igareosh) ·

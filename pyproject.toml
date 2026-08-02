@@ -32,16 +32,16 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/igareosh/fpf-agentic-thinking-map"
-Repository = "https://github.com/igareosh/fpf-agentic-thinking-map"
-Documentation = "https://github.com/igareosh/fpf-agentic-thinking-map#readme"
-Issues = "https://github.com/igareosh/fpf-agentic-thinking-map/issues"
-Architecture = "https://github.com/igareosh/fpf-agentic-thinking-map/blob/main/ARCHITECTURE.md"
-Changelog = "https://github.com/igareosh/fpf-agentic-thinking-map/blob/main/CHANGELOG.md"
-Contributing = "https://github.com/igareosh/fpf-agentic-thinking-map/blob/main/CONTRIBUTING.md"
-Advisories = "https://github.com/igareosh/fpf-agentic-thinking-map/blob/main/docs/deep/ADVISORIES.md"
-Website = "https://igareosh.com"
-GitHub = "https://github.com/igareosh"
+Homepage = "https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map"
+Repository = "https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map"
+Documentation = "https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map#readme"
+Issues = "https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/issues"
+Architecture = "https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/ARCHITECTURE.md"
+Changelog = "https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/CHANGELOG.md"
+Contributing = "https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/CONTRIBUTING.md"
+Advisories = "https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/deep/ADVISORIES.md"
+Website = "https://consolidare-continuum.com"
+GitHub = "https://github.com/Consolidare-Continuum"
 Telegram = "https://t.me/igareosh"
 Demo = "https://igareosh.github.io/fpf-agentic-thinking-map/demos/three-runs.html"
 

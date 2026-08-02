@@ -5,7 +5,7 @@ doc-only and metadata-only releases, marked as such. This is a supplement to
 [`CHANGELOG.md`](../CHANGELOG.md) (which covers v1.6.0 onward in narrative form)
 and [`docs/deep/EXPANDED_PROVENANCE.md`](deep/EXPANDED_PROVENANCE.md) (the
 v1.7.0–1.9.1 throughline). Full release bodies:
-[GitHub Releases](https://github.com/igareosh/fpf-agentic-thinking-map/releases).
+[GitHub Releases](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/releases).
 
 There is no v0.x or v1.1.x — v1.0.0 is the first tagged release, and
 versioning jumps v1.0.1 → v1.2.0.

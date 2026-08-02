@@ -266,5 +266,5 @@ for how this closes (and doesn't close) that document's own stated gaps.
 
 ## [1.6.0] and earlier
 
-See [GitHub Releases](https://github.com/igareosh/fpf-agentic-thinking-map/releases)
+See [GitHub Releases](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/releases)
 and [`docs/deep/ADOPTED_IGNITION_LOCK.md`](docs/deep/ADOPTED_IGNITION_LOCK.md).
