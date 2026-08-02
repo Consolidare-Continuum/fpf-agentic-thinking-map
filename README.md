@@ -18,7 +18,7 @@ the move is valid.
 [![License](https://img.shields.io/pypi/l/fpf-thinking-map?style=flat-square&label=license&color=57c7bd)](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/LICENSE)
 [![Zero dependencies](https://img.shields.io/badge/dependencies-0-ff9f43?style=flat-square)](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/pyproject.toml)
 [![Verification](https://img.shields.io/badge/verify-35%2F35-59d18c?style=flat-square)](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/fpf_thinking_map/verify.py)
-[![Live demo](https://img.shields.io/badge/live-demo-dd8cff?style=flat-square)](https://igareosh.github.io/fpf-agentic-thinking-map/demos/three-runs.html)
+[![Live demo](https://img.shields.io/badge/live-demo-dd8cff?style=flat-square)](https://consolidare-continuum.github.io/fpf-agentic-thinking-map/demos/three-runs.html)
 
 ```bash
 pip install fpf-thinking-map
@@ -111,9 +111,9 @@ These are bounded runtime compilations, not a port of the full FPF framework.
 
 ## Live runtime visual
 
-[![Four test-backed traces of the traversal runtime](https://raw.githubusercontent.com/Consolidare-Continuum/fpf-agentic-thinking-map/main/docs/assets/three-runs-preview.png)](https://igareosh.github.io/fpf-agentic-thinking-map/demos/three-runs.html)
+[![Four test-backed traces of the traversal runtime](https://raw.githubusercontent.com/Consolidare-Continuum/fpf-agentic-thinking-map/main/docs/assets/three-runs-preview.png)](https://consolidare-continuum.github.io/fpf-agentic-thinking-map/demos/three-runs.html)
 
-**[Open the interactive four-run trace](https://igareosh.github.io/fpf-agentic-thinking-map/demos/three-runs.html)**
+**[Open the interactive four-run trace](https://consolidare-continuum.github.io/fpf-agentic-thinking-map/demos/three-runs.html)**
 
 The visual follows evidence recovery, `PendingInput`/`AWAIT`, `MoveIntent`,
 state-bound authorization, and the v1.9.5 distinction between an undecided

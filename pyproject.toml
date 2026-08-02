@@ -43,7 +43,7 @@ Advisories = "https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/
 Website = "https://consolidare-continuum.com"
 GitHub = "https://github.com/Consolidare-Continuum"
 Telegram = "https://t.me/igareosh"
-Demo = "https://igareosh.github.io/fpf-agentic-thinking-map/demos/three-runs.html"
+Demo = "https://consolidare-continuum.github.io/fpf-agentic-thinking-map/demos/three-runs.html"
 
 [build-system]
 requires = ["setuptools>=68.0"]
