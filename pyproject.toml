@@ -6,10 +6,10 @@ readme = "README.md"
 license = "MIT"
 requires-python = ">=3.12"
 authors = [
-    {name = "igareosh.com (@igareosh)", email = "igareosh@igareosh.com"},
+    {name = "CONSOLIDARE CONTINUUM S.R.L.", email = "info@consolidare-continuum.com"},
 ]
 maintainers = [
-    {name = "igareosh.com (@igareosh)", email = "igareosh@igareosh.com"},
+    {name = "CONSOLIDARE CONTINUUM S.R.L.", email = "info@consolidare-continuum.com"},
 ]
 keywords = [
     "agentic", "thinking-map", "llm", "reasoning",
