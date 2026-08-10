@@ -13,7 +13,7 @@ context. The model can inspect the map and choose; the runtime decides whether
 the move is valid.
 
 [![PyPI](https://img.shields.io/pypi/v/fpf-thinking-map?style=flat-square&label=PyPI&color=3775A9)](https://pypi.org/project/fpf-thinking-map/)
-[![Downloads (honest)](https://img.shields.io/badge/downloads%20%28honest%29-4k-1f6feb?style=flat-square)](https://pypistats.org/packages/fpf-thinking-map)
+[![Downloads (honest)](https://img.shields.io/badge/downloads%20%28honest%29-4.5k-1f6feb?style=flat-square)](https://pypistats.org/packages/fpf-thinking-map)
 [![Python](https://img.shields.io/pypi/pyversions/fpf-thinking-map?style=flat-square&label=Python&color=f0b429)](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/pyproject.toml)
 [![License](https://img.shields.io/pypi/l/fpf-thinking-map?style=flat-square&label=license&color=57c7bd)](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/LICENSE)
 [![Zero dependencies](https://img.shields.io/badge/dependencies-0-ff9f43?style=flat-square)](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/pyproject.toml)
