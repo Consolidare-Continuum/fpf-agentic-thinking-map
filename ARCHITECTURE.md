@@ -491,7 +491,7 @@ The two facts worth carrying forward from this diagram: the model saw `archive_r
 
 ## What's declared vs. what's reachable
 
-`traversal.py` declares 11 `OutcomeKind` values, but not all of them are active in runtime today. Checked against actual code paths, 8 are reachable and 3 are currently unused:
+`traversal.py` declares 11 `OutcomeKind` values, but not all of them are active in runtime today. Checked against actual code paths, 9 are reachable and 2 are currently unused:
 
 | Outcome | Reachable from | Status |
 |---|---|---|
@@ -501,13 +501,13 @@ The two facts worth carrying forward from this diagram: the model saw `archive_r
 | `CHANGE_FRAME` | `step()` | live |
 | `IDLE` | `step()` | live |
 | `BRIDGE` | `step()` | live (advisory only) |
+| `REVISE_PLAN` | `step()`, `attempt_transition()` | live |
 | `AWAIT` | `step()` (an unresolved `PendingInput`, nothing else actionable) | live |
 | `ESCALATE` | `attempt_bridge()`, `attempt_transition()` (Ignition Lock or a rejected `AuthorizationReceipt`) | live |
 | `ASK` | — | declared, unreachable |
 | `PUBLISH` | — | declared, unreachable |
-| `REVISE_PLAN` | — | declared, unreachable |
 
-This is not a bug. The underlying primitives already exist, but the traversal layer does not emit those outcomes yet. In simple terms: the types are there, the runtime wiring is not.
+This is not a bug. The underlying primitives already exist, but the traversal layer does not emit `ASK` or `PUBLISH` yet. In simple terms: the types are there, the runtime wiring is not.
 
 ---
 
