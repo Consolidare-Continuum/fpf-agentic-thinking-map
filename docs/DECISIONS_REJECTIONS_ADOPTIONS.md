@@ -60,6 +60,7 @@ Use this index when you need rationale and provenance behind design choices.
 - **Related work comparisons:**
   - [RELATED_WORK_MILTONIAN_PRINCIPLES.md](deep/RELATED_WORK_MILTONIAN_PRINCIPLES.md)
   - [RELATED_WORK_GOFLOW_FPF_SKILL.md](deep/RELATED_WORK_GOFLOW_FPF_SKILL.md)
+  - [RELATED_WORK_LEVENCHUK_FPF_KNOWLEDGE_GRAPH_TOOLKIT.md](deep/RELATED_WORK_LEVENCHUK_FPF_KNOWLEDGE_GRAPH_TOOLKIT.md)
 
 ## Positioning
 
