@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Consolidare-Continuum/fpf-agentic-thinking-map/main/docs/assets/fpf-agentic-thinking-map-header.png" alt="FPF Agentic Thinking Map - Agent freedom. Explicit movement rules." width="100%" />
+  <img src="https://raw.githubusercontent.com/Consolidare-Continuum/fpf-agentic-thinking-map/main/docs/assets/fpf-agentic-thinking-map-header-v20260818.png" alt="FPF Agentic Thinking Map - Agent freedom. Explicit movement rules." width="100%" />
 </p>
 
 # FPF Agentic Thinking Map
