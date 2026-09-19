@@ -8,6 +8,21 @@ list: [`docs/deep/EXPANDED_PROVENANCE.md`](docs/deep/EXPANDED_PROVENANCE.md).
 
 ## [Unreleased]
 
+### Planned
+
+- Traversal checkpoint and restore — `ActiveState.checkpoint()` /
+  `ActiveState.from_checkpoint()`, `SemanticMap.fingerprint()`. Design
+  finalized, not yet implemented. See
+  [`docs/deep/DESIGN_TRAVERSAL_CHECKPOINT.md`](docs/deep/DESIGN_TRAVERSAL_CHECKPOINT.md).
+
+## [2.0.0] - 2026-09-19
+
+Version number is a release decision, not an architectural one — see
+[`docs/deep/SPEC_V2_0_BUILD.md`](docs/deep/SPEC_V2_0_BUILD.md). Everything
+below is additive and backward-compatible; no primitive is removed, no
+existing `Outcome` is reshaped, and a caller who adopts none of this
+release's new opt-in surface sees zero behavioral change from `1.9.5`.
+
 ### Added
 
 - **ADV-17** — Wumpus-World-style negative-evidence inference: a
@@ -26,13 +41,6 @@ list: [`docs/deep/EXPANDED_PROVENANCE.md`](docs/deep/EXPANDED_PROVENANCE.md).
   [`docs/deep/PROPOSED_WUMPUS_ADJACENCY_CLEARANCE.md`](docs/deep/PROPOSED_WUMPUS_ADJACENCY_CLEARANCE.md).
   `fpf_thinking_map/verify.py` 39/39, `dev_mcp/test_server.py` unchanged at
   45/45 (no detector to add).
-
-### Planned
-
-- Traversal checkpoint and restore — `ActiveState.checkpoint()` /
-  `ActiveState.from_checkpoint()`, `SemanticMap.fingerprint()`. Design
-  finalized, not yet implemented. See
-  [`docs/deep/DESIGN_TRAVERSAL_CHECKPOINT.md`](docs/deep/DESIGN_TRAVERSAL_CHECKPOINT.md).
 
 ## [1.9.6] - 2026-09-19
 

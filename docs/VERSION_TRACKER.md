@@ -1,4 +1,4 @@
-# Version tracker — v1.0.0 through v1.9.6
+# Version tracker — v1.0.0 through v2.0.0
 
 Every released version, three practical/reader-facing benefits each — including
 doc-only and metadata-only releases, marked as such. This is a supplement to
@@ -11,6 +11,28 @@ There is no v0.x or v1.1.x — v1.0.0 is the first tagged release, and
 versioning jumps v1.0.1 → v1.2.0.
 
 ---
+
+## v2.0.0 — 2026-09-19 — Adjacency clearance ("Positive Control")
+
+Version number is a release decision, not an architectural one — see
+[`docs/deep/SPEC_V2_0_BUILD.md`](deep/SPEC_V2_0_BUILD.md). Content is
+additive and backward-compatible, same as every release below it.
+
+1. Adds `ADV-17`: a **confirmed-absent** percept (not merely unsupplied
+   evidence) proves every adjacent state danger-free, per a map-author-declared
+   `AdjacencyClearanceRule` — never inferred from a map's own shape.
+   `reachability.biconditional_clear()` is undirected, deliberately unlike
+   `shortest_path_distance`'s directed BFS.
+2. Ships three opt-in structural guards alongside the primitive, none of
+   them a substitute for reviewing the declared biconditional itself:
+   `contradicted_by` (an independent danger fact voids a clearance),
+   `DecisionRule.adjacency_sensitive` (mirrors `risk_sensitive`'s exact
+   selection-filter shape), and a real `validate_map()` enforcement that a
+   clearance id can never satisfy a `requires_human_authorization=True`
+   transition.
+3. No auto-detector for `ADV-17` — same class as `ADV-09`: this package
+   cannot verify a domain's declared biconditional is actually true, only
+   that the inference built on top of it is computed correctly.
 
 ## v1.9.6 — 2026-09-19 — Failed-run terminal / upstream scope gate ("Missed Approach")
 
