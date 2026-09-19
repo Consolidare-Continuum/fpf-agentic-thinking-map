@@ -8,23 +8,30 @@ list: [`docs/deep/EXPANDED_PROVENANCE.md`](docs/deep/EXPANDED_PROVENANCE.md).
 
 ## [Unreleased]
 
-### Added
-
-- **ADV-15** — failed-run XOR outcome space must include `end_compile_revert`
-  (still 1 step at a time; BFS hop `distance <= bound`). Documented in
-  `docs/deep/ADVISORIES.md`; detector in `dev_mcp/advisory_detectors.py`.
-- `reachability.shortest_path_distance` — BFS hop count for the ADV-15
-  distance check (`forward_reachable` remains set membership only).
-- **ADV-16** — `ailev/FPF` commits must PASS our predefined scopes else
-  **TOMBSTONE** (commit and/or advisory). Protocol:
-  `docs/deep/UPSTREAM_SCOPE_INSPECTION.md`. No auto-detector (ADV-09 class).
-
 ### Planned
 
 - Traversal checkpoint and restore — `ActiveState.checkpoint()` /
   `ActiveState.from_checkpoint()`, `SemanticMap.fingerprint()`. Design
   finalized, not yet implemented. See
   [`docs/deep/DESIGN_TRAVERSAL_CHECKPOINT.md`](docs/deep/DESIGN_TRAVERSAL_CHECKPOINT.md).
+
+## [1.9.6] - 2026-09-19
+
+### Added
+
+- **ADV-15** — failed-run XOR outcome space must include `end_compile_revert`
+  ("Missed Approach": still 1 step at a time; BFS hop `distance <= bound`).
+  Documented in `docs/deep/ADVISORIES.md`; detector in
+  `dev_mcp/advisory_detectors.py`; worked example + BFS hop-count coverage
+  (`shortest_path_distance`, 0/N/None cases) in `fpf_thinking_map/verify.py`
+  (37/37); detector-level scenarios (XOR without revert, no false positive
+  with revert, bare-`LogicLayer` namespace fallback) in
+  `dev_mcp/test_server.py` (45/45).
+- `reachability.shortest_path_distance` — BFS hop count for the ADV-15
+  distance check (`forward_reachable` remains set membership only).
+- **ADV-16** — `ailev/FPF` commits must PASS our predefined scopes else
+  **TOMBSTONE** (commit and/or advisory). Protocol:
+  `docs/deep/UPSTREAM_SCOPE_INSPECTION.md`. No auto-detector (ADV-09 class).
 
 ## [1.9.5] - 2026-08-01
 

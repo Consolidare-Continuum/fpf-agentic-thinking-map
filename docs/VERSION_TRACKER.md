@@ -1,4 +1,4 @@
-# Version tracker — v1.0.0 through v1.9.5
+# Version tracker — v1.0.0 through v1.9.6
 
 Every released version, three practical/reader-facing benefits each — including
 doc-only and metadata-only releases, marked as such. This is a supplement to
@@ -11,6 +11,23 @@ There is no v0.x or v1.1.x — v1.0.0 is the first tagged release, and
 versioning jumps v1.0.1 → v1.2.0.
 
 ---
+
+## v1.9.6 — 2026-09-19 — Failed-run terminal / upstream scope gate ("Missed Approach")
+
+1. Adds `ADV-15`: a `LogicLayer` `XOR` rule predicting exclusive step
+   outcomes must include a named `end_compile_revert` terminal — still one
+   `step()` at a time, and the BFS hop distance to the revert target must
+   satisfy a domain bound. `reachability.shortest_path_distance` adds the
+   hop-count check `forward_reachable` (set membership only) could not
+   express on its own.
+2. Adds `ADV-16` and `docs/deep/UPSTREAM_SCOPE_INSPECTION.md`: material
+   `ailev/FPF` commits are inspected against five predefined scope
+   conditions (S1–S5) before following into this package's runtime scopes;
+   a FAIL is recorded as **TOMBSTONE**, not silently ignored or adopted.
+3. Closes a real coverage gap found while landing this release: the new
+   detector and `shortest_path_distance` had zero test coverage in the
+   working tree despite being drafted — added before release, not after
+   (`fpf_thinking_map/verify.py` 37/37, `dev_mcp/test_server.py` 45/45).
 
 ## v1.9.5 — 2026-08-01 — Gate semantics ("Ground Stop")
 
