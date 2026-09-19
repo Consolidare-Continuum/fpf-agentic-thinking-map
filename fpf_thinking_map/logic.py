@@ -305,6 +305,54 @@ class CustomProp(Prop):
 
 
 # ---------------------------------------------------------------------------
+# Adjacency clearance (ADV-17) — Wumpus-World-style negative-evidence
+# inference: a confirmed-absent percept proves every adjacent state
+# danger-free, per a map-author-declared biconditional. See
+# docs/deep/PROPOSED_WUMPUS_ADJACENCY_CLEARANCE.md for the full spec this
+# implements. Never inferred from map shape (ADV-04 discipline) -- a
+# caller who never registers an AdjacencyClearanceRule sees no behavior
+# change anywhere in this module. The declaration object itself,
+# AdjacencyClearanceRule, lives in primitives.py (registered on
+# SemanticMap, same as GatePrimitive/CommitmentPrimitive) -- not here,
+# because primitives.py must not depend on ActiveState and this class
+# doesn't need to either. Only the Prop that reads it belongs in this
+# module.
+# ---------------------------------------------------------------------------
+
+@dataclass
+class AdjacentlyCleared(Prop):
+    """True when danger_percept_evidence_id was CONFIRMED absent (not
+    merely unconfirmed) at cell_state, per a registered
+    AdjacencyClearanceRule, and this specific cell is in the resulting
+    cleared set -- and no evidence in the rule's contradicted_by list is
+    present (ADV-04).
+
+    No registered rule for danger_percept_evidence_id, or the percept
+    never confirmed absent, or a declared contradiction present: always
+    False. Silent guessing is exactly what this must not do (ADV-01/02).
+    """
+    cell_state: str
+    danger_percept_evidence_id: str
+
+    def evaluate(self, state: ActiveState) -> bool:
+        rule = state.semantic_map.adjacency_clearance_rules.get(
+            self.danger_percept_evidence_id
+        )
+        if rule is None:
+            return False
+        if rule.contradicted_by and (
+            set(rule.contradicted_by) & state.available_evidence_ids
+        ):
+            return False
+        return self.cell_state in state._adjacency_clearances.get(
+            self.danger_percept_evidence_id, {}
+        )
+
+    def __repr__(self) -> str:
+        return f"adjacently_cleared({self.cell_state}, {self.danger_percept_evidence_id})"
+
+
+# ---------------------------------------------------------------------------
 # Decision rules — with kinds, tags, exclusions (#8-#11)
 # ---------------------------------------------------------------------------
 
@@ -325,6 +373,10 @@ class DecisionRule:
     #10: block/warn/route/hint consolidate behavior.
     #11: exclusive_with replaces hardcoded contradiction pairs.
     #21: risk_sensitive controls whether rule sees risk_level.
+    ADV-17: adjacency_sensitive mirrors risk_sensitive's exact selection-filter
+    shape -- skipped unless state.has_adjacency_clearance, same as a
+    risk_sensitive rule is skipped below elevated risk (ADV-02: the core
+    never auto-filters transitions off a fact by itself; a rule opts in).
     """
     name: str
     condition: Prop
@@ -335,6 +387,7 @@ class DecisionRule:
     tags: list[str] = field(default_factory=list)
     exclusive_with: list[str] = field(default_factory=list)
     risk_sensitive: bool = False
+    adjacency_sensitive: bool = False
 
     def evaluate(self, state: ActiveState) -> tuple[bool, str]:
         result = self.condition.evaluate(state)
@@ -378,14 +431,22 @@ class LogicLayer:
         self,
         tags: set[str] | None = None,
         risk_level: str = "normal",
+        has_adjacency_clearance: bool = False,
     ) -> list[DecisionRule]:
-        """#12: filter rules by tags. #21: skip risk_sensitive rules at low/normal risk."""
+        """#12: filter rules by tags. #21: skip risk_sensitive rules at low/normal
+        risk. ADV-17: skip adjacency_sensitive rules when nothing has been
+        adjacency-cleared yet -- same shape as risk_sensitive, not a separate
+        mechanism."""
         elevated = self._risk_thresholds.get(risk_level, 1) >= 2
         rules = self.rules if tags is None else [
             r for r in self.rules
             if not r.tags or (set(r.tags) & tags)
         ]
-        return [r for r in rules if not r.risk_sensitive or elevated]
+        return [
+            r for r in rules
+            if (not r.risk_sensitive or elevated)
+            and (not r.adjacency_sensitive or has_adjacency_clearance)
+        ]
 
     def evaluate_for(
         self,
@@ -394,7 +455,9 @@ class LogicLayer:
     ) -> list[dict[str, Any]]:
         """#12: evaluate only rules matching tags."""
         results = []
-        for rule in self._select_rules(tags, state.binding.risk_level):
+        for rule in self._select_rules(
+            tags, state.binding.risk_level, state.has_adjacency_clearance
+        ):
             satisfied, action = rule.evaluate(state)
             results.append({
                 "rule": rule.name,
@@ -413,7 +476,7 @@ class LogicLayer:
         rl = state.binding.risk_level
         return [
             action
-            for rule in self._select_rules(tags, rl)
+            for rule in self._select_rules(tags, rl, state.has_adjacency_clearance)
             for satisfied, action in [rule.evaluate(state)]
             if satisfied and action
         ]
@@ -422,7 +485,7 @@ class LogicLayer:
         rl = state.binding.risk_level
         return [
             rule.name
-            for rule in self._select_rules(tags, rl)
+            for rule in self._select_rules(tags, rl, state.has_adjacency_clearance)
             if not rule.condition.evaluate(state)
         ]
 
@@ -433,7 +496,7 @@ class LogicLayer:
         active_actions = {r["action"] for r in results if r["satisfied"] and r["action"]}
         contradictions = []
 
-        for rule in self._select_rules(tags, rl):
+        for rule in self._select_rules(tags, rl, state.has_adjacency_clearance):
             satisfied, action = rule.evaluate(state)
             if satisfied and action and rule.exclusive_with:
                 for ex in rule.exclusive_with:

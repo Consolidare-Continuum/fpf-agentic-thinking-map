@@ -143,6 +143,7 @@ class ThinkingMapTraversal:
         rule_names = {
             rule.name for rule in self.logic_layer.rules
         } if self.logic_layer is not None else set()
+        clearance_ids = set(self.semantic_map.adjacency_clearance_rules.keys())
         for transition in self.semantic_map.transitions.values():
             if (
                 transition.required_gate_id
@@ -162,6 +163,21 @@ class ThinkingMapTraversal:
                     errors.append(
                         f"transition '{transition.transition_id}' requires unknown logic rule "
                         f"'{transition.guard_expression}'"
+                    )
+            # ADV-10/ADV-17: a clearance percept id must never satisfy a
+            # requires_human_authorization=True transition's evidence
+            # requirement -- AdjacencyClearanceRule.never_satisfies_authorization
+            # is a structural marker, enforced here, not left as documentation.
+            if transition.requires_human_authorization:
+                offending = clearance_ids & (
+                    set(transition.required_evidence) | set(transition.readiness_refs)
+                )
+                if offending:
+                    errors.append(
+                        f"transition '{transition.transition_id}' requires_human_authorization "
+                        f"but lists adjacency-clearance percept id(s) {sorted(offending)} in "
+                        "required_evidence/readiness_refs -- a clearance must never substitute "
+                        "for a human authorization (ADV-10)"
                     )
         return errors
 

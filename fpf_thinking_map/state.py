@@ -30,6 +30,7 @@ from fpf_thinking_map.authorization import AuthorizationReceipt, compute_state_f
 from fpf_thinking_map.move_intent import MoveIntent
 from fpf_thinking_map.pending_input import PendingInput
 from fpf_thinking_map.primitives import (
+    AdjacencyClearanceRule,
     CommitmentPrimitive,
     ContextPrimitive,
     DeonticModality,
@@ -99,6 +100,9 @@ class SemanticMap:
     publications: dict[str, PublicationPrimitive] = field(default_factory=dict)
     call_plans: dict[str, CallPlanPrimitive] = field(default_factory=dict)
     autonomy_budgets: dict[str, AutonomyBudgetDecl] = field(default_factory=dict)
+    adjacency_clearance_rules: dict[str, AdjacencyClearanceRule] = field(default_factory=dict)
+    """ADV-17: keyed by danger_percept_evidence_id, same registry pattern as
+    gates/commitments -- see PROPOSED_WUMPUS_ADJACENCY_CLEARANCE.md."""
     _ctx_transition_idx: dict[str, dict[str, list[TransitionPrimitive]]] | None = field(
         default=None, init=False, repr=False,
     )
@@ -150,6 +154,9 @@ class SemanticMap:
 
     def register_autonomy_budget(self, budget: AutonomyBudgetDecl) -> None:
         self.autonomy_budgets[budget.budget_id] = budget
+
+    def register_adjacency_clearance_rule(self, rule: AdjacencyClearanceRule) -> None:
+        self.adjacency_clearance_rules[rule.danger_percept_evidence_id] = rule
 
     def validate_work_attribution(self, work_id: str) -> list[str]:
         """F.6 exact Work -> RoleAssignment attribution diagnostics.
@@ -299,6 +306,30 @@ class ActiveState:
     _evidence_added_at: dict[str, int] = field(default_factory=dict, init=False, repr=False)
     _state_visits: dict[str, int] = field(default_factory=dict, init=False, repr=False)
     _state_visit_evidence: dict[str, frozenset[str]] = field(default_factory=dict, init=False, repr=False)
+    _adjacency_clearances: dict[str, dict[str, int]] = field(
+        default_factory=dict, init=False, repr=False,
+    )
+    """ADV-08/ADV-17: danger_percept_evidence_id -> {cell_state: step cleared}.
+
+    Nested per percept id, not a flat cell -> step map, so a clearance
+    stays attributable to the specific biconditional that produced it --
+    two different percepts clearing the same cell must not be conflated
+    (that would be exactly the kind of self-asserted, unverified fact
+    ADV-03 already warns about, one level up). Private and init=False, same
+    shape as _state_visits: a harness that hand-rolls persistence across a
+    process boundary silently loses this unless restored explicitly.
+    """
+    _confirmed_absent_percepts: dict[str, str | None] = field(
+        default_factory=dict, init=False, repr=False,
+    )
+    """ADV-03: percept_evidence_id -> confirmed_by_action (or None when not
+    named). The "percept record" -- exists so a harness that cares can
+    verify a confirmed-absent reading came from a real sensing action
+    instead of accepting an ambient claim. Distinct from available_evidence_ids
+    on purpose: reusing evidence presence for "percept checked" would make
+    EvidencePresent(id) silently read True for a percept that was actually
+    confirmed ABSENT, which is exactly backwards.
+    """
     _authorization_clock: int = field(default=0, init=False, repr=False)
     """Ticks on every step() call AND every successful transition_to() fire —
 
@@ -876,6 +907,48 @@ class ActiveState:
             self.trace.evidence_delta.append(evidence_id)
         if evidence_id not in self._evidence_added_at:
             self._evidence_added_at[evidence_id] = self.step_count
+
+    @property
+    def has_adjacency_clearance(self) -> bool:
+        """ADV-17/ADV-02: True once anything has been adjacency-cleared.
+
+        Gates DecisionRule.adjacency_sensitive the same way an elevated
+        risk_level gates risk_sensitive -- see LogicLayer._select_rules.
+        """
+        return bool(self._adjacency_clearances)
+
+    def confirm_percept_absent(
+        self,
+        danger_percept_evidence_id: str,
+        at_state: str,
+        confirmed_by_action: str | None = None,
+    ) -> set[str]:
+        """The Wumpus-World trick's entry point (ADV-17): record that
+        danger_percept_evidence_id was CONFIRMED absent at at_state, and
+        derive the resulting cleared neighborhood from the registered
+        AdjacencyClearanceRule, if any.
+
+        Returns the set of newly cleared cell states (empty if no rule is
+        registered for this percept id -- never guesses one, ADV-01/02).
+        This is a positive confirmation, distinct from the percept simply
+        never having been supplied: calling this is how a caller states
+        "I checked, and it wasn't there," not "I haven't checked yet."
+        """
+        self._confirmed_absent_percepts[danger_percept_evidence_id] = confirmed_by_action
+        rule = self.semantic_map.adjacency_clearance_rules.get(danger_percept_evidence_id)
+        if rule is None:
+            return set()
+        # Deferred import: reachability.py imports SemanticMap from this
+        # module, so importing it back at module load time would cycle.
+        from fpf_thinking_map.reachability import biconditional_clear
+
+        cleared = biconditional_clear(
+            self.semantic_map.transitions.values(), at_state, percept_absent=True,
+        )
+        cell_steps = self._adjacency_clearances.setdefault(danger_percept_evidence_id, {})
+        for cell in cleared:
+            cell_steps.setdefault(cell, self.step_count)
+        return cleared
 
     def response_contract(self, transition_id: str | None = None) -> dict:
         """Output contract — what the model's response must contain.

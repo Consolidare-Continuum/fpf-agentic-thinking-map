@@ -8,6 +8,25 @@ list: [`docs/deep/EXPANDED_PROVENANCE.md`](docs/deep/EXPANDED_PROVENANCE.md).
 
 ## [Unreleased]
 
+### Added
+
+- **ADV-17** — Wumpus-World-style negative-evidence inference: a
+  **confirmed-absent** percept proves every adjacent state danger-free, per
+  a map-author-declared `AdjacencyClearanceRule` (never inferred from map
+  shape). Opt-in, additive: `AdjacentlyCleared` (`logic.py`),
+  `AdjacencyClearanceRule` (`primitives.py`), `biconditional_clear()`
+  (`reachability.py`, undirected adjacency), `ActiveState.confirm_percept_absent()`
+  / `has_adjacency_clearance`, `DecisionRule.adjacency_sensitive`,
+  `SemanticMap.register_adjacency_clearance_rule()`. No auto-detector
+  (`ADV-09` class — this package cannot verify a domain's biconditional is
+  actually true). `ThinkingMapTraversal.validation_errors()` gained one new
+  check: a clearance percept id can never satisfy a
+  `requires_human_authorization=True` transition's evidence requirement
+  (`ADV-10`). Full spec:
+  [`docs/deep/PROPOSED_WUMPUS_ADJACENCY_CLEARANCE.md`](docs/deep/PROPOSED_WUMPUS_ADJACENCY_CLEARANCE.md).
+  `fpf_thinking_map/verify.py` 39/39, `dev_mcp/test_server.py` unchanged at
+  45/45 (no detector to add).
+
 ### Planned
 
 - Traversal checkpoint and restore — `ActiveState.checkpoint()` /

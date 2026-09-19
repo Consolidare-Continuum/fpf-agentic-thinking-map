@@ -12,8 +12,8 @@ against whatever `ActiveState` your scenario builds, automatically — no
 need to reason by hand about whether your test case happens to sit in one
 of these blind spots. Hits are returned inline and logged
 (`get_advisory_log`), so you can tell which of these are theoretical for
-your domain and which your own scenarios actually hit. `ADV-09` and
-`ADV-16` aren't part of that automatic scan — see each entry for why not.
+your domain and which your own scenarios actually hit. `ADV-09`, `ADV-16`,
+and `ADV-17` aren't part of that automatic scan — see each entry for why not.
 
 ## Index
 
@@ -35,6 +35,7 @@ your domain and which your own scenarios actually hit. `ADV-09` and
 | [`ADV-14`](#adv-14--may-is-not-a-permission-grant-or-authorization) | MAY is not authority | RFC-style MAY cannot grant permission or authorize enactment |
 | [`ADV-15`](#adv-15--failed-run-xor-outcome-space-must-include-end_compile_revert--still-1-step--distance-) | failed-run XOR terminal | predicting exclusive step outcomes via XOR must name `end_compile_revert`; still 1 step; hop distance ≤ bound |
 | [`ADV-16`](#adv-16--ailevfpf-commits-must-pass-our-predefined-scopes--else-tombstone) | upstream scope gate | ailev/FPF commits follow into our scopes only after inspection PASS; else TOMBSTONE commit and/or advisory |
+| [`ADV-17`](#adv-17--adjacency-clearance-is-sound-only-for-a-correctly-declared-biconditional-not-for-no-evidence-yet) | Wumpus World logic | a confirmed-absent percept clears every adjacent state only if the declared biconditional is actually true of the domain — this package cannot verify that |
 
 ---
 
@@ -224,4 +225,16 @@ This is a distinct question from whether the model reads or chooses to use a *va
 
 ---
 
-*v1 — 2026-07-08 (ADV-01/02), v2 — 2026-07-08 (ADV-03..06), v3 — 2026-07-08 (ADV-07), v4 — 2026-07-18 (ADV-08), v5 — 2026-07-18 (ADV-09), v6 — 2026-07-20 (ADV-10), v7 — 2026-07-20 (ADV-11), v8 — 2026-08-01 (ADV-12..14), v9 — 2026-09-19 (ADV-15), v10 — 2026-09-19 (ADV-16). All were found by running scenarios or comparing shipped structures against their current source semantics; they are evidence-backed integration warnings, not speculative feature requests.*
+## ADV-17 — Adjacency clearance is sound only for a correctly-declared biconditional, not for "no evidence yet"
+
+*Tag: Wumpus World logic. No auto-detector — same class as ADV-09: this package cannot verify a domain's physics/security model actually satisfies a declared biconditional.*
+
+**What**: `AdjacentlyCleared`/`ActiveState.confirm_percept_absent()`/`reachability.biconditional_clear()` implement one sound inference — a **confirmed-absent** percept (not merely unsupplied evidence) proves every state adjacent to it danger-free, per an `AdjacencyClearanceRule` the map author declares (never inferred from the map's own shape). That inference only produces a valid result when the declared biconditional is actually true of the domain — danger at a neighbor really would, always, cause the percept at the named cell. A caller that registers a biconditional which doesn't actually hold in their domain gets a *confidently wrong* clearance — worse than `ADV-01`'s merely-stale evidence, because nothing about a false "cleared" reads as uncertain. Wumpus World's own textbook trick only works because the game's designers guaranteed the biconditional; this package cannot verify a domain's physics/security model actually satisfies one.
+
+**Why this is the default**: same shape as `ADV-04` declining to infer contradiction from action names, and `ADV-09`'s "no oracles, no future seers" — validating that a domain-supplied biconditional is *true* would require this package to understand the domain's physics, which it structurally cannot. The core's job stops at computing the inference correctly *given* a declared rule; whether the rule itself is sound is the map author's claim to defend.
+
+**How to close the gap**: never auto-declare a biconditional from `HasMissingEvidence`/absence-of-a-key alone. Require an explicit, reviewed `AdjacencyClearanceRule` per percept — the same discipline `ADV-04`'s `exclusive_with` and `ADV-10`'s `requires_human_authorization` already ask of a map author for a comparably sharp claim. Three structural guards ship with the primitive, none of them a substitute for reviewing the biconditional itself: `contradicted_by` (ADV-04) lets an independent, directly-asserted danger fact void a clearance; `AdjacencyClearanceRule.never_satisfies_authorization` is enforced in `ThinkingMapTraversal.validation_errors()` so a clearance can never substitute for a missing `requires_human_authorization` (ADV-10); `DecisionRule.adjacency_sensitive` keeps a clearance-reading rule out of selection entirely until something has actually been cleared (ADV-02's non-auto-filter discipline, mirrored). Full spec: `docs/deep/PROPOSED_WUMPUS_ADJACENCY_CLEARANCE.md`.
+
+---
+
+*v1 — 2026-07-08 (ADV-01/02), v2 — 2026-07-08 (ADV-03..06), v3 — 2026-07-08 (ADV-07), v4 — 2026-07-18 (ADV-08), v5 — 2026-07-18 (ADV-09), v6 — 2026-07-20 (ADV-10), v7 — 2026-07-20 (ADV-11), v8 — 2026-08-01 (ADV-12..14), v9 — 2026-09-19 (ADV-15), v10 — 2026-09-19 (ADV-16), v11 — 2026-09-19 (ADV-17). All were found by running scenarios or comparing shipped structures against their current source semantics; they are evidence-backed integration warnings, not speculative feature requests.*

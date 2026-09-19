@@ -44,6 +44,7 @@ __all__ = [
     "graph_roots",
     "forward_reachable",
     "shortest_path_distance",
+    "biconditional_clear",
     "unreachable_transitions",
 ]
 
@@ -121,6 +122,58 @@ def shortest_path_distance(
                     return dist[nxt]
                 frontier.append(nxt)
     return None
+
+
+def biconditional_clear(
+    transitions: Iterable[TransitionPrimitive],
+    percept_state: str,
+    percept_absent: bool,
+    *,
+    strict_state_ids: bool = False,
+) -> set[str]:
+    """Wumpus-World-style negative-evidence inference (ADV-17): given a
+    declared percept is CONFIRMED absent at percept_state, return every
+    state adjacent to it that a biconditional therefore proves danger-free.
+
+    Adjacency here is UNDIRECTED -- deliberately not the directed relation
+    shortest_path_distance/forward_reachable use, since the biconditional
+    this models (``Percept(p, c*) <=> OR(D(c) for c adjacent to c*)``) is
+    symmetric: a transition declared c1->c2 makes c1 and c2 mutually
+    adjacent for this inference, regardless of which direction it fires.
+
+    Returns the empty set when percept_absent is False -- this function
+    computes the graph-membership half of the inference only. It does not
+    decide what "danger-free" should be allowed to unlock; same split as
+    shortest_path_distance vs. a guard's distance<=bound policy (ADV-15).
+    Whether a specific percept_state was confirmed absent (vs. merely
+    unconfirmed) is a state.py concern (see ActiveState.confirm_percept_absent
+    and the ADV-03 discussion in PROPOSED_WUMPUS_ADJACENCY_CLEARANCE.md), not
+    this function's -- this function is pure and knows nothing about evidence.
+
+    strict_state_ids (ADV-07): when True, percept_state not appearing as
+    either endpoint of any declared transition raises ValueError instead of
+    silently returning an empty set. Default stays permissive/fail-safe --
+    under-clearing (nothing proven safe) is the safe direction to fail in,
+    never over-clearing.
+    """
+    if not percept_absent:
+        return set()
+    transitions = list(transitions)
+    neighbors: set[str] = set()
+    known_states: set[str] = set()
+    for t in transitions:
+        known_states.add(t.from_state)
+        known_states.add(t.to_state)
+        if t.from_state == percept_state:
+            neighbors.add(t.to_state)
+        if t.to_state == percept_state:
+            neighbors.add(t.from_state)
+    if strict_state_ids and percept_state not in known_states:
+        raise ValueError(
+            f"percept_state '{percept_state}' is not an endpoint of any "
+            "declared transition"
+        )
+    return neighbors
 
 
 def unreachable_transitions(

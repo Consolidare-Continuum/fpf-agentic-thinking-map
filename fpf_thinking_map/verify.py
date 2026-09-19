@@ -39,6 +39,7 @@ from fpf_thinking_map.examples import (
 )
 from fpf_thinking_map.guards import GuardEngine, GuardScope, GuardVerdict
 from fpf_thinking_map.logic import (
+    AdjacentlyCleared,
     CustomProp,
     DecisionRule,
     EvidenceFresh,
@@ -56,6 +57,7 @@ from fpf_thinking_map.pending_input import PendingInput, PendingInputStatus
 from fpf_thinking_map.primitives import (
     FGR,
     FLOOR_BASE_TTL,
+    AdjacencyClearanceRule,
     AgencyLevel,
     CommitmentPrimitive,
     ContextBridge,
@@ -74,7 +76,11 @@ from fpf_thinking_map.primitives import (
     TransitionPrimitive,
     WorkPrimitive,
 )
-from fpf_thinking_map.reachability import shortest_path_distance, unreachable_transitions
+from fpf_thinking_map.reachability import (
+    biconditional_clear,
+    shortest_path_distance,
+    unreachable_transitions,
+)
 from fpf_thinking_map.state import ActiveState, MoveTrace, RuntimeBinding, SemanticMap
 from fpf_thinking_map.traversal import (
     MapValidationError,
@@ -1889,6 +1895,125 @@ def check_adv15_distance_and_xor_terminal():
     assert distance == 1
 
 
+def check_biconditional_clear():
+    """ADV-17: biconditional_clear() is pure, undirected, and fail-safe.
+
+    Undirected on purpose (unlike shortest_path_distance): a single
+    declared transition hub->room_a makes room_a adjacent to hub AND hub
+    adjacent to room_a for this inference, because the biconditional it
+    models is symmetric (see PROPOSED_WUMPUS_ADJACENCY_CLEARANCE.md's
+    Formal spec).
+    """
+    transitions = [
+        TransitionPrimitive("t1", "Hub to A", "ctx", "hub", "room_a"),
+        TransitionPrimitive("t2", "Hub to B", "ctx", "hub", "room_b"),
+        TransitionPrimitive("t3", "Elsewhere", "ctx", "x", "y"),
+    ]
+
+    assert biconditional_clear(transitions, "hub", percept_absent=False) == set()
+    assert biconditional_clear(transitions, "hub", percept_absent=True) == {"room_a", "room_b"}
+    # undirected: clearing from a neighbor's side reaches back to the hub
+    assert biconditional_clear(transitions, "room_a", percept_absent=True) == {"hub"}
+    # disconnected component contributes nothing
+    assert biconditional_clear(transitions, "x", percept_absent=True) == {"y"}
+
+    # ADV-07: unknown state id -- silent empty set by default (fail-safe,
+    # under-clears rather than guessing), loud only when asked.
+    assert biconditional_clear(transitions, "nowhere", percept_absent=True) == set()
+    try:
+        biconditional_clear(transitions, "nowhere", percept_absent=True, strict_state_ids=True)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("strict_state_ids=True must raise on an unknown state id")
+
+
+def check_adjacency_clearance_trick():
+    """ADV-17 end to end: confirm_percept_absent -> AdjacentlyCleared, plus
+    the four opt-in hooks (ADV-04 contradicted_by, ADV-02 adjacency_sensitive,
+    ADV-10 never_satisfies_authorization) that came out of the per-advisory
+    review in PROPOSED_WUMPUS_ADJACENCY_CLEARANCE.md. Not tested here:
+    clearance_group_id/declared_by_role_id (ADV-05/ADV-06) -- both are
+    inert metadata by design, nothing to assert beyond "the field exists
+    and round-trips," which the dataclass itself already guarantees.
+    """
+    sm = SemanticMap()
+    sm.register_context(ContextPrimitive("ctx", "Test"))
+    sm.register_transition(TransitionPrimitive("t1", "Hub to A", "ctx", "hub", "room_a"))
+    sm.register_transition(TransitionPrimitive("t2", "Hub to B", "ctx", "hub", "room_b"))
+    sm.register_adjacency_clearance_rule(
+        AdjacencyClearanceRule(danger_percept_evidence_id="breeze_at_hub")
+    )
+    engine = ThinkingMapTraversal(sm)
+    state = engine.build_active_state(RuntimeBinding(active_context_id="ctx"), current_state="hub")
+
+    # unconfirmed percept: never guesses a clearance (ADV-01/02 discipline)
+    assert AdjacentlyCleared("room_a", "breeze_at_hub").evaluate(state) is False
+    assert state.has_adjacency_clearance is False
+
+    cleared = state.confirm_percept_absent("breeze_at_hub", at_state="hub", confirmed_by_action="t1")
+    assert cleared == {"room_a", "room_b"}
+    assert AdjacentlyCleared("room_a", "breeze_at_hub").evaluate(state) is True
+    assert AdjacentlyCleared("room_b", "breeze_at_hub").evaluate(state) is True
+    assert state.has_adjacency_clearance is True
+    # a percept id with no registered rule never clears anything, silently
+    assert state.confirm_percept_absent("no_rule_for_this", at_state="hub") == set()
+
+    # ADV-04: an explicit, declared contradiction voids a clearance that
+    # would otherwise hold -- opt-in, not inferred from map shape.
+    sm.register_adjacency_clearance_rule(AdjacencyClearanceRule(
+        danger_percept_evidence_id="quiet_at_hub", contradicted_by=["direct_danger_report"],
+    ))
+    state2 = engine.build_active_state(RuntimeBinding(active_context_id="ctx"), current_state="hub")
+    state2.confirm_percept_absent("quiet_at_hub", at_state="hub")
+    assert AdjacentlyCleared("room_a", "quiet_at_hub").evaluate(state2) is True
+    state2.add_evidence("direct_danger_report")
+    assert AdjacentlyCleared("room_a", "quiet_at_hub").evaluate(state2) is False
+
+    # ADV-02: adjacency_sensitive mirrors risk_sensitive's exact
+    # selection-filter shape -- skipped until something is cleared.
+    layer = LogicLayer()
+    layer.add_rule(DecisionRule(
+        name="room_a_clear_route",
+        condition=AdjacentlyCleared("room_a", "breeze_at_hub"),
+        action_if_true="enter_room_a",
+        adjacency_sensitive=True,
+    ))
+    unconfirmed_state = engine.build_active_state(
+        RuntimeBinding(active_context_id="ctx"), current_state="hub",
+    )
+    assert "enter_room_a" not in layer.satisfied_actions(unconfirmed_state), (
+        "adjacency_sensitive rule must be filtered out before anything is cleared"
+    )
+    assert layer.unsatisfied_rules(unconfirmed_state) == []  # not selected, so not "unsatisfied" either
+    unconfirmed_state.confirm_percept_absent("breeze_at_hub", at_state="hub")
+    assert "enter_room_a" in layer.satisfied_actions(unconfirmed_state)
+
+    # ADV-10: a clearance percept id must never satisfy a
+    # requires_human_authorization=True transition's evidence requirement.
+    unsafe = SemanticMap()
+    unsafe.register_context(ContextPrimitive("ctx", "Test"))
+    unsafe.register_transition(TransitionPrimitive(
+        "delete_everything", "Delete", "ctx", "hub", "gone",
+        requires_human_authorization=True, required_evidence=["breeze_at_hub"],
+    ))
+    unsafe.register_adjacency_clearance_rule(
+        AdjacencyClearanceRule(danger_percept_evidence_id="breeze_at_hub")
+    )
+    unsafe_engine = ThinkingMapTraversal(unsafe)
+    errors = unsafe_engine.validation_errors()
+    assert any("ADV-10" in e for e in errors), f"expected an ADV-10 validation error, got {errors}"
+    try:
+        unsafe_engine.validate_map()
+    except MapValidationError:
+        pass
+    else:
+        raise AssertionError(
+            "validate_map must fail closed when a clearance id gates a "
+            "requires_human_authorization transition"
+        )
+
+
 def check_route_gated_transition():
     """guard_expression -> DecisionRule: routing-policy legality, agentic
 
@@ -2443,6 +2568,8 @@ def main():
             "ADV-15 failed-run terminal (XOR-predicted, 1 step, distance <= bound)",
             check_adv15_distance_and_xor_terminal,
         ),
+        ("ADV-17 biconditional_clear (undirected, fail-safe)", check_biconditional_clear),
+        ("ADV-17 adjacency clearance trick end to end", check_adjacency_clearance_trick),
         (
             "route-gated transition (guard_expression -> DecisionRule, REVISE_PLAN not ESCALATE)",
             check_route_gated_transition,

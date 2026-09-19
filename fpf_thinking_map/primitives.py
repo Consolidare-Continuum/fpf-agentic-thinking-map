@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import Any, ClassVar
 
 from fpf_thinking_map.agentic_structure import (
     ClaimScope,
@@ -459,6 +459,42 @@ class EvidencePrimitive:
             trust_factor = self.fgr.formality_ratio * self.fgr.effective_reliability
             return max(1, round(trust_factor * base))
         return base
+
+
+# ---------------------------------------------------------------------------
+# ADV-17 — adjacency clearance (Wumpus-World-style negative-evidence
+# inference). See docs/deep/PROPOSED_WUMPUS_ADJACENCY_CLEARANCE.md for the
+# full spec. This declaration object is deliberately separate from the
+# Prop that reads it (logic.AdjacentlyCleared) -- primitives.py has no
+# ActiveState dependency and this class doesn't need one either.
+# ---------------------------------------------------------------------------
+
+@dataclass
+class AdjacencyClearanceRule:
+    """Map-author-declared biconditional: Percept(danger_percept_evidence_id)
+    <=> OR(D(c) for c adjacent to the confirmed-absent cell). Registered on
+    SemanticMap (register_adjacency_clearance_rule), one per percept id --
+    never inferred from the map's own shape (ADV-04 discipline).
+    """
+    danger_percept_evidence_id: str
+    contradicted_by: list[str] = field(default_factory=list)
+    """ADV-04: evidence ids that, if present, void a clearance built from
+    this rule -- opt-in, explicit contradiction, same discipline as
+    DecisionRule.exclusive_with for actions."""
+    clearance_group_id: str | None = None
+    """ADV-05: clearances meant to jointly satisfy one partial-completeness
+    GateCheck share a group id -- this field only tags that intent, it
+    does not itself aggregate anything."""
+    declared_by_role_id: str | None = None
+    """ADV-06: records who authored this biconditional, so an opt-in guard
+    can refuse to honor a clearance when the currently-acting role matches
+    the declaring role (self-certification conflict of interest). Not
+    enforced here -- structural fact only, same as agency-level metadata."""
+    never_satisfies_authorization: ClassVar[bool] = True
+    """ADV-10: non-instance, non-overridable marker. A clearance produced
+    via this rule must never be accepted as required_evidence/readiness_refs
+    on a requires_human_authorization=True transition -- enforced in
+    ThinkingMapTraversal.validation_errors(), not just documented here."""
 
 
 # ---------------------------------------------------------------------------

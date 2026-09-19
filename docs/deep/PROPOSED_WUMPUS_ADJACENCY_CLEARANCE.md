@@ -1,9 +1,18 @@
-# Proposed (not accepted, not built) — adjacency clearance from negative evidence ("Wumpus World logic")
+# Accepted and shipped — adjacency clearance from negative evidence ("Wumpus World logic")
 
-**Status**: Draft proposal only. No verdict recorded, no code written, nothing
-scheduled. This document exists so "propose it" has something concrete to
-react to — accept, amend, or reject, the same three-way choice every other
-`REJECTED_*.md` / `DESIGN_*.md` in this directory went through before landing.
+**Status**: Accepted by operator 2026-09-19 ("accepted, produce the code,
+dont overstep") and built the same day, exactly to this spec — every field
+listed here (`AdjacentlyCleared`, `AdjacencyClearanceRule`,
+`biconditional_clear`, `DecisionRule.adjacency_sensitive`,
+`ActiveState.confirm_percept_absent`/`has_adjacency_clearance`,
+`never_satisfies_authorization`) is real code now, not a sketch. Shipped as
+**ADV-17** in `docs/deep/ADVISORIES.md`. This document is kept as the
+design record the implementation is traceable back to, per the same
+`REJECTED_*.md`/`DESIGN_*.md` convention every other accepted/rejected
+proposal in this directory follows — the reasoning stays even once the
+"open questions" below are resolved. Where a question below was resolved
+during implementation rather than left for a separate verdict, the
+resolution is noted inline; nothing was decided silently.
 **Requested by**: operator, 2026-09-19, in two turns: "wumpus world is a bit
 adjusted for agentic scopes" + "we added a bit of reversed logic," then
 "propose it as based on wumpus world logic."
@@ -289,29 +298,40 @@ is.
   guard/`DecisionRule` decision on the domain side, per every existing
   `ADV-0x` in this family.
 
-## Open questions for whoever gives this a verdict
+## Open questions — resolved during implementation
 
 1. ~~Is "adjacent" the right relation?~~ Resolved in **Formal spec** above:
    undirected, deliberately not `shortest_path_distance`'s directed BFS.
-2. Does `AdjacencyClearanceRule` live on the `ContextPrimitive` (domain-wide,
-   fewer declarations) or get registered per-`GateCheck` (narrower, more
-   declarations, less risk of one wrong rule leaking across an unrelated
-   part of a map)? The ten-variable table above assumes per-rule
-   registration on `SemanticMap` (its own registry, same pattern as
-   `register_gate`/`register_commitment`) — not decided.
-3. `never_satisfies_authorization` (the `ADV-10` variable): does it belong
-   as a `ClassVar` on `AdjacencyClearanceRule` itself (one flag, always
-   `True`, effectively documentation-as-code) or as an actual
-   `validate_map()` check that scans `required_evidence` lists for a
-   clearance id against `requires_human_authorization=True` transitions?
-   The former is cheaper; the latter actually enforces it. Leaning toward
-   requiring the latter given how sharp `ADV-10`'s own text already is
-   about silent defaults — but that's a real implementation decision, not
-   a documentation one, and belongs to whoever accepts this.
-4. Worth a `run_scenario`-testable worked example in `examples.py` (an 11th
-   scenario) before or after a verdict — this package's own convention
-   (`ADV-15`'s `check_adv15_distance_and_xor_terminal`) was to build the
-   worked example as part of landing the feature, not before proposing it.
+2. ~~Where does `AdjacencyClearanceRule` live?~~ Resolved: registered on
+   `SemanticMap` (`register_adjacency_clearance_rule`, its own registry,
+   same pattern as `register_gate`/`register_commitment`) — keyed by
+   `danger_percept_evidence_id`, one rule per percept. The dataclass
+   itself lives in `primitives.py`, not `logic.py` as first sketched above
+   — `primitives.py` has no `ActiveState` dependency and this class didn't
+   need one either; only the `Prop` that reads it (`AdjacentlyCleared`)
+   belongs in `logic.py`. Purely a which-file decision, invisible to any
+   caller.
+3. ~~`ClassVar` alone or real enforcement?~~ Resolved: both.
+   `never_satisfies_authorization: ClassVar[bool] = True` on
+   `AdjacencyClearanceRule`, **and** `ThinkingMapTraversal.validation_errors()`
+   gained a real check that scans every `requires_human_authorization=True`
+   transition's `required_evidence`/`readiness_refs` for a registered
+   clearance id and fails closed on `validate_map()` if found. Went with
+   the stated leaning toward actual enforcement.
+4. ~~Worked example in `examples.py`?~~ Resolved: no. Followed the actual
+   `ADV-15` precedent (not the speculative "or" in the original question)
+   — coverage lives in `fpf_thinking_map/verify.py`
+   (`check_biconditional_clear`, `check_adjacency_clearance_trick`,
+   39/39), not as an 11th scenario in `examples.py`'s public demo list.
+
+One implementation-time refinement beyond the four questions above:
+`ActiveState._adjacency_clearances` shipped as `dict[str, dict[str, int]]`
+(percept id → {cell: step cleared}), not the flatter `dict[str, int]` this
+document's per-advisory table first named. A flat cell → step map couldn't
+tell two different percepts clearing the same cell apart — exactly the
+kind of unverified-provenance bug `ADV-03`'s own variable exists to avoid,
+one layer up. Still one field, still `ADV-08`'s exact persistence-hazard
+shape; the value type just needed to be precise once actually implemented.
 
 ## Regression guarantee
 
