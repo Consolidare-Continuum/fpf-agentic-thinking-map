@@ -489,6 +489,99 @@ result = "ok"
     assert "ADV-14" in ids, f"expected ADV-14 for MAY compatibility form, got {ids}"
 
 
+def check_adv15_xor_without_revert_detected():
+    """XOR-predicted exclusive outcomes with no end_compile_revert-named transition -> ADV-15."""
+    code = """
+sm = SemanticMap()
+sm.register_context(ContextPrimitive("ctx", "Test"))
+sm.register_transition(TransitionPrimitive(
+    transition_id="deploy_success", label="Deploy succeeded", context_id="ctx",
+    from_state="running", to_state="success",
+))
+sm.register_transition(TransitionPrimitive(
+    transition_id="deploy_failed", label="Deploy failed", context_id="ctx",
+    from_state="running", to_state="failed",
+))
+layer = LogicLayer()
+layer.add_rule(DecisionRule(
+    name="run_concluded",
+    condition=InState("success").XOR(InState("failed")),
+    action_if_true="run_concluded",
+))
+engine = ThinkingMapTraversal(sm, logic_layer=layer)
+state = engine.build_active_state(RuntimeBinding(active_context_id="ctx"), current_state="failed")
+result = "ok"
+"""
+    out = json.loads(run_scenario(code, scope="core"))
+    ids = _triggered_ids(out)
+    assert "ADV-15" in ids, f"expected ADV-15 (XOR without end_compile_revert), got {ids} — full: {out}"
+
+
+def check_adv15_no_false_positive_with_revert():
+    """Same XOR rule, but a registered end_compile_revert transition names the failed-run terminal -> no hit."""
+    code = """
+sm = SemanticMap()
+sm.register_context(ContextPrimitive("ctx", "Test"))
+sm.register_transition(TransitionPrimitive(
+    transition_id="deploy_success", label="Deploy succeeded", context_id="ctx",
+    from_state="running", to_state="success",
+))
+sm.register_transition(TransitionPrimitive(
+    transition_id="deploy_failed", label="Deploy failed", context_id="ctx",
+    from_state="running", to_state="failed",
+))
+sm.register_transition(TransitionPrimitive(
+    transition_id="end_compile_revert", label="End compile attempt, revert to known-good",
+    context_id="ctx", from_state="failed", to_state="known_good",
+))
+layer = LogicLayer()
+layer.add_rule(DecisionRule(
+    name="run_concluded",
+    condition=InState("success").XOR(InState("failed")),
+    action_if_true="run_concluded",
+))
+engine = ThinkingMapTraversal(sm, logic_layer=layer)
+state = engine.build_active_state(RuntimeBinding(active_context_id="ctx"), current_state="failed")
+result = "ok"
+"""
+    out = json.loads(run_scenario(code, scope="core"))
+    ids = _triggered_ids(out)
+    assert "ADV-15" not in ids, f"end_compile_revert is declared, ADV-15 must not fire — full: {out}"
+
+
+def check_adv15_bare_logic_layer_in_namespace_detected():
+    """find_active_states_and_logic's fallback: a LogicLayer never bound to a
+    ThinkingMapTraversal (no `logic_layer=` kwarg) must still be picked up by
+    variable-type scan alone, so ADV-15 still fires."""
+    code = """
+sm = SemanticMap()
+sm.register_context(ContextPrimitive("ctx", "Test"))
+sm.register_transition(TransitionPrimitive(
+    transition_id="deploy_success", label="Deploy succeeded", context_id="ctx",
+    from_state="running", to_state="success",
+))
+sm.register_transition(TransitionPrimitive(
+    transition_id="deploy_failed", label="Deploy failed", context_id="ctx",
+    from_state="running", to_state="failed",
+))
+layer = LogicLayer()
+layer.add_rule(DecisionRule(
+    name="run_concluded",
+    condition=InState("success").XOR(InState("failed")),
+    action_if_true="run_concluded",
+))
+engine = ThinkingMapTraversal(sm)
+state = engine.build_active_state(RuntimeBinding(active_context_id="ctx"), current_state="failed")
+result = "ok"
+"""
+    out = json.loads(run_scenario(code, scope="core"))
+    ids = _triggered_ids(out)
+    assert "ADV-15" in ids, (
+        f"LogicLayer was never bound via logic_layer=, only present as a bare "
+        f"namespace variable — the fallback scan must still find it, got {ids} — full: {out}"
+    )
+
+
 def check_advisory_log_persists_across_calls():
     code = """
 sm = SemanticMap()
@@ -684,6 +777,15 @@ def main() -> int:
         ("advisories: ADV-12 typed assurance accepted", check_adv12_typed_assurance_no_false_positive),
         ("advisories: ADV-13 invalid work attribution detected", check_adv13_invalid_work_attribution_detected),
         ("advisories: ADV-14 MAY is not permission", check_adv14_may_not_permission_detected),
+        ("advisories: ADV-15 XOR without end_compile_revert detected", check_adv15_xor_without_revert_detected),
+        (
+            "advisories: ADV-15 no false positive when revert declared",
+            check_adv15_no_false_positive_with_revert,
+        ),
+        (
+            "advisories: ADV-15 detected via bare LogicLayer in namespace",
+            check_adv15_bare_logic_layer_in_namespace_detected,
+        ),
         ("advisories: log persists across calls", check_advisory_log_persists_across_calls),
         ("compliance: off by default", check_compliance_off_by_default),
         ("compliance: fit recorded", check_compliance_fit_recorded),

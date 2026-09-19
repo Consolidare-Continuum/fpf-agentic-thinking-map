@@ -45,9 +45,11 @@ from fpf_thinking_map.logic import (
     EvidencePresent,
     GateAbstained,
     GateBlocked,
+    InState,
     LogicLayer,
     RiskAbove,
     RuleKind,
+    XorProp,
 )
 from fpf_thinking_map.move_intent import MoveIntent
 from fpf_thinking_map.pending_input import PendingInput, PendingInputStatus
@@ -72,7 +74,7 @@ from fpf_thinking_map.primitives import (
     TransitionPrimitive,
     WorkPrimitive,
 )
-from fpf_thinking_map.reachability import unreachable_transitions
+from fpf_thinking_map.reachability import shortest_path_distance, unreachable_transitions
 from fpf_thinking_map.state import ActiveState, MoveTrace, RuntimeBinding, SemanticMap
 from fpf_thinking_map.traversal import (
     MapValidationError,
@@ -1790,6 +1792,103 @@ def check_reachability():
     )
 
 
+def check_shortest_path_distance():
+    """ADV-15's distance check: BFS hop count, not mere set membership.
+
+    forward_reachable answers "can I get there at all"; ADV-15 needs "how
+    many hops," because a distance <= bound policy on a failed-run revert
+    target cannot be expressed with reachability alone. Three cases:
+    same node (0), a genuine multi-hop path (positive int, exact count),
+    and no path at all (None) -- the last two are indistinguishable to
+    forward_reachable() but must not be to this function.
+    """
+    transitions = [
+        TransitionPrimitive(
+            transition_id="t1", label="A to B", context_id="ctx",
+            from_state="a", to_state="b",
+        ),
+        TransitionPrimitive(
+            transition_id="t2", label="B to C", context_id="ctx",
+            from_state="b", to_state="c",
+        ),
+        TransitionPrimitive(
+            transition_id="t3", label="X to Y (disconnected)", context_id="ctx",
+            from_state="x", to_state="y",
+        ),
+    ]
+
+    assert shortest_path_distance(transitions, "a", "a") == 0
+    assert shortest_path_distance(transitions, "a", "b") == 1
+    assert shortest_path_distance(transitions, "a", "c") == 2
+    assert shortest_path_distance(transitions, "a", "x") is None
+    # directed graph: no edge runs c -> a, so the reverse hop must be None too
+    assert shortest_path_distance(transitions, "c", "a") is None
+
+
+def check_adv15_distance_and_xor_terminal():
+    """ADV-15 worked example: XOR-predicted failed-run terminal, 1 step at a
+    time, distance <= bound to the revert target.
+
+    A domain map's LogicLayer predicts exactly one of {success, failed} via
+    XorProp -- the exclusive-outcome-count pattern ADV-15 is about. The
+    failed branch must land on a *named* end_compile_revert transition
+    (not an unnamed ABSTAIN/ESCALATE leftover), fired as its own single
+    step() call, and the hop distance from the failure locus to the revert
+    target must satisfy a domain-declared bound.
+    """
+    sm = SemanticMap()
+    sm.register_context(ContextPrimitive("ops", "Ops"))
+    sm.register_transition(TransitionPrimitive(
+        transition_id="deploy_success", label="Deploy succeeded", context_id="ops",
+        from_state="running", to_state="success",
+    ))
+    sm.register_transition(TransitionPrimitive(
+        transition_id="deploy_failed", label="Deploy failed", context_id="ops",
+        from_state="running", to_state="failed",
+    ))
+    sm.register_transition(TransitionPrimitive(
+        transition_id="end_compile_revert", label="End compile attempt, revert to known-good",
+        context_id="ops", from_state="failed", to_state="known_good",
+    ))
+
+    logic = LogicLayer()
+    logic.add_rule(DecisionRule(
+        name="run_concluded",
+        condition=XorProp(InState("success"), InState("failed")),
+        action_if_true="run_concluded",
+    ))
+    engine = ThinkingMapTraversal(sm, logic_layer=logic)
+
+    binding = RuntimeBinding(active_context_id="ops")
+
+    # exactly one of {success, failed} holds at each terminal -- the XOR
+    # prediction the DecisionRule encodes.
+    s_success = engine.build_active_state(binding, current_state="success")
+    s_failed = engine.build_active_state(binding, current_state="failed")
+    assert XorProp(InState("success"), InState("failed")).evaluate(s_success) is True
+    assert XorProp(InState("success"), InState("failed")).evaluate(s_failed) is True
+
+    # the failed branch fires as its own single step() call ...
+    s_running = engine.build_active_state(binding, current_state="running")
+    o_fail = engine.attempt_transition(s_running, "deploy_failed")
+    assert o_fail.kind == OutcomeKind.CONTINUE
+    assert o_fail.next_state == "failed"
+
+    # ... and the revert is a second, separate single step() call naming
+    # end_compile_revert explicitly -- not batched into the same hop.
+    o_revert = engine.attempt_transition(s_failed, "end_compile_revert")
+    assert o_revert.kind == OutcomeKind.CONTINUE
+    assert o_revert.next_state == "known_good"
+
+    # distance(failure locus, revert target) must satisfy the domain bound;
+    # forward_reachable alone (set membership) cannot express "<= bound".
+    domain_bound = 3
+    distance = shortest_path_distance(sm.transitions.values(), "failed", "known_good")
+    assert distance is not None, "revert target must be reachable from the failure locus"
+    assert distance <= domain_bound, f"distance {distance} exceeds domain bound {domain_bound}"
+    assert distance == 1
+
+
 def check_route_gated_transition():
     """guard_expression -> DecisionRule: routing-policy legality, agentic
 
@@ -2339,6 +2438,11 @@ def main():
         ("pending input / AWAIT (distinct from IDLE)", check_pending_input_await),
         ("move intent / inspect_move (concrete move identity)", check_move_intent),
         ("reachability (discrete graph analysis, val.pdf ch.10)", check_reachability),
+        ("shortest_path_distance (BFS hop count: 0, N, None unreachable)", check_shortest_path_distance),
+        (
+            "ADV-15 failed-run terminal (XOR-predicted, 1 step, distance <= bound)",
+            check_adv15_distance_and_xor_terminal,
+        ),
         (
             "route-gated transition (guard_expression -> DecisionRule, REVISE_PLAN not ESCALATE)",
             check_route_gated_transition,

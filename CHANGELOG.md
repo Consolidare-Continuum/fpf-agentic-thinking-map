@@ -8,6 +8,17 @@ list: [`docs/deep/EXPANDED_PROVENANCE.md`](docs/deep/EXPANDED_PROVENANCE.md).
 
 ## [Unreleased]
 
+### Added
+
+- **ADV-15** — failed-run XOR outcome space must include `end_compile_revert`
+  (still 1 step at a time; BFS hop `distance <= bound`). Documented in
+  `docs/deep/ADVISORIES.md`; detector in `dev_mcp/advisory_detectors.py`.
+- `reachability.shortest_path_distance` — BFS hop count for the ADV-15
+  distance check (`forward_reachable` remains set membership only).
+- **ADV-16** — `ailev/FPF` commits must PASS our predefined scopes else
+  **TOMBSTONE** (commit and/or advisory). Protocol:
+  `docs/deep/UPSTREAM_SCOPE_INSPECTION.md`. No auto-detector (ADV-09 class).
+
 ### Planned
 
 - Traversal checkpoint and restore — `ActiveState.checkpoint()` /

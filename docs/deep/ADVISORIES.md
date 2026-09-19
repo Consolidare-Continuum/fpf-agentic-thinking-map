@@ -7,13 +7,13 @@ Each advisory: what the default behavior actually is, why that's the default, an
 **Read these two first if you read nothing else here: [`ADV-03`](#adv-03--active_context_id-is-self-asserted-not-verified-against-how-you-got-there) (context claims aren't verified) and [`ADV-07`](#adv-07--riskaboves-string-matching-is-case-sensitive-and-fails-silently) (a routing rule built exactly as this doc recommends can still silently do the opposite of what you intended). Both are silent — no error, no warning — and both sit directly behind paths this document itself tells you to use.**
 
 **Testing against these directly?** [`dev_mcp`](../../dev_mcp/README.md)'s
-`run_scenario` checks every one of the 13 auto-detected advisories below
+`run_scenario` checks every one of the 14 auto-detected advisories below
 against whatever `ActiveState` your scenario builds, automatically — no
 need to reason by hand about whether your test case happens to sit in one
 of these blind spots. Hits are returned inline and logged
 (`get_advisory_log`), so you can tell which of these are theoretical for
-your domain and which your own scenarios actually hit. `ADV-09` isn't part
-of that automatic scan — see its own entry for why not.
+your domain and which your own scenarios actually hit. `ADV-09` and
+`ADV-16` aren't part of that automatic scan — see each entry for why not.
 
 ## Index
 
@@ -33,6 +33,8 @@ of that automatic scan — see its own entry for why not.
 | [`ADV-12`](#adv-12--legacy-scalar-fg-is-not-a-typed-assurance-tuple) | scalar F/G drift | numeric F/G remains readable but is not current typed assurance semantics |
 | [`ADV-13`](#adv-13--performed-work-lacks-exact-f6-attribution) | attribution unresolved | Work must recover one exact RoleAssignment and matching holder/context |
 | [`ADV-14`](#adv-14--may-is-not-a-permission-grant-or-authorization) | MAY is not authority | RFC-style MAY cannot grant permission or authorize enactment |
+| [`ADV-15`](#adv-15--failed-run-xor-outcome-space-must-include-end_compile_revert--still-1-step--distance-) | failed-run XOR terminal | predicting exclusive step outcomes via XOR must name `end_compile_revert`; still 1 step; hop distance ≤ bound |
+| [`ADV-16`](#adv-16--ailevfpf-commits-must-pass-our-predefined-scopes--else-tombstone) | upstream scope gate | ailev/FPF commits follow into our scopes only after inspection PASS; else TOMBSTONE commit and/or advisory |
 
 ---
 
@@ -194,4 +196,32 @@ This is a distinct question from whether the model reads or chooses to use a *va
 
 ---
 
-*v1 — 2026-07-08 (ADV-01/02), v2 — 2026-07-08 (ADV-03..06), v3 — 2026-07-08 (ADV-07), v4 — 2026-07-18 (ADV-08), v5 — 2026-07-18 (ADV-09), v6 — 2026-07-20 (ADV-10), v7 — 2026-07-20 (ADV-11), v8 — 2026-08-01 (ADV-12..14). All were found by running scenarios or comparing shipped structures against their current source semantics; they are evidence-backed integration warnings, not speculative feature requests.*
+## ADV-15 — Failed-run XOR outcome space must include `end_compile_revert` (still 1 step; distance ≤)
+
+**What**: the logic layer ships all **6** operators (`NOT`, `AND`, `OR`, `XOR`, `IMPLIES`, `IFF`). When a domain uses **`XOR`** to predict / count mutually exclusive step outcomes (exactly one of the predicted outcomes holds), nothing in the core requires that the exclusive set include an **`end_compile_revert`** terminal — the step that means *this run failed / was unsuccessful: end the compile attempt and revert to known-good*. A map can XOR success-path outcomes only, leave failure as an unnamed leftover (`ABSTAIN` / `ESCALATE` / `REVISE_PLAN` / silence), and still get a lawful `CONTINUE` on the next unrelated move. `step()` remains **one step at a time** either way; that discipline alone does not invent a failed-run terminal or a distance bound to it. `forward_reachable()` answers set membership, not hop **distance** — so “reachable somehow” is not the same as `distance(current, revert_target) ≤ bound`.
+
+**Why this is the default**: which outcome string is the failed-run sense, where “known-good” lives, and what hop budget is acceptable are domain facts. Baking a universal `end_compile_revert` into every XOR prediction would guess those facts for every integrator. The engine’s job stays: evaluate one declared move per `step()`, return one `OutcomeKind`, leave exclusive-outcome *policy* to the map author.
+
+**How to close the gap** (all three; missing any one leaves the blind spot open):
+
+1. **Name the failed-run step** — declare an explicit transition (id/label) for `end_compile_revert` (or equivalent: `end_compile` + `revert` / `rollback` to known-good). Put that outcome in the **XOR** exclusive set with the success-path predictions so exactly one of {success…, `end_compile_revert`} is the predicted count for that decision.
+2. **Still 1 step at a time** — fire `end_compile_revert` as its own `step()` / `attempt_transition()`; do not batch “fail + revert + re-enter” across multiple hops inside one call or invent a parallel irreversible path while Holding/`AWAIT`.
+3. **Satisfy `distance ≤ bound`** — compute BFS hop distance on the declared `(from_state → to_state)` graph from the failure locus to the revert target; require `distance ≤` your domain bound before treating the failed-run terminal as admissible. Set membership via `forward_reachable` is necessary but not sufficient. Enforce with a guard / `LogicLayer` rule (or harness pre-check), not by hoping the model counts hops.
+
+`dev_mcp`’s `ADV-15` detector flags maps that use `XOR` in the bound `LogicLayer` while no registered transition names an end-compile / revert / rollback terminal — lint awareness, not a runtime cage.
+
+---
+
+## ADV-16 — `ailev/FPF` commits must pass our predefined scopes — else TOMBSTONE
+
+*Tag: upstream intake. Second thread (with ADV-15). No auto-detector — same class as ADV-09.*
+
+**What**: nothing in the engine, `dev_mcp`, or a PyPI pin watches [ailev/FPF](https://github.com/ailev/FPF). A new upstream commit does not enter our runtime scopes by existing. Our **predefined scopes** (proposed/advised for this carrier — one lawful move, executable frontier, small compiled surface, scenario-or-HOLD, honest provenance) are documented in [`UPSTREAM_SCOPE_INSPECTION.md`](UPSTREAM_SCOPE_INSPECTION.md). Until a commit is inspected against those scopes and **PASS**es, it is **open**, not adopted. If inspection **FAIL**s the conditions, the honest fate is **TOMBSTONE**: tombstone that upstream commit (ledger / `REJECTED_*` / scope-audit row) **and/or** tombstone any advisory that would pretend the commit is in scope or that itself fails the same conditions. Leaving either live as if authoritative is the defect this advisory names.
+
+**Why this is the default**: `ailev/FPF` owns the evolving formal framework; this package owns the executable frontier. Auto-following upstream would guess that every ontology/edit delta changes one lawful `step()` — it does not. Auto-ignoring would leave material commits unclassified forever. Inspection + PASS/FAIL + TOMBSTONE is the only shape that keeps both honesty and a bounded surface.
+
+**How to close the gap**: for each material upstream commit (one at a time): run S1–S5 in `UPSTREAM_SCOPE_INSPECTION.md`; on PASS, file disposition (`ADOPT`/`ADAPT`/`HOLD`/`COUNTER`) and follow into our scopes only as that disposition allows; on FAIL, **TOMBSTONE** the commit and any non-respecting advisory. Update the disposition ledger in brain `governance/FPF-THINKING-MAP-VS-AILEV-FPF-POSITIONING.md`. Do not treat `get_advisories` / live ADV text as a substitute for that ledger when the question is upstream intake.
+
+---
+
+*v1 — 2026-07-08 (ADV-01/02), v2 — 2026-07-08 (ADV-03..06), v3 — 2026-07-08 (ADV-07), v4 — 2026-07-18 (ADV-08), v5 — 2026-07-18 (ADV-09), v6 — 2026-07-20 (ADV-10), v7 — 2026-07-20 (ADV-11), v8 — 2026-08-01 (ADV-12..14), v9 — 2026-09-19 (ADV-15), v10 — 2026-09-19 (ADV-16). All were found by running scenarios or comparing shipped structures against their current source semantics; they are evidence-backed integration warnings, not speculative feature requests.*

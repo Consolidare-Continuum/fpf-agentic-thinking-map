@@ -2,6 +2,8 @@
 
 A running log of every FPF-ecosystem pattern, repo, or writeup checked against this package's scope. Different artifact from `FPF_SOURCE_TO_CODE_RELATION_AUDIT.md` (which audits line-level fidelity between the FPF spec and this code) — this one audits *external* patterns and prior art discovered after the fact, and records a verdict for each: awareness, inspected, rejected, or concluded. Nothing here changes without a verdict recorded.
 
+**Upstream commits (2026-09-19):** material `ailev/FPF` commits are inspected against predefined scopes in [`UPSTREAM_SCOPE_INSPECTION.md`](UPSTREAM_SCOPE_INSPECTION.md) (ADV-16). **PASS** → follow into our scopes via disposition. **FAIL** → **TOMBSTONE** the commit and/or any advisory that does not respect the conditions.
+
 ## Rejected
 
 Evaluated for inclusion, explicitly not incorporated. Full reasoning in the linked doc.
@@ -51,6 +53,22 @@ Read, understood, informs context, no doc-level action taken beyond the entries 
 
 Every item above resolves to exactly one of: **rejected** (3), **inspected, confirmed correct** (4), **inspected, found and fixed a real gap** (1), **acknowledged prior art** (2), **background awareness** (2). Twelve items total, one open thread closed each time — see `REFLECTIONS.md` for the standing design position this whole log keeps confirming: compile the framework away, once, rather than let the model carry it.
 
+## Upstream commits — framework / publication (2026-09-19 Felix)
+
+Baseline previously verified: `1eb56cd`. Live `origin/main`: `8581bcf`. Focus this pass: **framework structure / suite packing**, not ontology semantics.
+
+| Commit | Subject | S1–S5 (framework pass) | Verdict |
+|--------|---------|------------------------|---------|
+| `6a8cd43` | foundational thinking DPF Suite reference | S1 FAIL (pub surface) · S2 N/A · S3 FAIL (ecosystem doc) · S4 HOLD N/A · S5 N/A | **TOMBSTONE** |
+| `78fc72f` | repacking of Foundational Thinking DPF Suite | S1 FAIL · S3 FAIL (large move/repack) | **TOMBSTONE** |
+| `368bb77` | restructuring of folders for FT DPF Suite | S1 FAIL · S3 FAIL | **TOMBSTONE** |
+| `8581bcf` | FT Suite Reference update | S1 FAIL | **TOMBSTONE** |
+| `f965ffb` | DPF path correction | S1 FAIL (pathing) | **TOMBSTONE** |
+| `7fee40b` | How to use FPF with your AI agent | S1 FAIL · S2 FAIL (agent guidance doc) | **TOMBSTONE** |
+| `d3e691a` | permission to work without mandatory testing | **Not framework-structure** — Spec/DPF plain-language; defer to semantics queue | **Open (semantics)** |
+
+Brain ledger mirror: `governance/FPF-THINKING-MAP-VS-AILEV-FPF-POSITIONING.md`.
+
 ---
 
-prichindel.com | 2026-07-10 | v1.4.13
+prichindel.com | 2026-07-10 | v1.4.13 · UPDATED Felix 2026-09-19 framework TOMBSTONE pass

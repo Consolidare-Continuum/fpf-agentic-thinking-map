@@ -40,7 +40,12 @@ from collections.abc import Iterable
 from fpf_thinking_map.primitives import TransitionPrimitive
 from fpf_thinking_map.state import SemanticMap
 
-__all__ = ["graph_roots", "forward_reachable", "unreachable_transitions"]
+__all__ = [
+    "graph_roots",
+    "forward_reachable",
+    "shortest_path_distance",
+    "unreachable_transitions",
+]
 
 
 def graph_roots(transitions: Iterable[TransitionPrimitive]) -> set[str]:
@@ -83,6 +88,39 @@ def forward_reachable(
                 seen.add(nxt)
                 frontier.append(nxt)
     return seen
+
+
+def shortest_path_distance(
+    transitions: Iterable[TransitionPrimitive],
+    source: str,
+    target: str,
+) -> int | None:
+    """BFS hop count from source to target on declared to_state edges.
+
+    Returns 0 when source == target, a non-negative integer hop count when a
+    path exists, or None when target is not forward-reachable from source.
+    This is the distance check ADV-15 requires for an end_compile_revert
+    terminal (``distance <= bound``); ``forward_reachable`` only answers
+    set membership and is not a substitute.
+    """
+    if source == target:
+        return 0
+    transitions = list(transitions)
+    edges: dict[str, list[str]] = {}
+    for t in transitions:
+        edges.setdefault(t.from_state, []).append(t.to_state)
+
+    dist = {source: 0}
+    frontier = [source]
+    while frontier:
+        s = frontier.pop(0)
+        for nxt in edges.get(s, []):
+            if nxt not in dist:
+                dist[nxt] = dist[s] + 1
+                if nxt == target:
+                    return dist[nxt]
+                frontier.append(nxt)
+    return None
 
 
 def unreachable_transitions(

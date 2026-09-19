@@ -1,4 +1,4 @@
-"""Structural detectors for 13 of the 14 documented integrator advisories (docs/deep/ADVISORIES.md).
+"""Structural detectors for 14 of the 15 documented integrator advisories (docs/deep/ADVISORIES.md).
 ADV-09 has no detector — it's about compliance mode itself, not an ActiveState property.
 
 Not a fix. Not enforcement. Nothing here changes engine behavior or blocks
@@ -332,8 +332,72 @@ def _adv14_may_is_not_permission(state: ActiveState) -> AdvisoryHit | None:
     )
 
 
+_REVERT_KEYWORDS = (
+    "end_compile_revert",
+    "end_compile",
+    "end-compile",
+    "endcompile",
+    "revert",
+    "rollback",
+)
+
+
+def _prop_uses_xor(prop: Any) -> bool:
+    """True when a proposition tree contains at least one XOR node."""
+    if prop is None:
+        return False
+    cls_name = type(prop).__name__
+    if cls_name in ("XorProp", "XOR"):
+        return True
+    for attr in ("left", "right", "a", "b", "p", "q", "inner", "child", "operand"):
+        child = getattr(prop, attr, None)
+        if child is not None and _prop_uses_xor(child):
+            return True
+    operands = getattr(prop, "operands", None)
+    if operands:
+        for child in operands:
+            if _prop_uses_xor(child):
+                return True
+    return False
+
+
+def _map_has_end_compile_revert(state: ActiveState) -> bool:
+    for t in state.semantic_map.transitions.values():
+        blob = f"{t.transition_id} {getattr(t, 'label', '') or ''} {t.to_state}".lower()
+        if any(k in blob for k in _REVERT_KEYWORDS):
+            return True
+    return False
+
+
+def _adv15_xor_failed_run_needs_revert(
+    state: ActiveState, logic_layer: "LogicLayer | None"
+) -> AdvisoryHit | None:
+    """ADV-15 — XOR outcome prediction without an end_compile_revert failed-run terminal."""
+    if logic_layer is None:
+        return None
+    rules = getattr(logic_layer, "rules", None) or []
+    xor_rules = [
+        getattr(rule, "name", None) or "?"
+        for rule in rules
+        if _prop_uses_xor(getattr(rule, "condition", None))
+    ]
+    if not xor_rules:
+        return None
+    if _map_has_end_compile_revert(state):
+        return None
+    return AdvisoryHit(
+        "ADV-15",
+        "Failed-run XOR outcome space must include end_compile_revert",
+        "heuristic-prompt",
+        f"LogicLayer XOR rule(s) {xor_rules} predict exclusive step outcomes, but no "
+        f"registered transition names end_compile_revert / revert / rollback. Still "
+        f"1 step at a time; also require BFS hop distance ≤ domain bound to the "
+        f"revert target — forward_reachable alone is not distance.",
+    )
+
+
 def detect_advisories(state: ActiveState, logic_layer: "LogicLayer | None" = None) -> list[AdvisoryHit]:
-    """Run all 13 structural detectors (ADV-01..08, ADV-10..14) against one
+    """Run all 14 structural detectors (ADV-01..08, ADV-10..15) against one
 
     ActiveState (+ optional LogicLayer) and return the hits. ADV-09 has no
     detector here — it's about compliance mode itself, not something an
@@ -353,6 +417,7 @@ def detect_advisories(state: ActiveState, logic_layer: "LogicLayer | None" = Non
         _adv12_legacy_scalar_assurance(state),
         _adv13_invalid_work_attribution(state),
         _adv14_may_is_not_permission(state),
+        _adv15_xor_failed_run_needs_revert(state, logic_layer),
     ]
     return [h for h in hits if h is not None]
 
@@ -361,8 +426,9 @@ def find_active_states_and_logic(ns: dict[str, Any]) -> list[tuple[str, ActiveSt
     """Scan a run_scenario exec namespace for ActiveState objects (by variable name, any name).
 
     Also looks for a ThinkingMapTraversal in the same namespace to pull its
-    bound logic_layer for ADV-04, without requiring the scenario to expose
-    the LogicLayer under a specific name either.
+    bound logic_layer for ADV-04 / ADV-15, and falls back to any bare
+    LogicLayer instance in the namespace (same session) when no traversal
+    carries one — without requiring a specific variable name.
     """
     logic_layer: "LogicLayer | None" = None
     for value in ns.values():
@@ -370,6 +436,11 @@ def find_active_states_and_logic(ns: dict[str, Any]) -> list[tuple[str, ActiveSt
         if traversal_logic is not None and LogicLayer is not None and isinstance(traversal_logic, LogicLayer):
             logic_layer = traversal_logic
             break
+    if logic_layer is None and LogicLayer is not None:
+        for value in ns.values():
+            if isinstance(value, LogicLayer):
+                logic_layer = value
+                break
 
     found: list[tuple[str, ActiveState, "LogicLayer | None"]] = []
     for name, value in ns.items():
