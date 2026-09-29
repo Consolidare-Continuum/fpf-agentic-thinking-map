@@ -388,7 +388,6 @@ for attribution and scope boundaries.
 MIT License. See
 [LICENSE](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/LICENSE).
 
-Maintained by [igareosh.com](https://igareosh.com) ·
 [@igareosh](https://github.com/igareosh) ·
 [igareosh@igareosh.com](mailto:igareosh@igareosh.com)
 
