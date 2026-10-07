@@ -40,3 +40,6 @@ jobs:
           name: dist
           path: dist/
       - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          # Fallback: if the PYPI_API_TOKEN secret is set it is used; if empty, trusted publishing (OIDC) is used.
+          password: ${{ secrets.PYPI_API_TOKEN }}
