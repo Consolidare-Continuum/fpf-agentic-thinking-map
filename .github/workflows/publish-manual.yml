@@ -1,0 +1,36 @@
+name: Publish to PyPI (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Tag or ref to build and publish"
+        required: true
+        default: "v2.0.0"
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: pypi
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install build tools
+        run: pip install build
+      - name: Build sdist and wheel
+        run: python -m build
+      - name: Verify package
+        run: |
+          pip install dist/*.whl
+          python -m fpf_thinking_map.verify
+      - name: Publish with API token
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}

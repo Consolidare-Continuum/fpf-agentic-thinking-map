@@ -38,3 +38,7 @@ Secrets / recovery codes: trustmaster custody only.
 Both mean the same ADV-17 / 2.0.0 ship.
 
 SIGNED: Team lead (Ethan) escalate → Felix land | 2026-10-06 | publish artifact
+
+## Token fallback
+
+If the trusted publisher cannot be configured, add a PyPI API token (scoped to `fpf-thinking-map`) as the repository or `pypi` environment secret `PYPI_API_TOKEN`. `publish.yml` uses it when set; when unset, it uses trusted publishing.
