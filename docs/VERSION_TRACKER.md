@@ -1,4 +1,4 @@
-# Version tracker — v1.0.0 through v2.0.0
+# Version tracker — v1.0.0 through v2.0.1
 
 Every released version, three practical/reader-facing benefits each — including
 doc-only and metadata-only releases, marked as such. This is a supplement to
@@ -11,6 +11,16 @@ There is no v0.x or v1.1.x — v1.0.0 is the first tagged release, and
 versioning jumps v1.0.1 → v1.2.0.
 
 ---
+
+## v2.0.1 — 2026-10-08 — Reference hardware (doc/metadata-only)
+
+1. README records the reference hardware the map was processed and verified
+   on: a dual-socket Intel Westmere server (Xeon X5675) on a Chieftec Vita
+   80 PLUS Bronze PSU.
+2. README verify badge corrected from 35/35 to the actual 39/39, and the
+   release-line table now runs through v2.0.
+3. `SHA256SUMS` reindexed — the previous file was stale against the tree
+   (it still listed a removed header image and missed newer docs).
 
 ## v2.0.0 — 2026-09-19 — Adjacency clearance ("Positive Control")
 

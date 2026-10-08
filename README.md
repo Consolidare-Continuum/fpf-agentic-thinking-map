@@ -17,7 +17,7 @@ the move is valid.
 [![Python](https://img.shields.io/pypi/pyversions/fpf-thinking-map?style=flat-square&label=Python&color=f0b429)](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/pyproject.toml)
 [![License](https://img.shields.io/pypi/l/fpf-thinking-map?style=flat-square&label=license&color=57c7bd)](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/LICENSE)
 [![Zero dependencies](https://img.shields.io/badge/dependencies-0-ff9f43?style=flat-square)](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/pyproject.toml)
-[![Verification](https://img.shields.io/badge/verify-35%2F35-59d18c?style=flat-square)](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/fpf_thinking_map/verify.py)
+[![Verification](https://img.shields.io/badge/verify-39%2F39-59d18c?style=flat-square)](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/fpf_thinking_map/verify.py)
 [![Live demo](https://img.shields.io/badge/live-demo-dd8cff?style=flat-square)](https://consolidare-continuum.github.io/fpf-agentic-thinking-map/demos/three-runs.html)
 
 ```bash
@@ -272,6 +272,8 @@ by expanding into a general agent framework.
 | v1.8 | External dependency tracking and `AWAIT` |
 | v1.9 | Concrete move identity, inspection, lineage, authorization-clock fix |
 | v1.9.5 "Ground Stop" | Correct A.21 gate join; explicit `BLOCK` versus insufficient `ABSTAIN`; typed denial causes; opt-in structural controls |
+| v1.9.6 "Missed Approach" | Failed-run revert terminal; upstream FPF scope gate |
+| v2.0 "Adjacency Clearance" | Confirmed-absent percepts clear adjacent states under a declared `AdjacencyClearanceRule` |
 
 The complete reader-facing history is in
 [docs/VERSION_TRACKER.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/VERSION_TRACKER.md).
@@ -321,6 +323,13 @@ intelligence or total application cost. Method and limitations:
 For the authorization experiments, threat boundaries, failures found, and
 claims deliberately not made, see
 [IGNITION_LOCK_WIND_TUNNEL.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/deep/IGNITION_LOCK_WIND_TUNNEL.md).
+
+### Reference hardware
+
+The FPF thinking map was processed, indexed, and verified on a dual-socket
+Intel [Westmere](https://en.wikipedia.org/wiki/Westmere_(microarchitecture))
+server (Xeon X5675, 32 nm), powered by a Chieftec Vita 80 PLUS Bronze PSU.
+The runtime has zero dependencies and needs nothing newer.
 
 ## Scope
 

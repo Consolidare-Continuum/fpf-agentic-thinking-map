@@ -15,6 +15,17 @@ list: [`docs/deep/EXPANDED_PROVENANCE.md`](docs/deep/EXPANDED_PROVENANCE.md).
   finalized, not yet implemented. See
   [`docs/deep/DESIGN_TRAVERSAL_CHECKPOINT.md`](docs/deep/DESIGN_TRAVERSAL_CHECKPOINT.md).
 
+## [2.0.1] - 2026-10-08
+
+Docs and metadata only; no runtime change.
+
+### Changed
+
+- README: reference-hardware note (dual-socket Intel Westmere Xeon X5675,
+  Chieftec Vita 80 PLUS Bronze PSU); verify badge corrected to 39/39;
+  release-line table extended through v2.0.
+- `SHA256SUMS` reindexed against the current tree.
+
 ## [2.0.0] - 2026-09-19
 
 Version number is a release decision, not an architectural one — see
