@@ -5,6 +5,16 @@
 **Workflow:** `.github/workflows/publish.yml` (release `published` → build → `pypa/gh-action-pypi-publish` with OIDC)  
 **GitHub environment:** `pypi`
 
+## Status (2026-10-08)
+
+Blocked. PyPI serves **1.9.5**. Publish runs for `v1.9.6`, `v2.0.0` and
+`v2.0.1` all fail at upload with `invalid-publisher`; build and
+`fpf_thinking_map.verify` pass in each run. The OIDC claims GitHub sends are
+correct (`repository: Consolidare-Continuum/fpf-agentic-thinking-map`,
+`repository_owner_id: 309344304`, `environment: pypi`, workflow
+`publish.yml`), so the fix is entirely on pypi.org. Until then, install from
+the git tag (see README).
+
 ## Required PyPI Trusted Publisher binding
 
 Configure at  

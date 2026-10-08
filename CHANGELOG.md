@@ -17,6 +17,9 @@ list: [`docs/deep/EXPANDED_PROVENANCE.md`](docs/deep/EXPANDED_PROVENANCE.md).
 
 ## [2.0.1] - 2026-10-08
 
+**Distribution:** GitHub tag only. The PyPI upload failed with
+`invalid-publisher`; PyPI still serves 1.9.5.
+
 Docs and metadata only; no runtime change.
 
 ### Changed
@@ -27,6 +30,9 @@ Docs and metadata only; no runtime change.
 - `SHA256SUMS` reindexed against the current tree.
 
 ## [2.0.0] - 2026-09-19
+
+**Distribution:** GitHub tag only. The PyPI upload failed with
+`invalid-publisher`; PyPI still serves 1.9.5.
 
 Version number is a release decision, not an architectural one — see
 [`docs/deep/SPEC_V2_0_BUILD.md`](docs/deep/SPEC_V2_0_BUILD.md). Everything
@@ -54,6 +60,9 @@ release's new opt-in surface sees zero behavioral change from `1.9.5`.
   45/45 (no detector to add).
 
 ## [1.9.6] - 2026-09-19
+
+**Distribution:** GitHub tag only. The PyPI upload failed with
+`invalid-publisher`; PyPI still serves 1.9.5.
 
 ### Added
 

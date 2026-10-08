@@ -14,15 +14,23 @@ versioning jumps v1.0.1 → v1.2.0.
 
 ## v2.0.1 — 2026-10-08 — Reference hardware (doc/metadata-only)
 
+Distribution: GitHub tag only — PyPI upload blocked (`invalid-publisher`);
+PyPI still serves 1.9.5.
+
 1. README records the reference hardware the map was processed and verified
    on: a dual-socket Intel Westmere server (Xeon X5675) on a Chieftec Vita
    80 PLUS Bronze PSU.
 2. README verify badge corrected from 35/35 to the actual 39/39, and the
    release-line table now runs through v2.0.
 3. `SHA256SUMS` reindexed — the previous file was stale against the tree
-   (it still listed a removed header image and missed newer docs).
+   (it still listed a removed header image and missed newer docs). Processed
+   and tagged on the Westmere host; a clean-venv install from the `v2.0.1`
+   tag verifies 39/39.
 
 ## v2.0.0 — 2026-09-19 — Adjacency clearance ("Positive Control")
+
+Distribution: GitHub tag only — PyPI upload blocked (`invalid-publisher`);
+PyPI still serves 1.9.5.
 
 Version number is a release decision, not an architectural one — see
 [`docs/deep/SPEC_V2_0_BUILD.md`](deep/SPEC_V2_0_BUILD.md). Content is
@@ -45,6 +53,9 @@ additive and backward-compatible, same as every release below it.
    that the inference built on top of it is computed correctly.
 
 ## v1.9.6 — 2026-09-19 — Failed-run terminal / upstream scope gate ("Missed Approach")
+
+Distribution: GitHub tag only — PyPI upload blocked (`invalid-publisher`);
+PyPI still serves 1.9.5.
 
 1. Adds `ADV-15`: a `LogicLayer` `XOR` rule predicting exclusive step
    outcomes must include a named `end_compile_revert` terminal — still one

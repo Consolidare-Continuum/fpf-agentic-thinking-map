@@ -25,6 +25,15 @@ pip install fpf-thinking-map
 python -m fpf_thinking_map.verify
 ```
 
+PyPI currently serves **1.9.5**. Releases 1.9.6, 2.0.0 and 2.0.1 are tagged on
+GitHub but their PyPI uploads are still blocked (see
+[PUBLISH-TRUSTED-PUBLISHER.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/PUBLISH-TRUSTED-PUBLISHER.md)).
+To install the current release, pin the tag:
+
+```bash
+pip install "git+https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map@v2.0.1"
+```
+
 ## Important links
 
 - [ARCHITECTURE.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/ARCHITECTURE.md)
@@ -360,7 +369,7 @@ boundary. Known sharp edges and deliberate non-goals are recorded in
 
 | Path | Purpose |
 | --- | --- |
-| [`fpf_thinking_map/`](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/tree/main/fpf_thinking_map) | Zero-dependency runtime published to PyPI |
+| [`fpf_thinking_map/`](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/tree/main/fpf_thinking_map) | Zero-dependency runtime (PyPI: 1.9.5; later releases via GitHub tags) |
 | [`dev_mcp/`](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/tree/main/dev_mcp) | Separate development and compliance-testing harness |
 | [ARCHITECTURE.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/ARCHITECTURE.md) | Verified control flow and module architecture |
 | [docs/VERSION_TRACKER.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/VERSION_TRACKER.md) | Every release, with three practical consequences |

@@ -1,6 +1,9 @@
-# v2.0.0 build spec — not yet cut
+# v2.0.0 build spec
 
-**Status**: Spec only. No version bump committed, no tag, no release.
+**Status**: Executed 2026-09-19 — version bumped, tagged `v2.0.0`, GitHub
+release created. Step 8's PyPI upload failed (`invalid-publisher`) as
+predicted and remains blocked; 2.0.0 is distributed via the GitHub tag only.
+Superseded on GitHub by `v2.0.1` (2026-10-08, docs-only).
 **Requested by**: operator, 2026-09-19, "recheck and spec a v2.0 build."
 
 ## Recheck (done this session, before writing this spec)
@@ -18,7 +21,7 @@ Stating this once, for the record, since a major-version framing has now been as
 
 Everything currently on `main`, unreleased: `ADV-15` (failed-run XOR terminal, `end_compile_revert`, `shortest_path_distance`), `ADV-16` (`ailev/FPF` upstream scope gate, `UPSTREAM_SCOPE_INSPECTION.md`), `ADV-17` (Wumpus World adjacency clearance, `AdjacentlyCleared`/`AdjacencyClearanceRule`/`biconditional_clear`). No new content is specified here — all three are already built, tested, and merged. This document only plans the release packaging around them.
 
-## Build steps (none executed yet)
+## Build steps (executed; step 8 PyPI upload blocked)
 
 1. `pyproject.toml`: `version = "2.0.0"`.
 2. `CHANGELOG.md`: rename `## [Unreleased]` → `## [2.0.0] - <release date>`. The `ADV-15`/`ADV-16` entry already lives under `[1.9.6]` and stays there unchanged — `2.0.0`'s own entry lists only its delta (`ADV-17`), same as every prior release lists only its own delta, not a cumulative diff.
