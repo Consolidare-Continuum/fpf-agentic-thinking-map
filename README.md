@@ -38,6 +38,7 @@ pip install "git+https://github.com/Consolidare-Continuum/fpf-agentic-thinking-m
 
 - [ARCHITECTURE.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/ARCHITECTURE.md)
 - [VERSION_TRACKER.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/VERSION_TRACKER.md)
+- [ISO_EVIDENCE_PACKET.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/ISO_EVIDENCE_PACKET.md) (ISO/IEC 25010 · 27001 · 9001 alignment, not certification)
 - [TRIPLE_TAX_CALCULUS.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/deep/TRIPLE_TAX_CALCULUS.md)
 - [REFLECTIONS.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/deep/REFLECTIONS.md)
 - [CONTRIBUTING.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/CONTRIBUTING.md)
@@ -373,6 +374,7 @@ boundary. Known sharp edges and deliberate non-goals are recorded in
 | [`dev_mcp/`](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/tree/main/dev_mcp) | Separate development and compliance-testing harness |
 | [ARCHITECTURE.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/ARCHITECTURE.md) | Verified control flow and module architecture |
 | [docs/VERSION_TRACKER.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/VERSION_TRACKER.md) | Every release, with three practical consequences |
+| [docs/ISO_EVIDENCE_PACKET.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/ISO_EVIDENCE_PACKET.md) | Per-release ISO-aligned evidence: quality, security, traceability, deployment gate |
 | [docs/DECISIONS_REJECTIONS_ADOPTIONS.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/DECISIONS_REJECTIONS_ADOPTIONS.md) | Design provenance and rejected scope |
 | [docs/deep/ADVISORIES.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/deep/ADVISORIES.md) | Integration boundaries and known sharp edges |
 | [SHA256SUMS](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/SHA256SUMS) | Repository-wide source fingerprints |
