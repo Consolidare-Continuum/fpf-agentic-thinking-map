@@ -25,8 +25,11 @@ pip install fpf-thinking-map
 python -m fpf_thinking_map.verify
 ```
 
-PyPI currently serves **1.9.5**. Releases 1.9.6, 2.0.0 and 2.0.1 are tagged on
-GitHub but their PyPI uploads are still blocked (see
+The README's published-package status is **1.9.5**, while this checkout's
+`pyproject.toml` declares **2.0.1**. This is a confirmed version/publishing
+mismatch: the project metadata version does not mean that version is available
+on PyPI. Releases 1.9.6, 2.0.0 and 2.0.1 are tagged on GitHub but their PyPI
+uploads are still blocked (see
 [PUBLISH-TRUSTED-PUBLISHER.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/PUBLISH-TRUSTED-PUBLISHER.md)).
 To install the current release, pin the tag:
 
@@ -368,10 +371,30 @@ boundary. Known sharp edges and deliberate non-goals are recorded in
 
 ## Repository guide
 
+For local development from a checkout, install the package in editable mode and
+run the deterministic verification and packaged scenarios:
+
+```bash
+python -m pip install -e .
+python -m fpf_thinking_map.verify
+python -m fpf_thinking_map.examples
+```
+
+The runtime builds a `SemanticMap` from primitives, creates an `ActiveState`
+from a `RuntimeBinding`, then uses `ThinkingMapTraversal` to inspect or attempt
+transitions. The surrounding modules provide the constraints and supporting
+state:
+
 | Path | Purpose |
 | --- | --- |
 | [`fpf_thinking_map/`](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/tree/main/fpf_thinking_map) | Zero-dependency runtime (PyPI: 1.9.5; later releases via GitHub tags) |
+| `primitives.py`, `state.py`, `traversal.py` | Semantic map objects, active runtime state, and deterministic step/transition engine |
+| `logic.py`, `guards.py`, `reachability.py` | Decision rules, hard constraints, and graph reachability analysis |
+| `authorization.py`, `pending_input.py`, `move_intent.py` | State-bound approvals, external waits, and concrete move identity |
+| `agentic_structure.py` | Typed claim scope, call plans, and autonomy budgets |
+| `examples.py`, `verify.py` | Runnable scenarios and deterministic runtime verification |
 | [`dev_mcp/`](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/tree/main/dev_mcp) | Separate development and compliance-testing harness |
+| `bench/` | Behavioral ablation harness and benchmark results |
 | [ARCHITECTURE.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/ARCHITECTURE.md) | Verified control flow and module architecture |
 | [docs/VERSION_TRACKER.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/VERSION_TRACKER.md) | Every release, with three practical consequences |
 | [docs/ISO_EVIDENCE_PACKET.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/ISO_EVIDENCE_PACKET.md) | Per-release ISO-aligned evidence: quality, security, traceability, deployment gate |
