@@ -1,129 +1,82 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Consolidare-Continuum/fpf-agentic-thinking-map/main/docs/assets/fpf-agentic-thinking-map-header-v20260818.png" alt="FPF Agentic Thinking Map - Agent freedom. Explicit movement rules." width="100%" />
+  <img src="https://raw.githubusercontent.com/Consolidare-Continuum/fpf-agentic-thinking-map/main/docs/assets/fpf-agentic-thinking-map-header-v20260818.png" alt="FPF Agentic Thinking Map — Agent freedom. Explicit movement rules." width="100%" />
 </p>
 
 # FPF Agentic Thinking Map
 
-A small, deterministic Python runtime for agents that may reason freely but
-must move through a workflow lawfully.
+Deterministic Python runtime for agents that may reason freely but must move
+through a workflow lawfully.
 
-It keeps operational state, evidence freshness, transition legality,
-authorization boundaries, and waiting conditions outside the model's prose
-context. The model can inspect the map and choose; the runtime decides whether
-the move is valid.
+Operational state, evidence freshness, transition legality, authorization,
+waiting, and move identity live **outside** model prose. The model proposes;
+the runtime decides whether the move is valid.
+
+**Owner:** CONSOLIDARE CONTINUUM S.R.L. · **PyPI:** [`fpf-thinking-map`](https://pypi.org/project/fpf-thinking-map/) · **Current:** **2.0.1**
 
 [![PyPI](https://img.shields.io/pypi/v/fpf-thinking-map?style=flat-square&label=PyPI&color=3775A9)](https://pypi.org/project/fpf-thinking-map/)
-[![Downloads (honest)](https://img.shields.io/badge/downloads%20%28honest%29-4.5k-1f6feb?style=flat-square)](https://pypistats.org/packages/fpf-thinking-map)
 [![Python](https://img.shields.io/pypi/pyversions/fpf-thinking-map?style=flat-square&label=Python&color=f0b429)](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/pyproject.toml)
 [![Zero dependencies](https://img.shields.io/badge/dependencies-0-ff9f43?style=flat-square)](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/pyproject.toml)
 [![Verification](https://img.shields.io/badge/verify-39%2F39-59d18c?style=flat-square)](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/fpf_thinking_map/verify.py)
 [![Live demo](https://img.shields.io/badge/live-demo-dd8cff?style=flat-square)](https://consolidare-continuum.github.io/fpf-agentic-thinking-map/demos/three-runs.html)
 
-```bash
-pip install fpf-thinking-map
-python -m fpf_thinking_map.verify
-```
+## Install
 
-**Current release: 2.0.1** on [PyPI](https://pypi.org/project/fpf-thinking-map/2.0.1/) — full 2.0 line live (`2.0.0`, `2.0.1`; also `1.9.6`). Built and verified for client delivery by **CONSOLIDARE CONTINUUM S.R.L.**
+Requires **Python ≥ 3.12**. Zero runtime dependencies.
 
 ```bash
 pip install "fpf-thinking-map==2.0.1"
+python -m fpf_thinking_map.verify    # 39/39
+python -m fpf_thinking_map.examples
 ```
 
-## Important links
+Full 2.0 line is on the index: [`2.0.0`](https://pypi.org/project/fpf-thinking-map/2.0.0/), [`2.0.1`](https://pypi.org/project/fpf-thinking-map/2.0.1/) (also [`1.9.6`](https://pypi.org/project/fpf-thinking-map/1.9.6/)).
 
-- [ARCHITECTURE.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/ARCHITECTURE.md)
-- [VERSION_TRACKER.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/VERSION_TRACKER.md)
-- [ISO_EVIDENCE_PACKET.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/ISO_EVIDENCE_PACKET.md) (ISO/IEC 25010 · 27001 · 9001 alignment, not certification)
-- [TRIPLE_TAX_CALCULUS.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/deep/TRIPLE_TAX_CALCULUS.md)
-- [REFLECTIONS.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/deep/REFLECTIONS.md)
-- [CONTRIBUTING.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/CONTRIBUTING.md)
-- [ADVISORIES.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/deep/ADVISORIES.md)
-- [`dev_mcp/`](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/tree/main/dev_mcp)
+## What it is
 
-The `dev_mcp` development and compliance harness is genuinely tested against
-the package and updated whenever runtime behavior, compliance checks, or
-integration requirements change.
+Agents lose workflow rules in long runs. This package moves the non-negotiable
+parts into ordinary code:
 
-## The problem
+- current context and state
+- evidence presence and TTL freshness
+- gates, guards, and lawful transitions
+- cross-context bridges
+- human authorization (`AuthorizationReceipt`)
+- external wait (`PendingInput` / `AWAIT`)
+- concrete move identity (`MoveIntent`)
+- typed claim scope / pathwise reliability
+- tool-call plan closure and autonomy budgets
 
-An agent can explain a workflow rule and still lose track of it during a long
-run. Prose instructions compete with task content, earlier decisions, tool
-output, and context compression.
+Not a prompt. A compact **control surface** around reasoning.
 
-FPF Agentic Thinking Map moves the parts that should not depend on narration
-into ordinary code:
+## Contract
 
-- current context and state;
-- evidence presence and TTL freshness;
-- gates, guards, and lawful transitions;
-- cross-context bridges;
-- human authorization;
-- external dependencies and wake conditions;
-- concrete move identity and trace lineage;
-- typed claim scope and pathwise assurance;
-- tool-call plan closure and hard autonomy budgets.
-
-This is not another reasoning prompt. It is a compact control surface around
-reasoning.
-
-## Why this works across model sizes
-
-The map clips interpretive slack at both ends. Strong models stop
-free-associating past what a constraint actually says; lighter models receive
-enough scaffolding that they do not have to infer the workflow's intent from
-scratch.
-
-Building a good map still requires real judgment, so new controls should be
-designed and challenged with strong models first. Consuming the finished map
-does not require the same reasoning capacity. Once a workflow is encoded as
-explicit constraints and gates instead of tacit prose, following it correctly
-stops depending on frontier-level inference. A lighter model does not have to
-understand the workflow deeply; it has to respect the map.
-
-That is what makes the result portable down to smaller models, not merely
-across flagship ones: the hard reasoning was front-loaded into the encoding,
-once, by the map author.
-
-## The contract
-
-The division of responsibility is deliberate:
-
-| Agent or application | Thinking map runtime |
+| Agent / host | This runtime |
 | --- | --- |
 | Interprets the task | Holds explicit traversal state |
-| Generates and compares options | Computes which moves are legal |
+| Generates options | Computes which moves are legal |
 | Collects evidence | Checks presence and freshness |
-| Proposes a concrete move | Inspects or attempts that move |
+| Proposes a move | Inspects or attempts that move |
 | Explains the result | Returns a bounded outcome and trace |
 | Requests human input | Enforces the authorization boundary |
-| Executes tools and jobs | Never executes, polls, or schedules them |
+| Runs tools and jobs | Never executes, polls, or schedules them |
 
-The map constrains movement, not meaning. It does not replace the model,
-application logic, retrieval, tools, or a task scheduler.
+## Structural controls (shipped)
 
-## Structural agentic controls
-
-| Concern | Runtime structure | Enforced effect |
+| Concern | Structures | Effect |
 | --- | --- | --- |
-| Claim applicability and assurance | `ContextSlice`, `ClaimScope`, `FormalityLevel`, `ReliabilityPath` | Numeric G is no longer treated as scope; unknown membership stays unknown; R folds pathwise |
-| Tool-call planning | `CallPlanPrimitive`, `BudgetEnvelope`, `CheckpointReturn` | Incomplete or mismatched declared tool plans return `REVISE_PLAN` and cannot fire |
-| Autonomous enactment | `AutonomyBudgetDecl`, `AutonomyLedgerEntry` | A transition opts in with `requires_autonomy_budget_id`; failed assignment/gate/envelope returns `ESCALATE` and successful burn is recorded |
-| Performed-work attribution | `WorkPrimitive.performed_under`, `validate_work_attribution()` | Once a map declares RoleAssignments, a dangling or wrong-holder work record cannot satisfy completion |
-| Gate decisions | `GateDecision`, `GateCheck.failure_decision`, `OutcomeCause` | `ABSTAIN` means the gate lacks enough basis to say yes; an explicit `BLOCK` means policy says no for the current evaluation. Traversal preserves the distinction as `cause=gate_block` without breaking the existing outcome enum |
-| Map integrity | `ThinkingMapTraversal.validate_map()` | Opt-in preflight fails on dangling gate/rule references; explicit unknown transition IDs return typed `ABSTAIN` |
+| Claim / assurance | `ContextSlice`, `ClaimScope`, `FormalityLevel`, `ReliabilityPath` | Typed scope; unknown stays unknown |
+| Tool plans | `CallPlanPrimitive`, `BudgetEnvelope` | Incomplete plans → `REVISE_PLAN` |
+| Autonomy | `AutonomyBudgetDecl`, `AutonomyLedgerEntry` | Opt-in budget; fail → `ESCALATE` |
+| Work attribution | `WorkPrimitive.performed_under` | Wrong holder/context cannot complete |
+| Gate join | `GateDecision`, `OutcomeCause` | `ABSTAIN` ≠ `BLOCK` (`cause=gate_block`) |
+| Map integrity | `ThinkingMapTraversal.validate_map()` | Dangling refs / unknown IDs fail closed |
+| Adjacency (2.0) | `AdjacencyClearanceRule`, `AdjacentlyCleared` | Confirmed-absent percept clears declared neighbors |
 
-These are bounded runtime controls owned and shipped by CONSOLIDARE CONTINUUM.
+## Demo
 
-## Live runtime visual
+[![Four test-backed traces](https://raw.githubusercontent.com/Consolidare-Continuum/fpf-agentic-thinking-map/main/docs/assets/three-runs-preview.png)](https://consolidare-continuum.github.io/fpf-agentic-thinking-map/demos/three-runs.html)
 
-[![Four test-backed traces of the traversal runtime](https://raw.githubusercontent.com/Consolidare-Continuum/fpf-agentic-thinking-map/main/docs/assets/three-runs-preview.png)](https://consolidare-continuum.github.io/fpf-agentic-thinking-map/demos/three-runs.html)
-
-**[Open the interactive four-run trace](https://consolidare-continuum.github.io/fpf-agentic-thinking-map/demos/three-runs.html)**
-
-The visual follows evidence recovery, `PendingInput`/`AWAIT`, `MoveIntent`,
-state-bound authorization, and the v1.9.5 distinction between an undecided
-gate (`ABSTAIN`) and an explicit hard denial (`BLOCK`).
+**[Interactive four-run trace](https://consolidare-continuum.github.io/fpf-agentic-thinking-map/demos/three-runs.html)** — evidence recovery, `AWAIT`, `MoveIntent`, authorization, and `ABSTAIN` vs `BLOCK`.
 
 ## Minimal example
 
@@ -181,218 +134,71 @@ state = traversal.build_active_state(
 
 inspection = traversal.step(state)
 result = traversal.attempt_transition(state, "ship")
-
-print(inspection.kind)
-print(result.kind)
-print(state.current_state)
+print(inspection.kind, result.kind, state.current_state)
 ```
 
-The map is domain-agnostic. Replace the deployment vocabulary with your own
-contexts, roles, evidence, gates, and transitions.
+Replace the deploy vocabulary with your own contexts, roles, evidence, and gates.
 
-Run the packaged scenarios:
+## Gate join (keep these apart)
 
-```bash
-python -m fpf_thinking_map.examples
-```
-
-## What is enforced
-
-### Explicit state
-
-The active position is a first-class object, not a conclusion the model must
-repeatedly reconstruct from chat history.
-
-### Evidence with age
-
-Transitions can require evidence. Evidence can decay by semantic floor and
-TTL, allowing the runtime to distinguish present evidence from usable
-evidence.
-
-### Gates, guards, and logic
-
-Gates test declared conditions. Guards enforce hard constraints. A small
-propositional layer composes facts without asking the model to reinterpret the
-rules on every step.
-
-When a gate cannot return `PASS`, v1.9.5 keeps two different situations apart:
-
-| Gate result | Plain-language meaning | Typical traversal response |
+| Gate result | Meaning | Typical outcome |
 | --- | --- | --- |
-| `ABSTAIN` (`"insufficient"`) | The gate does not have enough basis to say yes | `COLLECT_EVIDENCE` when the missing evidence is declared; otherwise a denied outcome |
-| `BLOCK` | A check explicitly says no under the current declared policy and state | denied with `cause=OutcomeCause.GATE_BLOCK` |
+| `ABSTAIN` (`insufficient`) | Not enough basis to say yes | `COLLECT_EVIDENCE` when evidence is declared |
+| `BLOCK` | Declared policy says no for this evaluation | Denied with `cause=GATE_BLOCK` |
 
-`BLOCK` is hard for that evaluation, not necessarily permanent. It must not be
-downgraded by another check or treated as an invitation to guess, but the gate
-may evaluate differently after its declared evidence, state, or policy changes.
-Existing checks do not become hard blocks automatically; a check opts in with
-`failure_decision=GateDecision.BLOCK`.
+`BLOCK` is hard for that evaluation; it is not automatically permanent. Checks
+opt into `BLOCK` with `failure_decision=GateDecision.BLOCK`.
 
-### Validated bridges
+## Release line
 
-Cross-context movement is explicit. High-risk substitution without a
-sufficient bridge contract is refused or escalated rather than silently
-treated as equivalent.
-
-### Human authorization
-
-`requires_human_authorization` separates "structurally legal" from "authorized
-to execute."
-
-For stronger integrations, `AuthorizationReceipt` binds approval to:
-
-- one transition;
-- the exact inspected state fingerprint;
-- an expiry boundary;
-- single consumption.
-
-A denied move may expose declared `safe_alternatives`, so escalation does not
-have to become a dead end.
-
-### External waiting
-
-`PendingInput` and `AWAIT` distinguish "the workflow is finished" from "the
-workflow is alive but waiting for something outside the map." The host owns
-polling and resolution.
-
-### Concrete move identity
-
-`MoveIntent` distinguishes a reusable transition type from one particular
-proposed move. `inspect_move()` evaluates it without mutation; a successful
-transition can stamp move lineage into the trace.
-
-## Why the versions matter
-
-The project has grown by closing specific ambiguities in traversal state, not
-by expanding into a general agent framework.
-
-| Release line | Capability added |
+| Line | Capability |
 | --- | --- |
-| v1.0 | Runnable semantic primitives, deterministic guards, lawful traversal |
-| v1.2 | Evidence TTL, response contracts, `IDLE` and `BRIDGE` |
-| v1.3 | Enforced bridge crossing and lean state slices |
-| v1.4 | Stagnation detection, integrator advisories, verified documentation |
-| v1.5 | Stable public package boundary |
-| v1.6 | Human authorization and safe denial routes |
-| v1.7 | State-bound, expiring authorization receipts |
-| v1.8 | External dependency tracking and `AWAIT` |
-| v1.9 | Concrete move identity, inspection, lineage, authorization-clock fix |
-| v1.9.5 "Ground Stop" | Correct A.21 gate join; explicit `BLOCK` versus insufficient `ABSTAIN`; typed denial causes; opt-in structural controls |
-| v1.9.6 "Missed Approach" | Failed-run revert terminal; upstream FPF scope gate |
-| v2.0 "Adjacency Clearance" | Confirmed-absent percepts clear adjacent states under a declared `AdjacencyClearanceRule` |
+| v1.0–v1.5 | Primitives, TTL, bridges, stagnation, stable public boundary |
+| v1.6–v1.8 | Human authorization, receipts, `AWAIT` |
+| v1.9 / 1.9.5 | Move identity; A.21 gate join (`ABSTAIN` vs `BLOCK`) |
+| v1.9.6 | Failed-run revert terminal (XOR + distance bound) |
+| **v2.0.0** | Adjacency Clearance (`ADV-17`) |
+| **v2.0.1** | Current — docs/metadata/reference hardware; runtime verify **39/39** |
 
-The complete reader-facing history is in
-[docs/VERSION_TRACKER.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/VERSION_TRACKER.md).
-Technical changes are in
-[CHANGELOG.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/CHANGELOG.md),
-and full release bodies remain in
-[GitHub Releases](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/releases).
+History: [VERSION_TRACKER.md](docs/VERSION_TRACKER.md) · [CHANGELOG.md](CHANGELOG.md) · [Releases](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/releases)
 
-This separation is intentional: the README describes the stable product; the
-tracker records how that product became stronger.
+## Integrator notes (read before production)
 
-## Evidence, verification, and limits
+Deliberate minimal defaults — not defects. Full text: [ADVISORIES.md](docs/deep/ADVISORIES.md).
 
-The repository includes three different kinds of support. They should not be
-confused:
+| Priority | Advisory | One line |
+| --- | --- | --- |
+| Sharp | **ADV-03** | `active_context_id` is self-asserted — harness must own continuity |
+| Sharp | **ADV-07** | `RiskAbove` string match is case-sensitive and fails silent |
+| Common | **ADV-01** | Stale evidence warns; it does not block unless gated |
+| Common | **ADV-10** | `requires_human_authorization` defaults off |
+| 2.0 | **ADV-17** | Adjacency clearance is only as sound as your declared biconditional |
 
-- Deterministic verification checks runtime invariants directly.
-- Scenario and adversarial tests exercise integration behavior and known
-  failure shapes.
-- Model experiments show behavior under stated conditions; they are evidence,
-  not universal guarantees.
-
-```bash
-python -m fpf_thinking_map.verify
-python -m fpf_thinking_map.examples
-```
-
-The 1.9.5 gate distinction was also replayed through `dev_mcp` with the same
-missing `release_permit` under two policies:
-
-```text
-default check       -> gate: insufficient -> outcome: collect_evidence
-explicit BLOCK      -> gate: block        -> outcome: denied (cause: gate_block)
-permit present      -> gate: pass         -> outcome: continue
-```
-
-That is the release contract in one view: uncertainty requests a resolution
-path; a declared hard denial stops the move and remains identifiable to the
-caller.
-
-The compiled state slice was also measured against injecting the corresponding
-raw FPF sections at five shipped decision points. The measured slice was much
-smaller, but this is a traversal-context result, not a claim about general
-intelligence or total application cost. Method and limitations:
-[TRIPLE_TAX_CALCULUS.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/deep/TRIPLE_TAX_CALCULUS.md).
-
-For the authorization experiments, threat boundaries, failures found, and
-claims deliberately not made, see
-[IGNITION_LOCK_WIND_TUNNEL.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/deep/IGNITION_LOCK_WIND_TUNNEL.md).
-
-### Reference hardware
-
-The FPF thinking map was processed, indexed, and verified on a dual-socket
-Intel [Westmere](https://en.wikipedia.org/wiki/Westmere_(microarchitecture))
-server (Xeon X5675, 32 nm), powered by a Chieftec Vita 80 PLUS Bronze PSU.
-The runtime has zero dependencies and needs nothing newer.
+MCP harness: [`dev_mcp/`](dev_mcp/) — `run_scenario`, `get_advisories`, `run_verify`.
 
 ## Scope
 
-Use this library when you need:
+**Use when you need:** bounded multi-step legality, evidence-aware state,
+inspectable block/escalate reasons, human authorization, wait vs idle,
+compact LLM state slices.
 
-- bounded multi-step traversal;
-- explicit next-move legality;
-- evidence-aware workflow state;
-- inspectable reasons for blocking or escalation;
-- human authorization for selected transitions;
-- a clean distinction between waiting, resting, and acting;
-- compact state projections for an LLM or agent host.
+**Do not use as:** a universal reasoner, vector store, tool runner/scheduler,
+or a certificate that an entire agent system is safe.
 
-Do not use it as:
-
-- a universal reasoning engine;
-- a semantic ingestion system for an external corpus;
-- an embeddings or vector database;
-- a tool runner, queue, scheduler, or worker supervisor;
-- a substitute for application-specific policy;
-- a certification that an entire agent system is safe.
-
-Correct map authoring and correct host integration remain part of the trust
-boundary. Known sharp edges and deliberate non-goals are recorded in
-[ADVISORIES.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/deep/ADVISORIES.md).
-
-## Repository guide
+## Docs
 
 | Path | Purpose |
 | --- | --- |
-| [`fpf_thinking_map/`](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/tree/main/fpf_thinking_map) | Zero-dependency runtime published to PyPI (**2.0.1**) |
-| [`dev_mcp/`](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/tree/main/dev_mcp) | Separate development and compliance-testing harness |
-| [ARCHITECTURE.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/ARCHITECTURE.md) | Verified control flow and module architecture |
-| [docs/VERSION_TRACKER.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/VERSION_TRACKER.md) | Every release, with three practical consequences |
-| [docs/ISO_EVIDENCE_PACKET.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/ISO_EVIDENCE_PACKET.md) | Per-release ISO-aligned evidence: quality, security, traceability, deployment gate |
-| [docs/DECISIONS_REJECTIONS_ADOPTIONS.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/DECISIONS_REJECTIONS_ADOPTIONS.md) | Design provenance and rejected scope |
-| [docs/deep/ADVISORIES.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/deep/ADVISORIES.md) | Integration boundaries and known sharp edges |
-| [SHA256SUMS](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/SHA256SUMS) | Repository-wide source fingerprints |
-
-## Design rules
-
-1. Keep the model free to generate and compare.
-2. Keep movement legality explicit and deterministic.
-3. Add structure only when it changes observable behavior.
-4. Keep each decision payload small.
-5. Keep host responsibilities outside the core.
-6. Record rejected ideas as carefully as adopted ones.
-7. Prefer a narrow mechanism with inspectable limits over a broad claim.
-
-## Product ownership
-
-**CONSOLIDARE CONTINUUM S.R.L.** designs, owns, and ships this runtime for its own products and client work. No third-party framework affiliation. No external attribution required for use of this package.
+| [`fpf_thinking_map/`](fpf_thinking_map/) | Zero-dependency runtime (PyPI **2.0.1**) |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Control flow |
+| [docs/ISO_EVIDENCE_PACKET.md](docs/ISO_EVIDENCE_PACKET.md) | ISO-aligned evidence (not certification) |
+| [docs/deep/ADVISORIES.md](docs/deep/ADVISORIES.md) | Integrator boundaries |
+| [SHA256SUMS](SHA256SUMS) | Source fingerprints |
 
 ## Contact
 
 - Org: [Consolidare-Continuum](https://github.com/Consolidare-Continuum)
-- Product: [fpf-thinking-map on PyPI](https://pypi.org/project/fpf-thinking-map/)
+- PyPI: [fpf-thinking-map](https://pypi.org/project/fpf-thinking-map/)
 - Mail: [info@consolidare-continuum.com](mailto:info@consolidare-continuum.com)
 - Web: [consolidare-continuum.com](https://consolidare-continuum.com)
 
