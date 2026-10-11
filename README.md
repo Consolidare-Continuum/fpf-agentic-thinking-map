@@ -15,7 +15,6 @@ the move is valid.
 [![PyPI](https://img.shields.io/pypi/v/fpf-thinking-map?style=flat-square&label=PyPI&color=3775A9)](https://pypi.org/project/fpf-thinking-map/)
 [![Downloads (honest)](https://img.shields.io/badge/downloads%20%28honest%29-4.5k-1f6feb?style=flat-square)](https://pypistats.org/packages/fpf-thinking-map)
 [![Python](https://img.shields.io/pypi/pyversions/fpf-thinking-map?style=flat-square&label=Python&color=f0b429)](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/pyproject.toml)
-[![License](https://img.shields.io/pypi/l/fpf-thinking-map?style=flat-square&label=license&color=57c7bd)](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/LICENSE)
 [![Zero dependencies](https://img.shields.io/badge/dependencies-0-ff9f43?style=flat-square)](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/pyproject.toml)
 [![Verification](https://img.shields.io/badge/verify-39%2F39-59d18c?style=flat-square)](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/fpf_thinking_map/verify.py)
 [![Live demo](https://img.shields.io/badge/live-demo-dd8cff?style=flat-square)](https://consolidare-continuum.github.io/fpf-agentic-thinking-map/demos/three-runs.html)
@@ -25,13 +24,10 @@ pip install fpf-thinking-map
 python -m fpf_thinking_map.verify
 ```
 
-PyPI currently serves **1.9.5**. Releases 1.9.6, 2.0.0 and 2.0.1 are tagged on
-GitHub but their PyPI uploads are still blocked (see
-[PUBLISH-TRUSTED-PUBLISHER.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/PUBLISH-TRUSTED-PUBLISHER.md)).
-To install the current release, pin the tag:
+**Current release: 2.0.1** on [PyPI](https://pypi.org/project/fpf-thinking-map/2.0.1/) — full 2.0 line live (`2.0.0`, `2.0.1`; also `1.9.6`). Built and verified for client delivery by **CONSOLIDARE CONTINUUM S.R.L.**
 
 ```bash
-pip install "git+https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map@v2.0.1"
+pip install "fpf-thinking-map==2.0.1"
 ```
 
 ## Important links
@@ -117,7 +113,7 @@ application logic, retrieval, tools, or a task scheduler.
 | Gate decisions | `GateDecision`, `GateCheck.failure_decision`, `OutcomeCause` | `ABSTAIN` means the gate lacks enough basis to say yes; an explicit `BLOCK` means policy says no for the current evaluation. Traversal preserves the distinction as `cause=gate_block` without breaking the existing outcome enum |
 | Map integrity | `ThinkingMapTraversal.validate_map()` | Opt-in preflight fails on dangling gate/rule references; explicit unknown transition IDs return typed `ABSTAIN` |
 
-These are bounded runtime compilations, not a port of the full FPF framework.
+These are bounded runtime controls owned and shipped by CONSOLIDARE CONTINUUM.
 
 ## Live runtime visual
 
@@ -356,7 +352,7 @@ Use this library when you need:
 Do not use it as:
 
 - a universal reasoning engine;
-- a semantic ingestion system for all of FPF;
+- a semantic ingestion system for an external corpus;
 - an embeddings or vector database;
 - a tool runner, queue, scheduler, or worker supervisor;
 - a substitute for application-specific policy;
@@ -370,7 +366,7 @@ boundary. Known sharp edges and deliberate non-goals are recorded in
 
 | Path | Purpose |
 | --- | --- |
-| [`fpf_thinking_map/`](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/tree/main/fpf_thinking_map) | Zero-dependency runtime (PyPI: 1.9.5; later releases via GitHub tags) |
+| [`fpf_thinking_map/`](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/tree/main/fpf_thinking_map) | Zero-dependency runtime published to PyPI (**2.0.1**) |
 | [`dev_mcp/`](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/tree/main/dev_mcp) | Separate development and compliance-testing harness |
 | [ARCHITECTURE.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/ARCHITECTURE.md) | Verified control flow and module architecture |
 | [docs/VERSION_TRACKER.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/VERSION_TRACKER.md) | Every release, with three practical consequences |
@@ -389,26 +385,15 @@ boundary. Known sharp edges and deliberate non-goals are recorded in
 6. Record rejected ideas as carefully as adopted ones.
 7. Prefer a narrow mechanism with inspectable limits over a broad claim.
 
-## Relationship to FPF
+## Product ownership
 
-This project is inspired by [ailev/FPF](https://github.com/ailev/FPF) by
-Anatoly Levenchuk. It is an independent, MIT-licensed implementation with its
-own runtime scope.
+**CONSOLIDARE CONTINUUM S.R.L.** designs, owns, and ships this runtime for its own products and client work. No third-party framework affiliation. No external attribution required for use of this package.
 
-FPF provides the broad conceptual frame. This package compiles a selected part
-of that frame into a practical traversal runtime. It may omit or reject
-patterns that do not improve this package's observable agent behavior.
+## Contact
 
-See [NOTICE](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/NOTICE)
-and [SOURCES.md](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/docs/deep/SOURCES.md)
-for attribution and scope boundaries.
-
-## License and contact
-
-MIT License. See
-[LICENSE](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/LICENSE).
-
-[@igareosh](https://github.com/igareosh) ·
-[igareosh@igareosh.com](mailto:igareosh@igareosh.com)
+- Org: [Consolidare-Continuum](https://github.com/Consolidare-Continuum)
+- Product: [fpf-thinking-map on PyPI](https://pypi.org/project/fpf-thinking-map/)
+- Mail: [info@consolidare-continuum.com](mailto:info@consolidare-continuum.com)
+- Web: [consolidare-continuum.com](https://consolidare-continuum.com)
 
 **Agent freedom. Explicit movement rules.**
