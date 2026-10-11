@@ -11,7 +11,7 @@ Operational state, evidence freshness, transition legality, authorization,
 waiting, and move identity live **outside** model prose. The model proposes;
 the runtime decides whether the move is valid.
 
-**Owner:** CONSOLIDARE CONTINUUM S.R.L. · **PyPI:** [`fpf-thinking-map`](https://pypi.org/project/fpf-thinking-map/) · **Current:** **2.0.1**
+**PyPI:** [`fpf-thinking-map`](https://pypi.org/project/fpf-thinking-map/) · **Current:** **2.0.1**
 
 [![PyPI](https://img.shields.io/pypi/v/fpf-thinking-map?style=flat-square&label=PyPI&color=3775A9)](https://pypi.org/project/fpf-thinking-map/)
 [![Python](https://img.shields.io/pypi/pyversions/fpf-thinking-map?style=flat-square&label=Python&color=f0b429)](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/pyproject.toml)
@@ -191,15 +191,15 @@ or a certificate that an entire agent system is safe.
 | --- | --- |
 | [`fpf_thinking_map/`](fpf_thinking_map/) | Zero-dependency runtime (PyPI **2.0.1**) |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Control flow |
-| [docs/ISO_EVIDENCE_PACKET.md](docs/ISO_EVIDENCE_PACKET.md) | ISO-aligned evidence (not certification) |
 | [docs/deep/ADVISORIES.md](docs/deep/ADVISORIES.md) | Integrator boundaries |
 | [SHA256SUMS](SHA256SUMS) | Source fingerprints |
 
-## Contact
+## Product continuation
 
-- Org: [Consolidare-Continuum](https://github.com/Consolidare-Continuum)
-- PyPI: [fpf-thinking-map](https://pypi.org/project/fpf-thinking-map/)
-- Mail: [info@consolidare-continuum.com](mailto:info@consolidare-continuum.com)
-- Web: [consolidare-continuum.com](https://consolidare-continuum.com)
+**CONSOLIDARE CONTINUUM S.R.L.** designs, owns, and ships this runtime for its own products and client work. No third-party framework affiliation. No external attribution required for use of this package.
+
+## ISO evidence
+
+[docs/ISO_EVIDENCE_PACKET.md](docs/ISO_EVIDENCE_PACKET.md) — ISO/IEC 25010 · 27001 · 9001 alignment for **v2.0.1** (**not** certification).
 
 **Agent freedom. Explicit movement rules.**
