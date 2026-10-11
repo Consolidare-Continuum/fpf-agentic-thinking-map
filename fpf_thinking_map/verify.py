@@ -726,6 +726,39 @@ def check_stagnation_counter():
     assert s4.visit_count == 0
 
 
+def check_stagnation_signal_precedes_simulated_retry_budget():
+    """The issue-cited 45-call retry shape tests bookkeeping, not real thrash detection.
+
+    With evidence held constant by this harness, step() reports stagnation at
+    the configured threshold. This does not prove the library detects
+    unproductive reasoning or stops a caller from continuing.
+    """
+    sm = SemanticMap()
+    sm.register_context(ContextPrimitive("ctx", "Test"))
+    sm.register_transition(TransitionPrimitive(
+        "t1", "Go", "ctx", "stuck", "done", required_evidence=["missing_ev"],
+    ))
+    engine = ThinkingMapTraversal(sm)
+    state = engine.build_active_state(
+        RuntimeBinding(active_context_id="ctx"),
+        current_state="stuck",
+    )
+
+    threshold = state.stagnation_threshold
+    first_stagnant_call = None
+    for call in range(1, 46):
+        outcome = engine.step(state)
+        stagnant = outcome.llm_prompt_state["stagnation"]["is_stagnant"]
+        if stagnant and first_stagnant_call is None:
+            first_stagnant_call = call
+        assert stagnant == (call >= threshold), (
+            f"Call {call}: expected stagnation={call >= threshold}, got {stagnant}"
+        )
+
+    assert first_stagnant_call == threshold
+    assert state.visit_count == 45
+
+
 def check_idle_outcome():
     """Verify IDLE outcome for clean terminal states."""
     sm = SemanticMap()
@@ -2550,6 +2583,7 @@ def main():
         ("horizontal properties (25 items)", check_horizontal_properties),
         ("TTL evidence decay", check_ttl_decay),
         ("stagnation counter (visit countdown)", check_stagnation_counter),
+        ("stagnation bookkeeping (simulated 45-call retry)", check_stagnation_signal_precedes_simulated_retry_budget),
         ("IDLE outcome", check_idle_outcome),
         ("BRIDGE outcome (cross-context)", check_bridge_outcome),
         ("bridge crossing (validated writeback)", check_bridge_crossing),
