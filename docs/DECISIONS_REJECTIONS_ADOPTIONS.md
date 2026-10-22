@@ -65,4 +65,5 @@ Use this index when you need rationale and provenance behind design choices.
 ## Positioning
 
 Mainstream files (especially root `README.md`) stay concise and runtime-focused.
+Binding status of each decision (DIRECTIVE / PROPOSAL / DESCRIPTION, with evidence): [DIRECTIVES.md](DIRECTIVES.md).
 This file is the single entrypoint for deeper theory, analyses, and historical decision records.
