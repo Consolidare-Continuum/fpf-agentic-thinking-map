@@ -8,12 +8,25 @@ list: [`docs/deep/EXPANDED_PROVENANCE.md`](docs/deep/EXPANDED_PROVENANCE.md).
 
 ## [Unreleased]
 
-### Planned
+### Added
 
-- Traversal checkpoint and restore — `ActiveState.checkpoint()` /
-  `ActiveState.from_checkpoint()`, `SemanticMap.fingerprint()`. Design
-  finalized, not yet implemented. See
-  [`docs/deep/DESIGN_TRAVERSAL_CHECKPOINT.md`](docs/deep/DESIGN_TRAVERSAL_CHECKPOINT.md).
+- **Traversal checkpoint and restore** (ADV-08) — `ActiveState.checkpoint()`,
+  `ActiveState.from_checkpoint(semantic_map, checkpoint, *, strict=True)`,
+  `SemanticMap.fingerprint()`, `ActiveState.map_revision` /
+  `binding_revision` / `mark_binding_changed()`, and the
+  `CheckpointError` family (`UnsupportedCheckpointVersion`,
+  `MapFingerprintMismatch`, `InvalidCheckpointState`). New module
+  `fpf_thinking_map/checkpoint.py`. Additive: a caller who never checkpoints
+  sees zero behavioral change. Restore is all-or-nothing and never repairs.
+  Beyond the 2026-07-23 design, the checkpoint also carries state added
+  since it was written — `authorization_clock`, `autonomy_ledger`,
+  adjacency clearances and confirmed-absent percepts — because omitting any
+  of them would reproduce the silent-forgetting bug this closes.
+  `fingerprint()` is computed on demand, not cached (registries are plain
+  dicts and can be mutated outside `register_*()`).
+  `verify.py` 40/40 (new: traversal checkpoint, round-trip fidelity,
+  fail-closed restore); `dev_mcp/test_server.py` unchanged at 45/45.
+  Rebind and the continuation capsule remain unbuilt, as designed.
 
 ## [2.0.1] - 2026-10-08
 

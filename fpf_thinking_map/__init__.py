@@ -41,6 +41,14 @@ from fpf_thinking_map.authorization import (
     issue_authorization_receipt,
 )
 
+# --- Checkpoint: supported round trip for a paused traversal (ADV-08) ---
+from fpf_thinking_map.checkpoint import (
+    CheckpointError,
+    InvalidCheckpointState,
+    MapFingerprintMismatch,
+    UnsupportedCheckpointVersion,
+)
+
 # --- Guards: deterministic hard constraints ---
 from fpf_thinking_map.guards import (
     Guard,

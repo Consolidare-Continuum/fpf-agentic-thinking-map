@@ -6,6 +6,7 @@ Basis: brain repo `governance/SIGNED-DIRECTIVE-STANDARD.md` (draft). Counter-exa
 a README sentence, a changelog line, a version number, the word "lawful".
 
 Evidence run 2026-10-22: `python3 -I -m fpf_thinking_map.verify` → **39/39 checks passed** (version 2.0.1).
+Checkpoint row: evidence run 2026-10-24 on branch `checkpoint-restore`, 40/40; not in a tagged release.
 Scope of that evidence: the library's own primitives, not any downstream map built on it.
 
 | Decision (see [DECISIONS_REJECTIONS_ADOPTIONS.md](DECISIONS_REJECTIONS_ADOPTIONS.md)) | Status | Evidence (verify.py check) |
@@ -17,7 +18,7 @@ Scope of that evidence: the library's own primitives, not any downstream map bui
 | MoveIntent (Tail Number) | DIRECTIVE | `move intent / inspect_move (concrete move identity)` |
 | Reachability analysis | DIRECTIVE | `reachability`, `shortest_path_distance` |
 | Agentic structural guards are opt-in | DIRECTIVE | `agentic structural guards are opt-in` |
-| Traversal Checkpoint and Restore | PROPOSAL | accepted, implementation pending; no code, no check |
+| Traversal Checkpoint and Restore | DIRECTIVE (unreleased branch) | `traversal checkpoint (round-trip fidelity, fail-closed restore)`, 40/40 on branch `checkpoint-restore` |
 | All `REJECTED_*.md` | DESCRIPTION | decision records; bind nothing |
 | `ADV-*` advisories | DESCRIPTION | integrator-facing known gaps, not guarantees |
 
@@ -28,3 +29,4 @@ Scope of that evidence: the library's own primitives, not any downstream map bui
 - Acceptance is by signature below; until a role other than the drafter signs, rows stay as classified by the drafter.
 
 SIGNED: Developer (Felix) | Claude Code context | 2026-10-22 | classification of existing decisions vs verify.py 39/39; acceptance pending
+SIGNED: Developer (Felix) | Claude Code context | 2026-10-24 | checkpoint/restore implemented vs accepted design; verify 40/40; acceptance pending

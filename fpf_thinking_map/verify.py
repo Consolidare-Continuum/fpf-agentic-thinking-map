@@ -1610,6 +1610,132 @@ def check_pending_input_await():
     ], prompt4["pending_inputs"]
 
 
+def check_traversal_checkpoint():
+    """Checkpoint/restore (ADV-08): a paused ActiveState round-trips with its
+    TTL, stagnation, authorization and pending-input memory intact, and any
+    inconsistent checkpoint is refused whole rather than repaired."""
+    import copy
+    import json
+
+    from fpf_thinking_map.checkpoint import (
+        CheckpointError,
+        InvalidCheckpointState,
+        MapFingerprintMismatch,
+        UnsupportedCheckpointVersion,
+    )
+
+    sm = SemanticMap()
+    sm.register_context(ContextPrimitive("ctx", "Test"))
+    sm.register_evidence(EvidencePrimitive(
+        evidence_id="fast_ev", label="Fast", context_id="ctx",
+        freshness=Freshness.CURRENT, ttl_steps=3, fgr=FGR(0.8, 0.6, 0.9),
+    ))
+    sm.register_evidence(EvidencePrimitive(
+        evidence_id="stable_ev", label="Stable", context_id="ctx",
+        freshness=Freshness.CURRENT, ttl_steps=None,
+    ))
+    sm.register_transition(TransitionPrimitive(
+        "work", "Work", "ctx", "draft", "ready", required_evidence=["fast_ev"],
+    ))
+    sm.register_transition(TransitionPrimitive(
+        "publish", "Publish", "ctx", "ready", "published",
+        requires_human_authorization=True,
+    ))
+    engine = ThinkingMapTraversal(sm)
+    b = RuntimeBinding(
+        active_context_id="ctx", task="t", current_evidence=["fast_ev", "stable_ev"],
+        pending_inputs=[PendingInput(
+            input_id="dep", label="Dep", status=PendingInputStatus.PENDING,
+            wake_conditions=["dep received"],
+        )],
+    )
+    s = engine.build_active_state(b, current_state="draft")
+    s.stagnation_threshold = 5
+    for _ in range(2):
+        engine.step(s)
+    s.current_state = "ready"
+    engine.step(s)
+    o_lock = engine.attempt_transition(s, "publish", authorized=False)
+    assert o_lock.kind == OutcomeKind.ESCALATE and "publish" in s.pending_authorizations
+    receipt = issue_authorization_receipt(s, "publish", request_id="req-cp", ttl_steps=100)
+    s.consumed_authorizations.add("spent-earlier")
+    s.mark_binding_changed()
+
+    before_steps, before_visits = s.step_count, dict(s._state_visits)
+    cp = s.checkpoint()
+    assert s.step_count == before_steps and s._state_visits == before_visits, "checkpoint must not mutate"
+    assert json.loads(json.dumps(cp)) == cp, "checkpoint must be plain JSON"
+    assert cp["map_fingerprint"] == sm.fingerprint()
+    assert cp["orientation"]["binding_revision"] == 1
+
+    # fidelity: same prompt state, same counters, same next outcome
+    r = ActiveState.from_checkpoint(sm, json.loads(json.dumps(cp)))
+    assert r.to_llm_prompt_state() == s.to_llm_prompt_state()
+    assert r._state_visits == s._state_visits and r._state_visit_evidence == s._state_visit_evidence
+    assert r._evidence_added_at == s._evidence_added_at
+    assert r.ttl_remaining("fast_ev") == s.ttl_remaining("fast_ev")
+    assert r.visits_remaining == s.visits_remaining
+    assert r.pending_authorizations == s.pending_authorizations
+    assert r.consumed_authorizations == s.consumed_authorizations
+    assert r._authorization_clock == s._authorization_clock
+    assert r.map_revision == sm.fingerprint() and r.binding_revision == 1
+    o1, o2 = engine.step(s), engine.step(r)
+    assert (o1.kind, o1.reason) == (o2.kind, o2.reason)
+    assert r.checkpoint()["active"] == s.checkpoint()["active"]
+
+    # control: the hand-rolled rebuild ADV-08 warns about really does forget
+    naive = ActiveState(sm, RuntimeBinding(
+        active_context_id="ctx", current_evidence=["fast_ev", "stable_ev"]), current_state="ready")
+    assert naive._state_visits == {} and s._state_visits != {}
+
+    # a receipt spent before the checkpoint stays spent after it: put the
+    # restored state back where the receipt's fingerprint matches again, so
+    # only the consumed set can be what refuses the replay
+    ok = engine.attempt_transition(r, "publish", authorization=receipt)
+    assert ok.kind == OutcomeKind.CONTINUE, ok.kind
+    r2 = ActiveState.from_checkpoint(sm, r.checkpoint())
+    assert "req-cp" in r2.consumed_authorizations
+    r2.current_state = "ready"
+    replay = engine.attempt_transition(r2, "publish", authorization=receipt)
+    assert replay.kind == OutcomeKind.ESCALATE and r2.current_state == "ready", replay.kind
+    forgot = copy.deepcopy(r.checkpoint())
+    forgot["active"]["consumed_authorizations"] = []
+    r3 = ActiveState.from_checkpoint(sm, forgot)
+    r3.current_state = "ready"
+    assert engine.attempt_transition(r3, "publish", authorization=receipt).kind == OutcomeKind.CONTINUE, \
+        "control: without the consumed set the same receipt would fire twice"
+
+    # fail closed, one defect at a time, nothing partially restored
+    def bad(mutate, exc):
+        c = copy.deepcopy(cp)
+        mutate(c)
+        try:
+            ActiveState.from_checkpoint(sm, c)
+        except exc:
+            return
+        raise AssertionError(f"expected {exc.__name__}")
+
+    bad(lambda c: c.update(schema_version="9"), UnsupportedCheckpointVersion)
+    bad(lambda c: c.pop("active"), InvalidCheckpointState)
+    bad(lambda c: c.update(map_fingerprint="sha256:0"), MapFingerprintMismatch)
+    bad(lambda c: c["binding"].update(active_context_id="nope"), InvalidCheckpointState)
+    bad(lambda c: c["active"].update(current_state="nowhere"), InvalidCheckpointState)
+    bad(lambda c: c["active"]["evidence_added_at"].update(fast_ev=999), InvalidCheckpointState)
+    bad(lambda c: c["active"]["state_visits"].update({"ctx:draft": -1}), InvalidCheckpointState)
+    bad(lambda c: c["active"].update(pending_authorizations=["ghost"]), InvalidCheckpointState)
+    bad(lambda c: c["active"]["trace"].update(last_transition_id="ghost"), InvalidCheckpointState)
+    bad(lambda c: c["binding"].update(current_evidence=["unregistered"]), InvalidCheckpointState)
+    assert isinstance(ActiveState.from_checkpoint(
+        sm, {**copy.deepcopy(cp), "binding": {**cp["binding"], "current_evidence": ["unregistered"]}},
+        strict=False), ActiveState)
+    assert issubclass(MapFingerprintMismatch, CheckpointError)
+
+    # the fingerprint tracks the map, not an earlier cache
+    sm.register_transition(TransitionPrimitive("extra", "Extra", "ctx", "draft", "draft"))
+    assert sm.fingerprint() != cp["map_fingerprint"]
+    bad(lambda c: None, MapFingerprintMismatch)
+
+
 def check_move_intent():
     """MoveIntent/inspect_move: a concrete proposed move, distinct from its
 
@@ -2562,6 +2688,7 @@ def main():
         ("authorization receipt (scoped, non-replayable, TOCTOU-safe)", check_authorization_receipt),
         ("pending input / AWAIT (distinct from IDLE)", check_pending_input_await),
         ("move intent / inspect_move (concrete move identity)", check_move_intent),
+        ("traversal checkpoint (round-trip fidelity, fail-closed restore)", check_traversal_checkpoint),
         ("reachability (discrete graph analysis, val.pdf ch.10)", check_reachability),
         ("shortest_path_distance (BFS hop count: 0, N, None unreachable)", check_shortest_path_distance),
         (

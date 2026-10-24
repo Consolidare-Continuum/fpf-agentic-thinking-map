@@ -1,7 +1,16 @@
-# Design (accepted, not yet built) — Traversal Checkpoint and Restore
+# Design (accepted, built on branch `checkpoint-restore`, unreleased) — Traversal Checkpoint and Restore
 
-**Status**: Accepted for implementation — no code exists yet. This document
-is the implementation reference; nothing here should be read as shipped.
+**Status**: Implemented 2026-10-24 in `fpf_thinking_map/checkpoint.py`
+(unreleased; `verify.py` check "traversal checkpoint"). Deviations from the
+text below, all deliberate: (1) `SemanticMap.fingerprint()` is computed on
+demand, not cached — the registries are plain dicts mutable outside
+`register_*()`, so a cache could outlive the map it describes; (2) the
+checkpoint also carries `authorization_clock`, `autonomy_ledger`,
+`adjacency_clearances` and `confirmed_absent_percepts`, state added after
+this design was written; (3) `from_checkpoint(..., strict=True)` requires
+bound evidence ids to be registered evidence primitives — a harness that
+binds unregistered tokens passes `strict=False`. Nothing shipped until a
+release is cut.
 **Decision by**: igareosh (prichindel.com)
 **Date**: 2026-07-23
 **Source**: split from an external draft submitted for review, proposing

@@ -107,6 +107,11 @@ class SemanticMap:
         default=None, init=False, repr=False,
     )
 
+    def fingerprint(self) -> str:
+        """Canonical SHA-256 over every registered primitive (computed, not cached)."""
+        from fpf_thinking_map.checkpoint import map_fingerprint
+        return map_fingerprint(self)
+
     def _ensure_indexes(self) -> None:
         if self._ctx_transition_idx is None:
             idx: dict[str, dict[str, list[TransitionPrimitive]]] = {}
@@ -303,6 +308,17 @@ class ActiveState:
     — a human can change their mind — it just means the ESCALATE reason on
     any retry names what was said before.
     """
+    map_revision: str = ""
+    """Fingerprint of the map this state was restored against; "" for a state
+
+    built directly. Set by from_checkpoint(), never projected into slice()
+    or to_llm_prompt_state() (see REJECTED_ORIENTATION_VIEW_PROJECTION.md).
+    """
+    binding_revision: int = 0
+    """Host-owned counter for "the binding changed under this state". Only
+
+    mark_binding_changed() advances it; the core never does.
+    """
     _evidence_added_at: dict[str, int] = field(default_factory=dict, init=False, repr=False)
     _state_visits: dict[str, int] = field(default_factory=dict, init=False, repr=False)
     _state_visit_evidence: dict[str, frozenset[str]] = field(default_factory=dict, init=False, repr=False)
@@ -350,6 +366,23 @@ class ActiveState:
     accelerate evidence TTL decay on every fire, a much bigger and
     unrelated semantic change to what step_count means.
     """
+
+    def mark_binding_changed(self) -> None:
+        """Advance binding_revision by one. No other effect."""
+        self.binding_revision += 1
+
+    def checkpoint(self) -> dict:
+        """JSON-compatible snapshot of this traversal. Observational: no step, no visit."""
+        from fpf_thinking_map.checkpoint import build_checkpoint
+        return build_checkpoint(self)
+
+    @classmethod
+    def from_checkpoint(
+        cls, semantic_map: "SemanticMap", checkpoint: dict, *, strict: bool = True,
+    ) -> "ActiveState":
+        """Restore a checkpoint() against the same map, or raise CheckpointError."""
+        from fpf_thinking_map.checkpoint import restore_from_checkpoint
+        return restore_from_checkpoint(semantic_map, checkpoint, strict=strict)
 
     def __post_init__(self) -> None:
         for eid in self.binding.current_evidence:

@@ -25,7 +25,7 @@ Requires **Python ≥ 3.12**. Zero runtime dependencies.
 
 ```bash
 pip install "fpf-thinking-map==2.0.1"
-python -m fpf_thinking_map.verify    # 39/39
+python -m fpf_thinking_map.verify    # 40/40 (39/39 at v2.0.1)
 python -m fpf_thinking_map.examples
 ```
 
