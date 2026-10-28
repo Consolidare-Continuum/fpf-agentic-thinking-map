@@ -1,3 +1,5 @@
+# Copyright (c) 2026 CONSOLIDARE CONTINUUM S.R.L. <info@consolidare-continuum.com>
+# SPDX-License-Identifier: MIT
 """Agentic structures whose semantics must remain explicit at runtime.
 
 This module is deliberately smaller than the upstream patterns it responds to.

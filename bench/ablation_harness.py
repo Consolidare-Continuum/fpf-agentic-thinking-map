@@ -1,3 +1,5 @@
+# Copyright (c) 2026 CONSOLIDARE CONTINUUM S.R.L. <info@consolidare-continuum.com>
+# SPDX-License-Identifier: MIT
 """Behavioral ablation: same task, same model, gate present vs. gate absent.
 
 Methodology (documented deliberately-cheap version of the ThinkMCP ablation

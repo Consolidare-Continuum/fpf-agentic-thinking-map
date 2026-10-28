@@ -1,3 +1,5 @@
+# Copyright (c) 2026 CONSOLIDARE CONTINUUM S.R.L. <info@consolidare-continuum.com>
+# SPDX-License-Identifier: MIT
 """Task BE: Task B's theme (cross-context / high-stakes figure), Task E's structure.
 
 Task B let the model dodge too: manual_reconciliation was a full,

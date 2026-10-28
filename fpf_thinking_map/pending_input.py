@@ -1,3 +1,5 @@
+# Copyright (c) 2026 CONSOLIDARE CONTINUUM S.R.L. <info@consolidare-continuum.com>
+# SPDX-License-Identifier: MIT
 """Pending external inputs — traversal waiting on something the map doesn't produce.
 
 `IDLE` today means two different things at once: "done, nothing left to do"

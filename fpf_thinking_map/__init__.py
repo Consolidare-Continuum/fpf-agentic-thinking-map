@@ -1,3 +1,5 @@
+# Copyright (c) 2026 CONSOLIDARE CONTINUUM S.R.L. <info@consolidare-continuum.com>
+# SPDX-License-Identifier: MIT
 """FPF Thinking Map — compiled semantic substrate for agentic traversal.
 
 A structured board for LLM reasoning: the model navigates a pre-shaped

@@ -1,3 +1,5 @@
+# Copyright (c) 2026 CONSOLIDARE CONTINUUM S.R.L. <info@consolidare-continuum.com>
+# SPDX-License-Identifier: MIT
 """Task E: structured so the *only* correct resolution is asking a human.
 
 Every prior task let the model avoid ever genuinely deciding to ask:

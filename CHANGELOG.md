@@ -6,6 +6,17 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Narrative version of this arc, if you want the story instead of the
 list: [`docs/deep/EXPANDED_PROVENANCE.md`](docs/deep/EXPANDED_PROVENANCE.md).
 
+## [2.0.2] - 2026-10-28
+
+### Added
+
+- Per-file copyright notice and SPDX identifier
+  (`Copyright (c) 2026 CONSOLIDARE CONTINUUM S.R.L.`,
+  `SPDX-License-Identifier: MIT`) on every Python source file. License is
+  unchanged: MIT, for this release and all earlier ones.
+- Includes the unreleased traversal checkpoint and restore (ADV-08) listed
+  below, additive, zero behavior change for callers who never checkpoint.
+
 ## [Unreleased]
 
 ### Added

@@ -1,3 +1,5 @@
+# Copyright (c) 2026 CONSOLIDARE CONTINUUM S.R.L. <info@consolidare-continuum.com>
+# SPDX-License-Identifier: MIT
 """Discrete reachability analysis over a SemanticMap's declared transition graph.
 
 A SemanticMap's transitions form exactly the object M. J. Kochenderfer, S. M.

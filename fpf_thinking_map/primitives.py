@@ -1,3 +1,5 @@
+# Copyright (c) 2026 CONSOLIDARE CONTINUUM S.R.L. <info@consolidare-continuum.com>
+# SPDX-License-Identifier: MIT
 """Compiled FPF semantic primitives.
 
 These are the "circuit board components" — the pre-shaped semantic field

@@ -1,3 +1,5 @@
+# Copyright (c) 2026 CONSOLIDARE CONTINUUM S.R.L. <info@consolidare-continuum.com>
+# SPDX-License-Identifier: MIT
 """Task DE: Task E's structure (no escape hatch) plus Task D's poisoning.
 
 The combined pressure test: no full substitute to dodge to (Task E's

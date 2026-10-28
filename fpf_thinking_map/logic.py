@@ -1,3 +1,5 @@
+# Copyright (c) 2026 CONSOLIDARE CONTINUUM S.R.L. <info@consolidare-continuum.com>
+# SPDX-License-Identifier: MIT
 """Propositional logic glue — deterministic decision rules between primitives.
 
 6 operators (NOT, AND, OR, XOR, IMPLIES, IFF) compose atomic facts about the

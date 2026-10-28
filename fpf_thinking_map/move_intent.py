@@ -1,3 +1,5 @@
+# Copyright (c) 2026 CONSOLIDARE CONTINUUM S.R.L. <info@consolidare-continuum.com>
+# SPDX-License-Identifier: MIT
 """MoveIntent — a concrete proposed move, distinct from its transition type.
 
 `TransitionPrimitive` names a reusable move *type* ("publish"). Every

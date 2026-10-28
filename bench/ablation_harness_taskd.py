@@ -1,3 +1,5 @@
+# Copyright (c) 2026 CONSOLIDARE CONTINUUM S.R.L. <info@consolidare-continuum.com>
+# SPDX-License-Identifier: MIT
 """Task D: poisoned tool description, live model, real engine underneath.
 
 Completes the pair with the dev_mcp-run engine proofs (see RESULTS.md

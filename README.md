@@ -11,7 +11,7 @@ Operational state, evidence freshness, transition legality, authorization,
 waiting, and move identity live **outside** model prose. The model proposes;
 the runtime decides whether the move is valid.
 
-**PyPI:** [`fpf-thinking-map`](https://pypi.org/project/fpf-thinking-map/) · **Current:** **2.0.1**
+**PyPI:** [`fpf-thinking-map`](https://pypi.org/project/fpf-thinking-map/) · **Current:** **2.0.2**
 
 [![PyPI](https://img.shields.io/pypi/v/fpf-thinking-map?style=flat-square&label=PyPI&color=3775A9)](https://pypi.org/project/fpf-thinking-map/)
 [![Python](https://img.shields.io/pypi/pyversions/fpf-thinking-map?style=flat-square&label=Python&color=f0b429)](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/pyproject.toml)

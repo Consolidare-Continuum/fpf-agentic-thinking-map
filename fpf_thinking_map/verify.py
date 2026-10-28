@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2026 CONSOLIDARE CONTINUUM S.R.L. <info@consolidare-continuum.com>
+# SPDX-License-Identifier: MIT
 """Self-verification harness for the FPF thinking map package.
 
 Run: python -m fpf_thinking_map.verify

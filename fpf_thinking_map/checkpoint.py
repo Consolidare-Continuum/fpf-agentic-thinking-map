@@ -1,3 +1,5 @@
+# Copyright (c) 2026 CONSOLIDARE CONTINUUM S.R.L. <info@consolidare-continuum.com>
+# SPDX-License-Identifier: MIT
 """Traversal checkpoint and restore — hand a paused ActiveState back to the engine intact.
 
 `ActiveState` keeps three counters (`_evidence_added_at`, `_state_visits`,

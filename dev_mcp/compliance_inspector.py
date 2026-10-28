@@ -1,3 +1,5 @@
+# Copyright (c) 2026 CONSOLIDARE CONTINUUM S.R.L. <info@consolidare-continuum.com>
+# SPDX-License-Identifier: MIT
 """Compliance Mode Inspector — durable record of map fit/drift, nothing more.
 
 The engine already computes whether a committed move fits the map: every

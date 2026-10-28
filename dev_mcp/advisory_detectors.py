@@ -1,3 +1,5 @@
+# Copyright (c) 2026 CONSOLIDARE CONTINUUM S.R.L. <info@consolidare-continuum.com>
+# SPDX-License-Identifier: MIT
 """Structural detectors for 14 of the 15 documented integrator advisories (docs/deep/ADVISORIES.md).
 ADV-09 has no detector — it's about compliance mode itself, not an ActiveState property.
 

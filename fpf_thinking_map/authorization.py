@@ -1,3 +1,5 @@
+# Copyright (c) 2026 CONSOLIDARE CONTINUUM S.R.L. <info@consolidare-continuum.com>
+# SPDX-License-Identifier: MIT
 """Authorization receipts — a human's yes, scoped to the exact state it was given for.
 
 `attempt_transition(state, "publish", authorized=True)` is an ambient boolean:

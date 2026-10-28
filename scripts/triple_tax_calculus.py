@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Copyright (c) 2026 CONSOLIDARE CONTINUUM S.R.L. <info@consolidare-continuum.com>
+# SPDX-License-Identifier: MIT
 """Triple tax calculus for fpf-agentic-thinking-map.
 
 Reproducible measurements only. This script does not edit fpf_thinking_map/*.

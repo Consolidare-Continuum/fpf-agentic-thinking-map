@@ -1,3 +1,5 @@
+# Copyright (c) 2026 CONSOLIDARE CONTINUUM S.R.L. <info@consolidare-continuum.com>
+# SPDX-License-Identifier: MIT
 """dev_mcp self-test — same check()/PASS-FAIL style as fpf_thinking_map/verify.py.
 
 Not pytest: this repo tests itself with plain asserts + a runner, on purpose

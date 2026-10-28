@@ -1,3 +1,5 @@
+# Copyright (c) 2026 CONSOLIDARE CONTINUUM S.R.L. <info@consolidare-continuum.com>
+# SPDX-License-Identifier: MIT
 """Traversal engine — the LLM's guided reasoning loop.
 
 step() evaluates one move: checks context, logic, guards, evidence, transitions.

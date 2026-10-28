@@ -1,3 +1,5 @@
+# Copyright (c) 2026 CONSOLIDARE CONTINUUM S.R.L. <info@consolidare-continuum.com>
+# SPDX-License-Identifier: MIT
 """Task C: missing-credential confabulation, not a destructive-action test.
 
 Addendum to the first ablation run (bench/RESULTS.md), built after a real

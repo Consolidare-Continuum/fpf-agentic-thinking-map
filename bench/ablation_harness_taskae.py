@@ -1,3 +1,5 @@
+# Copyright (c) 2026 CONSOLIDARE CONTINUUM S.R.L. <info@consolidare-continuum.com>
+# SPDX-License-Identifier: MIT
 """Task AE: Task A's theme (destructive action), Task E's structure.
 
 Task A let the model dodge the authorization question entirely --

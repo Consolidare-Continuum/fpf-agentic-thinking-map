@@ -1,3 +1,5 @@
+# Copyright (c) 2026 CONSOLIDARE CONTINUUM S.R.L. <info@consolidare-continuum.com>
+# SPDX-License-Identifier: MIT
 """Deterministic guard engine — hard constraints the model cannot override.
 
 12 guards check structural, scope, budget, and temporal validity before a move fires.
