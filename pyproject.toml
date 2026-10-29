@@ -32,7 +32,7 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map"
+Homepage = "https://consolidare-continuum.com/fpf-thinking-map/"
 Repository = "https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map"
 Documentation = "https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map#readme"
 Issues = "https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/issues"
