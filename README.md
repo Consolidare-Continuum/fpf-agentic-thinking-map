@@ -219,7 +219,14 @@ MCP test harness: [`dev_mcp/`](dev_mcp/) (`run_scenario`, `get_advisories`, `run
 
 ## License and ownership
 
-MIT. Copyright (c) 2026 CONSOLIDARE CONTINUUM S.R.L. The MIT license requires
+MIT. Copyright (c) 2026 CONSOLIDARE CONTINUUM S.R.L.
+
+Copyrighted build: release **2.0.2**, commit
+[`f0a17a543a23cbc8a33071b170a02ccf41fd33b7`](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/commit/f0a17a543a23cbc8a33071b170a02ccf41fd33b7)
+(signed tag `v2.0.2`). Every source file in that commit carries the copyright
+and SPDX notice.
+
+The MIT license requires
 that the copyright notice and license text be kept in copies and substantial
 portions of the software; see [LICENSE](LICENSE) and [NOTICE](NOTICE).
 
