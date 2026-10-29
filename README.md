@@ -1,82 +1,32 @@
-<p align="center">
-  <img src="https://raw.githubusercontent.com/Consolidare-Continuum/fpf-agentic-thinking-map/main/docs/assets/fpf-agentic-thinking-map-header-v20260818.png" alt="FPF Agentic Thinking Map — Agent freedom. Explicit movement rules." width="100%" />
-</p>
+# fpf-thinking-map
 
-# FPF Agentic Thinking Map
+A small Python library that tracks the state of a multi-step agent workflow
+and answers one question: *is this next move allowed right now, and if not,
+why?*
 
-Deterministic Python runtime for agents that may reason freely but must move
-through a workflow lawfully.
+You describe a workflow as a graph (contexts, roles, evidence, gates,
+transitions). Your agent harness feeds the library the current state and the
+move the agent proposes. The library returns a legal/illegal outcome with the
+reason and a trace. It does not call a model, run tools, poll, or schedule
+anything.
 
-Operational state, evidence freshness, transition legality, authorization,
-waiting, and move identity live **outside** model prose. The model proposes;
-the runtime decides whether the move is valid.
+**PyPI:** [`fpf-thinking-map`](https://pypi.org/project/fpf-thinking-map/) · **Current:** **2.0.2** · **License:** MIT
 
-**PyPI:** [`fpf-thinking-map`](https://pypi.org/project/fpf-thinking-map/) · **Current:** **2.0.2**
-
-[![PyPI](https://img.shields.io/pypi/v/fpf-thinking-map?style=flat-square&label=PyPI&color=3775A9)](https://pypi.org/project/fpf-thinking-map/)
-[![Python](https://img.shields.io/pypi/pyversions/fpf-thinking-map?style=flat-square&label=Python&color=f0b429)](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/pyproject.toml)
-[![Zero dependencies](https://img.shields.io/badge/dependencies-0-ff9f43?style=flat-square)](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/pyproject.toml)
-[![Verification](https://img.shields.io/badge/verify-39%2F39-59d18c?style=flat-square)](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/blob/main/fpf_thinking_map/verify.py)
-[![Live demo](https://img.shields.io/badge/live-demo-dd8cff?style=flat-square)](https://consolidare-continuum.github.io/fpf-agentic-thinking-map/demos/three-runs.html)
+[![PyPI](https://img.shields.io/pypi/v/fpf-thinking-map?style=flat-square&label=PyPI)](https://pypi.org/project/fpf-thinking-map/)
+[![Python](https://img.shields.io/pypi/pyversions/fpf-thinking-map?style=flat-square&label=Python)](pyproject.toml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 
 ## Install
 
-Requires **Python ≥ 3.12**. Zero runtime dependencies.
+Requires **Python ≥ 3.12**. No runtime dependencies.
 
 ```bash
 pip install "fpf-thinking-map==2.0.2"
-python -m fpf_thinking_map.verify    # 40/40 (39/39 at v2.0.1)
+python -m fpf_thinking_map.verify    # the package's own self-tests, 40 checks
 python -m fpf_thinking_map.examples
 ```
 
-Full 2.0 line is on the index: [`2.0.0`](https://pypi.org/project/fpf-thinking-map/2.0.0/), [`2.0.1`](https://pypi.org/project/fpf-thinking-map/2.0.1/), [`2.0.2`](https://pypi.org/project/fpf-thinking-map/2.0.2/) (also [`1.9.6`](https://pypi.org/project/fpf-thinking-map/1.9.6/)).
-
-## What it is
-
-Agents lose workflow rules in long runs. This package moves the non-negotiable
-parts into ordinary code:
-
-- current context and state
-- evidence presence and TTL freshness
-- gates, guards, and lawful transitions
-- cross-context bridges
-- human authorization (`AuthorizationReceipt`)
-- external wait (`PendingInput` / `AWAIT`)
-- concrete move identity (`MoveIntent`)
-- typed claim scope / pathwise reliability
-- tool-call plan closure and autonomy budgets
-
-Not a prompt. A compact **control surface** around reasoning.
-
-## Contract
-
-| Agent / host | This runtime |
-| --- | --- |
-| Interprets the task | Holds explicit traversal state |
-| Generates options | Computes which moves are legal |
-| Collects evidence | Checks presence and freshness |
-| Proposes a move | Inspects or attempts that move |
-| Explains the result | Returns a bounded outcome and trace |
-| Requests human input | Enforces the authorization boundary |
-| Runs tools and jobs | Never executes, polls, or schedules them |
-
-## Structural controls (shipped)
-
-| Concern | Structures | Effect |
-| --- | --- | --- |
-| Claim / assurance | `ContextSlice`, `ClaimScope`, `FormalityLevel`, `ReliabilityPath` | Typed scope; unknown stays unknown |
-| Tool plans | `CallPlanPrimitive`, `BudgetEnvelope` | Incomplete plans → `REVISE_PLAN` |
-| Autonomy | `AutonomyBudgetDecl`, `AutonomyLedgerEntry` | Opt-in budget; fail → `ESCALATE` |
-| Work attribution | `WorkPrimitive.performed_under` | Wrong holder/context cannot complete |
-| Gate join | `GateDecision`, `OutcomeCause` | `ABSTAIN` ≠ `BLOCK` (`cause=gate_block`) |
-| Map integrity | `ThinkingMapTraversal.validate_map()` | Dangling refs / unknown IDs fail closed |
-| Adjacency (2.0) | `AdjacencyClearanceRule`, `AdjacentlyCleared` | Confirmed-absent percept clears declared neighbors |
-
-## Demo
-
-[![Four test-backed traces](https://raw.githubusercontent.com/Consolidare-Continuum/fpf-agentic-thinking-map/main/docs/assets/three-runs-preview.png)](https://consolidare-continuum.github.io/fpf-agentic-thinking-map/demos/three-runs.html)
-
-**[Interactive four-run trace](https://consolidare-continuum.github.io/fpf-agentic-thinking-map/demos/three-runs.html)** — evidence recovery, `AWAIT`, `MoveIntent`, authorization, and `ABSTAIN` vs `BLOCK`.
+Other releases on the index: [`2.0.1`](https://pypi.org/project/fpf-thinking-map/2.0.1/), [`2.0.0`](https://pypi.org/project/fpf-thinking-map/2.0.0/), [`1.9.6`](https://pypi.org/project/fpf-thinking-map/1.9.6/).
 
 ## Minimal example
 
@@ -135,11 +85,86 @@ state = traversal.build_active_state(
 inspection = traversal.step(state)
 result = traversal.attempt_transition(state, "ship")
 print(inspection.kind, result.kind, state.current_state)
+# OutcomeKind.CONTINUE OutcomeKind.CONTINUE released
 ```
 
-Replace the deploy vocabulary with your own contexts, roles, evidence, and gates.
+Replace the deploy vocabulary with your own contexts, roles, evidence and gates.
 
-## Gate join (keep these apart)
+## What it does
+
+- Holds explicit traversal state: current context, state, and evidence.
+- Checks evidence presence and freshness. Freshness decays over **traversal
+  steps**, not wall-clock time.
+- Evaluates gates, guards and transitions and says which moves are legal.
+- Supports cross-context bridges with validated writeback.
+- Supports human authorization (`AuthorizationReceipt`): scoped, non-replayable.
+- Distinguishes waiting on external input (`PendingInput` / `AWAIT`) from idle.
+- Gives a proposed move a concrete identity (`MoveIntent`) that can be inspected.
+- Can checkpoint and restore a paused traversal (`ActiveState.checkpoint()`,
+  `from_checkpoint()`); restore is all-or-nothing and never repairs.
+
+Given the same map, state, evidence and receipts, it returns the same result.
+The core modules call no clock, random source, network or model.
+
+## Division of work
+
+| Agent / host | This library |
+| --- | --- |
+| Interprets the task | Holds explicit traversal state |
+| Generates options | Computes which moves are legal |
+| Collects evidence | Checks presence and freshness |
+| Proposes a move | Inspects or attempts that move |
+| Explains the result | Returns a bounded outcome and trace |
+| Requests human input | Enforces the authorization boundary |
+| Runs tools and jobs | Never executes, polls or schedules them |
+
+## Limits
+
+- **It only constrains what is routed through it.** A harness or agent that
+  does not call the library is not constrained. There is no sandbox.
+- **State lives in the host process.** The library keeps no storage of its
+  own; use `checkpoint()` to persist a paused traversal.
+- **Several inputs are self-asserted.** For example `active_context_id`
+  (advisory ADV-03): the harness must own continuity.
+- **Defaults are minimal.** Stale evidence warns but does not block unless a
+  gate requires it, and `requires_human_authorization` defaults off.
+- **It is not a universal reasoner,** a vector store, a tool runner or
+  scheduler, or a certificate that an agent system is safe.
+
+Full list of integrator boundaries: [ADVISORIES.md](docs/deep/ADVISORIES.md).
+
+## What the evidence shows
+
+- **Self-tests.** `python -m fpf_thinking_map.verify` (40 checks) and
+  `dev_mcp/test_server.py` (45 checks) are written and run by the authors. They
+  check that the library does what it is specified to do. They have not been
+  audited by a third party.
+- **Does it make agents safer?** One small benchmark exists
+  ([bench/RESULTS.md](bench/RESULTS.md)): two tasks, one frontier-model class,
+  5 runs per condition, 20 runs total. The model made **no policy violations
+  with or without** the library, so there is **no measured compliance
+  improvement** for a cooperative model on a clearly stated task. With the
+  library the model made *more* tool calls (4.4 vs 1.0 and 2.0 vs 1.0), because
+  it used the inspection calls before acting. Weaker or adversarial models were
+  not tested.
+- **ISO.** [docs/ISO_EVIDENCE_PACKET.md](docs/ISO_EVIDENCE_PACKET.md) maps
+  release 2.0.1 against ISO/IEC 25010, 27001 and 9001 as a self-assessed
+  checklist. It is **not** an audit and **not** a certification.
+
+## Shipped structures
+
+| Concern | Structures | Effect |
+| --- | --- | --- |
+| Claim / assurance | `ContextSlice`, `ClaimScope`, `FormalityLevel`, `ReliabilityPath` | Typed scope; unknown stays unknown |
+| Tool plans | `CallPlanPrimitive`, `BudgetEnvelope` | Incomplete plans → `REVISE_PLAN` |
+| Autonomy | `AutonomyBudgetDecl`, `AutonomyLedgerEntry` | Opt-in budget; failure → `ESCALATE` |
+| Work attribution | `WorkPrimitive.performed_under` | Wrong holder/context cannot complete |
+| Gate join | `GateDecision`, `OutcomeCause` | `ABSTAIN` ≠ `BLOCK` (`cause=gate_block`) |
+| Map integrity | `ThinkingMapTraversal.validate_map()` | Dangling refs / unknown IDs fail closed |
+| Adjacency (2.0) | `AdjacencyClearanceRule`, `AdjacentlyCleared` | A confirmed-absent percept clears declared neighbours |
+| Continuity (2.0.2) | `ActiveState.checkpoint()`, `from_checkpoint()` | Persist and restore a paused traversal |
+
+### Gate join
 
 | Gate result | Meaning | Typical outcome |
 | --- | --- | --- |
@@ -149,57 +174,57 @@ Replace the deploy vocabulary with your own contexts, roles, evidence, and gates
 `BLOCK` is hard for that evaluation; it is not automatically permanent. Checks
 opt into `BLOCK` with `failure_decision=GateDecision.BLOCK`.
 
-## Release line
+## Demo
 
-| Line | Capability |
+[Four interactive traces](https://consolidare-continuum.github.io/fpf-agentic-thinking-map/demos/three-runs.html)
+(evidence recovery, `AWAIT`, `MoveIntent` with authorization, `ABSTAIN` vs
+`BLOCK`). They follow behavior covered by the test suite as of v1.9.5; they are
+not a recording of a live model run and do not show later features.
+
+## Releases
+
+| Line | Change |
 | --- | --- |
 | v1.0–v1.5 | Primitives, TTL, bridges, stagnation, stable public boundary |
 | v1.6–v1.8 | Human authorization, receipts, `AWAIT` |
 | v1.9 / 1.9.5 | Move identity; A.21 gate join (`ABSTAIN` vs `BLOCK`) |
 | v1.9.6 | Failed-run revert terminal (XOR + distance bound) |
-| **v2.0.0** | Adjacency Clearance (`ADV-17`) |
-| **v2.0.1** | Current — docs/metadata/reference hardware; runtime verify **39/39** |
+| v2.0.0 | Adjacency clearance (`ADV-17`) |
+| v2.0.1 | Docs and metadata only; runtime identical to 2.0.0 |
+| **v2.0.2** | Copyright and SPDX notices on every source file (license unchanged); includes traversal checkpoint and restore (`ADV-08`) |
 
 History: [VERSION_TRACKER.md](docs/VERSION_TRACKER.md) · [CHANGELOG.md](CHANGELOG.md) · [Releases](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/releases)
 
-## Integrator notes (read before production)
-
-Deliberate minimal defaults — not defects. Full text: [ADVISORIES.md](docs/deep/ADVISORIES.md).
+## Integrator notes
 
 | Priority | Advisory | One line |
 | --- | --- | --- |
-| Sharp | **ADV-03** | `active_context_id` is self-asserted — harness must own continuity |
-| Sharp | **ADV-07** | `RiskAbove` string match is case-sensitive and fails silent |
+| Sharp | **ADV-03** | `active_context_id` is self-asserted: the harness must own continuity |
+| Sharp | **ADV-07** | `RiskAbove` string match is case-sensitive and fails silently |
 | Common | **ADV-01** | Stale evidence warns; it does not block unless gated |
 | Common | **ADV-10** | `requires_human_authorization` defaults off |
 | 2.0 | **ADV-17** | Adjacency clearance is only as sound as your declared biconditional |
 
-MCP harness: [`dev_mcp/`](dev_mcp/) — `run_scenario`, `get_advisories`, `run_verify`.
+MCP test harness: [`dev_mcp/`](dev_mcp/) (`run_scenario`, `get_advisories`, `run_verify`).
 
-## Scope
-
-**Use when you need:** bounded multi-step legality, evidence-aware state,
-inspectable block/escalate reasons, human authorization, wait vs idle,
-compact LLM state slices.
-
-**Do not use as:** a universal reasoner, vector store, tool runner/scheduler,
-or a certificate that an entire agent system is safe.
-
-## Docs
+## Repository
 
 | Path | Purpose |
 | --- | --- |
-| [`fpf_thinking_map/`](fpf_thinking_map/) | Zero-dependency runtime (PyPI **2.0.1**) |
+| [`fpf_thinking_map/`](fpf_thinking_map/) | The runtime (no dependencies) |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Control flow |
 | [docs/deep/ADVISORIES.md](docs/deep/ADVISORIES.md) | Integrator boundaries |
-| [SHA256SUMS](SHA256SUMS) | Source fingerprints |
+| [bench/](bench/) | The ablation benchmark and its raw results |
+| [SHA256SUMS](SHA256SUMS) | Source file checksums |
 
-## Product continuation
+## License and ownership
 
-**CONSOLIDARE CONTINUUM S.R.L.** designs, owns, and ships this runtime for its own products and client work. No third-party framework affiliation. No external attribution required for use of this package.
+MIT. Copyright (c) 2026 CONSOLIDARE CONTINUUM S.R.L. The MIT license requires
+that the copyright notice and license text be kept in copies and substantial
+portions of the software; see [LICENSE](LICENSE) and [NOTICE](NOTICE).
 
-## ISO evidence
-
-[docs/ISO_EVIDENCE_PACKET.md](docs/ISO_EVIDENCE_PACKET.md) — ISO/IEC 25010 · 27001 · 9001 alignment for **v2.0.1** (**not** certification).
-
-**Agent freedom. Explicit movement rules.**
+This is an independent implementation. It follows the public
+[ailev/FPF](https://github.com/ailev/FPF) work: upstream changes are reviewed
+and adopted, adapted or rejected (see
+[docs/deep/UPSTREAM_SCOPE_INSPECTION.md](docs/deep/UPSTREAM_SCOPE_INSPECTION.md)).
+It is not affiliated with or endorsed by that project.
