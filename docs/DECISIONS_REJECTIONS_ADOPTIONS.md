@@ -30,14 +30,8 @@ Use this index when you need rationale and provenance behind design choices.
   - [REJECTED_ORIENTATION_VIEW_PROJECTION.md](deep/REJECTED_ORIENTATION_VIEW_PROJECTION.md)
 - **Runtime Affordance Projection (rejected):**
   - [REJECTED_RUNTIME_AFFORDANCE_PROJECTION.md](deep/REJECTED_RUNTIME_AFFORDANCE_PROJECTION.md)
-- **C.32 Candidate-Synthesis Logic (rejected):**
-  - [REJECTED_C32_CANDIDATE_SYNTHESIS.md](deep/REJECTED_C32_CANDIDATE_SYNTHESIS.md)
-- **NQD/OEE/Cultural Evolution family (rejected):**
-  - [REJECTED_NQD_OEE_CULTURAL_EVOLUTION.md](deep/REJECTED_NQD_OEE_CULTURAL_EVOLUTION.md)
 - **F.17 Unified Term Sheet (rejected):**
   - [REJECTED_F17_UNIFIED_TERM_SHEET.md](deep/REJECTED_F17_UNIFIED_TERM_SHEET.md)
-- **A.22.CGUS as model self-admissibility procedure (rejected as practice; pattern acknowledged):**
-  - [REJECTED_A22_CGUS_MODEL_SELF_ADMISSIBILITY.md](deep/REJECTED_A22_CGUS_MODEL_SELF_ADMISSIBILITY.md)
 - **Cross-Map Composition and Cross-Task State Bridging (rejected, investigated at v1.9.2):**
   - [REJECTED_CROSS_MAP_TASK_BRIDGING.md](deep/REJECTED_CROSS_MAP_TASK_BRIDGING.md)
 
@@ -58,7 +52,6 @@ Use this index when you need rationale and provenance behind design choices.
   - [ARCHITECTURE.md](../ARCHITECTURE.md)
 - **Related work comparisons:**
   - [RELATED_WORK_MILTONIAN_PRINCIPLES.md](deep/RELATED_WORK_MILTONIAN_PRINCIPLES.md)
-  - [RELATED_WORK_GOFLOW_FPF_SKILL.md](deep/RELATED_WORK_GOFLOW_FPF_SKILL.md)
 
 ## Positioning
 

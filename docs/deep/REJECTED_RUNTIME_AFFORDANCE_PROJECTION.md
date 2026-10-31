@@ -64,8 +64,7 @@ pre-existing plain-string field as sufficient in the common case, which is
 a tell that the structured version isn't earning its keep.
 
 This is the same shape of rejection as
-[`REJECTED_C32_CANDIDATE_SYNTHESIS.md`](REJECTED_C32_CANDIDATE_SYNTHESIS.md)
-and [`REJECTED_F17_UNIFIED_TERM_SHEET.md`](REJECTED_F17_UNIFIED_TERM_SHEET.md):
+[`REJECTED_F17_UNIFIED_TERM_SHEET.md`](REJECTED_F17_UNIFIED_TERM_SHEET.md):
 structure proposed for orientation's sake, not because a missing relation
 changes what the agent does on a single move.
 

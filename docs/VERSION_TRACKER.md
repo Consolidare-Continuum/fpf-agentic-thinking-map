@@ -63,10 +63,11 @@ PyPI still serves 1.9.5.
    satisfy a domain bound. `reachability.shortest_path_distance` adds the
    hop-count check `forward_reachable` (set membership only) could not
    express on its own.
-2. Adds `ADV-16` and `docs/deep/UPSTREAM_SCOPE_INSPECTION.md`: material
-   `ailev/FPF` commits are inspected against five predefined scope
-   conditions (S1–S5) before following into this package's runtime scopes;
-   a FAIL is recorded as **TOMBSTONE**, not silently ignored or adopted.
+2. Added an upstream-intake advisory for inspecting external commits
+   against five predefined scope conditions (S1–S5) before following into
+   this package's runtime scopes, a FAIL recorded as **TOMBSTONE** rather
+   than silently ignored or adopted. Removed 2026-10-31: the upstream
+   repo it watched is now fully out of scope.
 3. Closes a real coverage gap found while landing this release: the new
    detector and `shortest_path_distance` had zero test coverage in the
    working tree despite being drafted — added before release, not after

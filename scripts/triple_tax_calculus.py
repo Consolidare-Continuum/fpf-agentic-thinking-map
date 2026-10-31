@@ -33,11 +33,8 @@ from fpf_thinking_map.examples import build_deploy_decision_map, build_deploy_ru
 from fpf_thinking_map.state import RuntimeBinding
 from fpf_thinking_map.traversal import ThinkingMapTraversal
 
-UPSTREAM_COMMIT = "d77339d7056433de3ee55ad863860ee4b3006f6f"
-UPSTREAM_RAW_SPEC_URL = (
-    "https://raw.githubusercontent.com/ailev/FPF/"
-    f"{UPSTREAM_COMMIT}/FPF-Spec.md"
-)
+UPSTREAM_COMMIT = os.environ.get("FPF_TRIPLE_TAX_UPSTREAM_COMMIT", "")
+UPSTREAM_RAW_SPEC_URL = os.environ.get("FPF_TRIPLE_TAX_UPSTREAM_URL", "")
 REFERENCE_PROSE_URL = "https://www.gutenberg.org/files/1342/1342-0.txt"
 DEFAULT_ENCODING = "o200k_base"
 DEFAULT_LIVE_MODEL = "gpt-5.4"
@@ -100,6 +97,13 @@ def load_spec_text(spec_path: str | None) -> tuple[str, Path, str]:
     if spec_path:
         path = Path(spec_path)
         return path.read_text(encoding="utf-8"), path, "local"
+
+    if not UPSTREAM_RAW_SPEC_URL or not UPSTREAM_COMMIT:
+        raise SystemExit(
+            "No spec source configured: pass --spec-path, or set both "
+            "FPF_TRIPLE_TAX_UPSTREAM_URL and FPF_TRIPLE_TAX_UPSTREAM_COMMIT "
+            "(no raw-spec source ships baked into this script)."
+        )
 
     cache_dir = cache_root() / UPSTREAM_COMMIT
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -762,7 +766,7 @@ def build_markdown(report: dict[str, Any]) -> str:
     add("")
     add("This document compares two different things:")
     add("")
-    add("- **Raw FPF**: Aliev's `ailev/FPF` framework, tested as raw spec text.")
+    add("- **Raw FPF**: the upstream specification text, tested raw (source configured at run time, not named here).")
     add("- **fpf-thinking-map**: this repo's compiled map, tested through `state.slice()` and the shipped scenarios.")
     add("")
     add("The purpose is not to say raw FPF is bad. The purpose is to measure what changes when an LLM works from raw FPF versus from fpf-thinking-map.")
@@ -811,7 +815,7 @@ def build_markdown(report: dict[str, Any]) -> str:
     add("")
     add("## Method")
     add("")
-    add(f"- Raw source pinned to `ailev/FPF` commit `{report['spec']['commit']}`")
+    add(f"- Raw source pinned to upstream commit `{report['spec']['commit']}`")
     add(f"- Raw file path: `{report['spec']['path']}`")
     add("- Comparable decision points: 5, all built from `fpf_thinking_map/examples.py`")
     add("- Raw conditions tested:")

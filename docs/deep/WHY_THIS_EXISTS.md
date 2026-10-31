@@ -68,7 +68,7 @@ Once per FPF concept layer (context → role → commitment → gate → evidenc
 
 FPF uses terms like "agency spectrum", "candidate synthesis", "novelty-quality-diversity" that are already strong priors in the training data. The model sees these and shifts into "academic reasoning mode" — verbose, hedge-heavy, option-multiplying. Exactly the opposite of what a per-step decision map needs.
 
-This is why we rejected FPF patterns like C.32 (candidate-synthesis logic) and NQD/OEE (novelty-quality-diversity). These patterns amplify existing LLM biases instead of constraining them. See [REJECTED_C32_CANDIDATE_SYNTHESIS.md](REJECTED_C32_CANDIDATE_SYNTHESIS.md) and [REJECTED_NQD_OEE_CULTURAL_EVOLUTION.md](REJECTED_NQD_OEE_CULTURAL_EVOLUTION.md).
+This is why we rejected candidate-synthesis-style logic and novelty-quality-diversity patterns as design inputs. These patterns amplify existing LLM biases instead of constraining them.
 
 ### 3. It is a word blob organized for human readers, not machine consumption
 

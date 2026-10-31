@@ -6,9 +6,7 @@ This package was built from two academic sources. Almost everything traces back 
 
 A transdisciplinary specification for reasoning, assurance, and evolution — an "operating system for thought."
 
-- **Author**: Anatoly Levenchuk (with LLM assistance)
-- **Repository**: [github.com/ailev/FPF](https://github.com/ailev/FPF)
-- **Inspected edition**: `FPF-Spec.md` at upstream commit `1eb56cd` (102,678 lines) — not included in this repository
+- **Inspected edition**: `FPF-Spec.md` at upstream commit `1eb56cd` (102,678 lines) — not included in this repository, and no longer tracked; this upstream specification is out of scope for this package (operator, 2026-10-31)
 - **Status**: Normative kernel, "eternal alpha" — used in working projects
 - **Prior Python model**: `py-fpf` in the original repo (basic graph model with CSV artifacts — not used directly, but informed the design)
 - **Carrier vs. framework**: [E.4.FPF — Form and Publication-or-Access Carrier Assembly](https://fpf.sh/generated/patterns/E.4.FPF) — the normative pattern distinguishing the FPF framework edition from its carriers (publication formats, skill packs, MCP services, retrieval routes). This package is a carrier under that definition, not an alternate edition of FPF.
@@ -83,17 +81,16 @@ We applied the same pattern:
 
 ## External references
 
-Short notes, not incorporated into the package — background reading around FPF and adjacent efforts. Full categorized log (awareness / inspected / rejected / concluded, one verdict per item) in `FPF_SCOPE_AUDIT_LOG.md`. Empirical token-cost measurement (2026-07-10, dual-AI-executed — OpenAI Codex generated it, Claude Code independently reproduced the deterministic numbers, full disclosure of who did what in the doc's own Disclosure section) in `TRIPLE_TAX_CALCULUS.md` in this same folder.
+Short notes, not incorporated into the package — background reading around FPF and adjacent efforts, kept only where it carries no external naming. Empirical token-cost measurement methodology (2026-07-10, dual-AI-executed — OpenAI Codex generated it, Claude Code independently reproduced the deterministic numbers, full disclosure of who did what in the doc's own Disclosure section) in `TRIPLE_TAX_CALCULUS.md` in this same folder.
 
 - [fpf.sh/generated/patterns/E.4.FPF](https://fpf.sh/generated/patterns/E.4.FPF) — normative pattern distinguishing the FPF framework edition from its carriers (publication formats, skill packs, MCP services).
 - [fpf.sh/work-packets](https://fpf.sh/work-packets) — FPF's own official method for agent use: bounded MCP retrieval of 3-8 pattern IDs per task, not compilation.
-- [ailev.livejournal.com/1770224.html](https://ailev.livejournal.com/1770224.html) — FPF author's own writeup: FPF vs. classical upper ontologies, normative "what to think about" vs. descriptive "what exists."
 - [github.com/miltonian/principles](https://github.com/miltonian/principles) — unrelated independent first-principles agent framework; see `RELATED_WORK_MILTONIAN_PRINCIPLES.md`.
 - [community.openai.com — Principles Framework writeup](https://community.openai.com/t/principles-framework-generate-ai-agents-using-first-principles-reasoning/1045890) — author's own announcement of the above.
 - [fpf.sh/generated/patterns/F.17](https://fpf.sh/generated/patterns/F.17) — Unified Term Sheet; evaluated and rejected, see `REJECTED_F17_UNIFIED_TERM_SHEET.md`.
 - [fpf.sh/generated/patterns/I.2](https://fpf.sh/generated/patterns/I.2) — entry-point disambiguation annex; validates this package's design bet (compile the FPF-pattern-selection work once, by a human, instead of asking the model to disambiguate at runtime).
 - [fpf.sh/generated/patterns/E.23](https://fpf.sh/generated/patterns/E.23) — Quality Improvement Loop Method: disciplines agentic retry loops (re-evaluation, cost/risk, stop conditions). Not needed here — `step()` runs once per call with zero LLM calls inside the package; there is no loop in the runtime path for E.23's discipline to attach to.
-- [fpf.sh/generated/patterns/E.20](https://fpf.sh/generated/patterns/E.20) — Mechanism Introduction Protocol: governs how FPF's own maintainers add mechanisms to the FPF kernel itself (still Draft status). Wrong actor, not scope — every locus it governs lives inside `ailev/FPF`; nothing in it addresses downstream consumers.
+- [fpf.sh/generated/patterns/E.20](https://fpf.sh/generated/patterns/E.20) — Mechanism Introduction Protocol: governs how the upstream spec's own maintainers add mechanisms to its kernel (still Draft status). Wrong actor, not scope — every locus it governs lives inside that upstream project's own kernel; nothing in it addresses downstream consumers.
 
 ## Package authorship
 

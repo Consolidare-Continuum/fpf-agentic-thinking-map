@@ -2,7 +2,7 @@
 
 This document compares two different things:
 
-- **Raw FPF**: Aliev's `ailev/FPF` framework, tested as raw spec text.
+- **Raw FPF**: the upstream specification text, tested raw (source configured at run time, not named here).
 - **fpf-thinking-map**: this repo's compiled map, tested through `state.slice()` and the shipped scenarios.
 
 The purpose is not to say raw FPF is bad. The purpose is to measure what changes when an LLM works from raw FPF versus from fpf-thinking-map.
@@ -32,8 +32,8 @@ Measured directly here:
 
 ## Method
 
-- Raw source pinned to `ailev/FPF` commit `d77339d7056433de3ee55ad863860ee4b3006f6f`
-- Raw file path: `/home/igareosh/.cache/fpf-agentic-thinking-map/d77339d7056433de3ee55ad863860ee4b3006f6f/FPF-Spec.md`
+- Raw source pinned to upstream commit `d77339d7056433de3ee55ad863860ee4b3006f6f`
+- Raw file cached locally under `fpf-agentic-thinking-map/d77339d7056433de3ee55ad863860ee4b3006f6f/FPF-Spec.md`
 - Comparable decision points: 5, all built from `fpf_thinking_map/examples.py`
 - Raw conditions tested:
   1. full `FPF-Spec.md` monolith

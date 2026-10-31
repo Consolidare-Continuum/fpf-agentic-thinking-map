@@ -169,9 +169,7 @@ generic witness over *any* move, not percept-specific — nothing here
 changes what it witnesses); `ADV-11` (`safe_alternatives` soundness is
 about declared transition alternatives, orthogonal to a Prop-level
 inference); `ADV-12`/`ADV-13`/`ADV-14` (legacy F/G, work attribution, `MAY`
-semantics — none touch evidence or adjacency); `ADV-16` (upstream `ailev/FPF`
-intake — this proposal isn't an upstream commit, so the scope gate doesn't
-apply to it).
+semantics — none touch evidence or adjacency).
 
 ## What I'd propose shipping (opt-in, additive)
 

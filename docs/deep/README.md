@@ -27,11 +27,10 @@ So we do not ship the whole framework in the runtime. We extract what is useful 
 
 Two sources, both real academic material:
 
-**Source 1: [FPF (First Principles Framework)](https://github.com/ailev/FPF)**
-- A transdisciplinary specification that had grown to 102,678 lines at inspected commit `1eb56cd` — "operating system for thought"
+**Source 1: FPF (First Principles Framework)**
+- A transdisciplinary specification that had grown to 102,678 lines at inspected commit `1eb56cd` — "operating system for thought". Out of scope for further tracking as of 2026-10-31; not included in this repository.
 - It defines how to structure reasoning about systems: what roles exist, what evidence is needed, what gates must pass, how to transition between states
 - We do NOT copy the whole spec into the package. The runtime keeps a curated set of objects extracted from it and turned into Python dataclasses
-- The full spec lives in the [ailev/FPF](https://github.com/ailev/FPF) repository
 
 **Source 2: Computational logic lectures (Mitev L.)**
 - 5 lecture PDFs on propositional logic from a university course

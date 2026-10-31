@@ -19,11 +19,11 @@ We already have the lightweight version of the thing F.17 protects against ambig
 
 ### Pattern that doesn't apply at this scope
 
-Adopting full UTS machinery — row IDs, blocks, Tech/Plain name splits, per-row admissible/blocked use, per-row currentness conditions — would formalize something already implicit and working, buying process weight without catching any failure mode this package has actually hit. Same shape of rejection as `REJECTED_C32_CANDIDATE_SYNTHESIS.md` and the ESEO pattern in `RELATED_WORK_GOFLOW_FPF_SKILL.md`: structure added for its own sake, not because a missing relation changes what the model does on a single move.
+Adopting full UTS machinery — row IDs, blocks, Tech/Plain name splits, per-row admissible/blocked use, per-row currentness conditions — would formalize something already implicit and working, buying process weight without catching any failure mode this package has actually hit: structure added for its own sake, not because a missing relation changes what the model does on a single move.
 
 ## What would change this
 
-If this package ever spawns multiple downstream forks independently reusing its primitive names in incompatible ways, that is the trigger to revisit — not a rejection reversed outright, but a "not rejected, deferred" case, the same treatment the Method/MethodDescription split got in `RELATED_WORK_GOFLOW_FPF_SKILL.md`.
+If this package ever spawns multiple downstream forks independently reusing its primitive names in incompatible ways, that is the trigger to revisit — not a rejection reversed outright, but a "not rejected, deferred" case.
 
 ---
 

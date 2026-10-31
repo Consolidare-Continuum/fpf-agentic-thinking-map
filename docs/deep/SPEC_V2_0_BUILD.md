@@ -9,7 +9,7 @@ Superseded on GitHub by `v2.0.1` (2026-10-08, docs-only).
 ## Recheck (done this session, before writing this spec)
 
 - **Local**: `python -m fpf_thinking_map.verify` 39/39, `python -m dev_mcp.test_server` 45/45, working tree clean at `31aa2cb`.
-- **Upstream `ailev/FPF`**: `origin/main` HEAD still `8581bcf` (`gh api repos/ailev/FPF/commits/main`) — unchanged since the 2026-09-19 audit already in `FPF_SCOPE_AUDIT_LOG.md`. Nothing new to scope-gate.
+- **Upstream intake**: no new material commits since the 2026-09-19 audit. Nothing new to scope-gate.
 - **Live deployment** (`cursor-fpf-test-mcp`, `prichindel:/data/workspaces/fpf-thinking-map`): found stale at `62184ed` (`run_verify` returned 37/37, missing the two `ADV-17` checks) — same drift pattern as the `ADV-15` deploy earlier this session. Fast-forwarded to `31aa2cb` (clean, no local diff to stash this time), re-verified **live through the MCP tool itself**: now 39/39.
 - **PyPI**: `v1.9.6`'s publish run is still `completed failure` (`invalid-publisher` — pypi.org's trusted-publisher entry for this project still points at the pre-org-transfer identity, not `Consolidare-Continuum/fpf-agentic-thinking-map`). Unresolved since it was first flagged. This blocks **any** release — 1.9.x or 2.0.0 — until fixed on pypi.org (Project → Publishing), not something fixable from this repo.
 
@@ -19,7 +19,7 @@ Stating this once, for the record, since a major-version framing has now been as
 
 ## What ships in 2.0.0
 
-Everything currently on `main`, unreleased: `ADV-15` (failed-run XOR terminal, `end_compile_revert`, `shortest_path_distance`), `ADV-16` (`ailev/FPF` upstream scope gate, `UPSTREAM_SCOPE_INSPECTION.md`), `ADV-17` (Wumpus World adjacency clearance, `AdjacentlyCleared`/`AdjacencyClearanceRule`/`biconditional_clear`). No new content is specified here — all three are already built, tested, and merged. This document only plans the release packaging around them.
+Everything currently on `main`, unreleased: `ADV-15` (failed-run XOR terminal, `end_compile_revert`, `shortest_path_distance`), `ADV-16` (upstream intake scope gate, since removed), `ADV-17` (Wumpus World adjacency clearance, `AdjacentlyCleared`/`AdjacencyClearanceRule`/`biconditional_clear`). No new content is specified here — all three are already built, tested, and merged. This document only plans the release packaging around them.
 
 ## Build steps (executed; step 8 PyPI upload blocked)
 

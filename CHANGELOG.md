@@ -21,17 +21,26 @@ list: [`docs/deep/EXPANDED_PROVENANCE.md`](docs/deep/EXPANDED_PROVENANCE.md).
 
 ### Changed
 
-- **Scope**: `ailev/FPF` and its ~150k-line `FPF-Spec.md` declared fully
-  out of scope for this package (operator, 2026-10-31). `ADV-16`
-  (upstream-intake advisory) removed from `docs/deep/ADVISORIES.md`;
-  `UPSTREAM_SCOPE_INSPECTION.md`, `FPF_SCOPE_AUDIT_LOG.md`,
-  `FPF_THINKING_MAP_VS_AILEV_FPF_POSITIONING.md`, and
-  `RELATED_WORK_LEVENCHUK_FPF_KNOWLEDGE_GRAPH_TOOLKIT.md` deleted.
-  README's independence disclaimer reworded to drop the upstream-review
-  framing. No code, dependency, or runtime behavior changed. This
-  diverges from the file set hashed in the signed/notarized `v2.0.2`
-  evidence bundle; that snapshot remains the record of the state as of
-  2026-10-28/29, unaffected by this change.
+- **Scope**: the external upstream specification this package was
+  historically informed by is declared fully out of scope (operator,
+  2026-10-31) — no further intake, comparison, or benchmarking against
+  it. `ADV-16` (upstream-intake advisory) removed from
+  `docs/deep/ADVISORIES.md`. Deleted the docs that named that upstream
+  repo directly: `UPSTREAM_SCOPE_INSPECTION.md`, `FPF_SCOPE_AUDIT_LOG.md`,
+  `FPF_THINKING_MAP_VS_AILEV_FPF_POSITIONING.md`,
+  `RELATED_WORK_LEVENCHUK_FPF_KNOWLEDGE_GRAPH_TOOLKIT.md`,
+  `RELATED_WORK_GOFLOW_FPF_SKILL.md`,
+  `REJECTED_C32_CANDIDATE_SYNTHESIS.md`,
+  `REJECTED_NQD_OEE_CULTURAL_EVOLUTION.md`,
+  `REJECTED_A22_CGUS_MODEL_SELF_ADMISSIBILITY.md`. Remaining incidental
+  mentions across `SOURCES.md`, `docs/deep/README.md`,
+  `scripts/triple_tax_calculus.py`, and several `docs/deep/*.md` notes
+  genericized to drop the named source while keeping the substantive
+  design reasoning intact. README's independence disclaimer reworded.
+  No code, dependency, or runtime behavior changed. This diverges from
+  the file set hashed in the signed/notarized `v2.0.2` evidence bundle;
+  that snapshot remains the record of the state as of 2026-10-28/29,
+  unaffected by this change.
 
 ### Added
 
@@ -114,9 +123,10 @@ release's new opt-in surface sees zero behavioral change from `1.9.5`.
   `dev_mcp/test_server.py` (45/45).
 - `reachability.shortest_path_distance` — BFS hop count for the ADV-15
   distance check (`forward_reachable` remains set membership only).
-- **ADV-16** — `ailev/FPF` commits must PASS our predefined scopes else
-  **TOMBSTONE** (commit and/or advisory). Protocol:
-  `docs/deep/UPSTREAM_SCOPE_INSPECTION.md`. No auto-detector (ADV-09 class).
+- **ADV-16** — upstream commits must PASS our predefined scopes else
+  **TOMBSTONE** (commit and/or advisory). No auto-detector (ADV-09 class).
+  Removed 2026-10-31 — the upstream repo it watched is now fully out of
+  scope.
 
 ## [1.9.5] - 2026-08-01
 
