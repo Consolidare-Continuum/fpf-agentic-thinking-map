@@ -10,6 +10,8 @@ Use this index when you need rationale and provenance behind design choices.
   - [FPF audit response](deep/FPF_AUDIT_RESPONSE.md)
 - **Ignition Lock / Abort to Orbit — legal vs. fireable, and declared alternatives (adopted, v1.6.0):**
   - [ADOPTED_IGNITION_LOCK.md](deep/ADOPTED_IGNITION_LOCK.md)
+- **Traversal Checkpoint and Restore — faithful serialize/restore of `ActiveState`, map fingerprinting (adopted, built — `ADV-08`, shipped v2.0.2):**
+  - [DESIGN_TRAVERSAL_CHECKPOINT.md](deep/DESIGN_TRAVERSAL_CHECKPOINT.md)
 
 ## Expansions
 
@@ -18,11 +20,6 @@ Use this index when you need rationale and provenance behind design choices.
   - [EXPANDED_PENDING_INPUT_AWAIT.md](deep/EXPANDED_PENDING_INPUT_AWAIT.md) — PendingInput/AWAIT detail, v1.8.0
   - [EXPANDED_MOVE_INTENT.md](deep/EXPANDED_MOVE_INTENT.md) — MoveIntent detail, v1.9.0
   - AuthorizationReceipt (v1.7.0) detail lives as the 2026-07-23 addendum in [IGNITION_LOCK_WIND_TUNNEL.md](deep/IGNITION_LOCK_WIND_TUNNEL.md) — it closes a gap that document named, so it's recorded there rather than a separate file
-
-## Accepted, implementation pending
-
-- **Traversal Checkpoint and Restore — faithful serialize/restore of `ActiveState`, map fingerprinting (accepted, not yet built):**
-  - [DESIGN_TRAVERSAL_CHECKPOINT.md](deep/DESIGN_TRAVERSAL_CHECKPOINT.md)
 
 ## Rejections
 

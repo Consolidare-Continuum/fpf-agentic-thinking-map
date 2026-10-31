@@ -6,6 +6,16 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Narrative version of this arc, if you want the story instead of the
 list: [`docs/deep/EXPANDED_PROVENANCE.md`](docs/deep/EXPANDED_PROVENANCE.md).
 
+## [2.1.0] - 2026-10-31
+
+### Fixed
+
+- `docs/DECISIONS_REJECTIONS_ADOPTIONS.md` still listed Traversal
+  Checkpoint and Restore under "Accepted, implementation pending" —
+  stale since `ADV-08` shipped in `2.0.2`. Moved into Adoptions, marked
+  built, section removed (it was the only entry). Doc-only; no runtime
+  change.
+
 ## [2.0.2] - 2026-10-28
 
 ### Added

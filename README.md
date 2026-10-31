@@ -10,7 +10,7 @@ move the agent proposes. The library returns a legal/illegal outcome with the
 reason and a trace. It does not call a model, run tools, poll, or schedule
 anything.
 
-**PyPI:** [`fpf-thinking-map`](https://pypi.org/project/fpf-thinking-map/) · **Current:** **2.0.3** · **License:** MIT
+**PyPI:** [`fpf-thinking-map`](https://pypi.org/project/fpf-thinking-map/) · **Current:** **2.1.0** · **License:** MIT
 
 [![PyPI](https://img.shields.io/pypi/v/fpf-thinking-map?style=flat-square&label=PyPI)](https://pypi.org/project/fpf-thinking-map/)
 [![Python](https://img.shields.io/pypi/pyversions/fpf-thinking-map?style=flat-square&label=Python)](pyproject.toml)
@@ -21,7 +21,7 @@ anything.
 Requires **Python ≥ 3.12**. No runtime dependencies.
 
 ```bash
-pip install "fpf-thinking-map==2.0.3"
+pip install "fpf-thinking-map==2.1.0"
 python -m fpf_thinking_map.verify    # the package's own self-tests, 40 checks
 python -m fpf_thinking_map.examples
 ```
@@ -192,7 +192,8 @@ not a recording of a live model run and do not show later features.
 | v2.0.0 | Adjacency clearance (`ADV-17`) |
 | v2.0.1 | Docs and metadata only; runtime identical to 2.0.0 |
 | v2.0.2 | Copyright and SPDX notices on every source file (license unchanged); includes traversal checkpoint and restore (`ADV-08`) |
-| **v2.0.3** | Docs and metadata only; runtime identical to 2.0.2. Removes the upstream-intake advisory (`ADV-16`) and every named reference to the external specification this package was historically informed by; independence disclaimer reworded |
+| v2.0.3 | Docs and metadata only; runtime identical to 2.0.2. Removes the upstream-intake advisory (`ADV-16`) and every named reference to the external specification this package was historically informed by; independence disclaimer reworded |
+| **v2.1.0** | Docs only; runtime identical to 2.0.3. Fixes a stale doc line claiming checkpoint/restore was unbuilt |
 
 History: [VERSION_TRACKER.md](docs/VERSION_TRACKER.md) · [CHANGELOG.md](CHANGELOG.md) · [Releases](https://github.com/Consolidare-Continuum/fpf-agentic-thinking-map/releases)
 
