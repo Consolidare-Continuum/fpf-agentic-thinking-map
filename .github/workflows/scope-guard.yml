@@ -1,0 +1,56 @@
+name: Scope guard — no ailev/FPF affiliation
+
+# ailev/FPF (Anatoly Levenchuk's FPF-Spec.md) is out of scope for this
+# package (operator, 2026-10-31; see docs/deep/ADVISORIES.md ADV-16 and
+# docs/deep/UPSTREAM_SCOPE_INSPECTION.md). This guard fails a push/PR that
+# *adds* a new ailev/Levenchuk reference outside the files that already
+# carry it as historical audit record.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: No new ailev/FPF affiliation references
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          BASE="${{ github.event.pull_request.base.sha || github.event.before }}"
+          HEAD="${{ github.sha }}"
+          if [ -z "${BASE:-}" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
+            BASE="$(git rev-list --max-parents=0 "$HEAD" | tail -1)"
+          fi
+
+          # Files allowed to carry ailev/Levenchuk mentions: historical
+          # audit/positioning record of a discontinued review practice,
+          # plus the changelog (append-only history).
+          ALLOWLIST='^docs/deep/(ADVISORIES|UPSTREAM_SCOPE_INSPECTION|FPF_SCOPE_AUDIT_LOG|FPF_THINKING_MAP_VS_AILEV_FPF_POSITIONING|RELATED_WORK_LEVENCHUK_FPF_KNOWLEDGE_GRAPH_TOOLKIT|RELATED_WORK_GOFLOW_FPF_SKILL|SOURCES|FPF_SOURCE_TO_CODE_RELATION_AUDIT|FPF_FLOOR_MAP|SPEC_V2_0_BUILD)\.md$|^CHANGELOG\.md$|^\.github/workflows/scope-guard\.yml$'
+
+          FAIL=0
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            if echo "$f" | grep -Eq "$ALLOWLIST"; then
+              continue
+            fi
+            ADDED="$(git diff --unified=0 "$BASE" "$HEAD" -- "$f" | grep -E '^\+[^+]' | grep -Ei 'ailev|levenchuk' || true)"
+            if [ -n "$ADDED" ]; then
+              echo "::error file=$f::New ailev/FPF reference introduced outside the allowlisted historical-record files:"
+              echo "$ADDED"
+              FAIL=1
+            fi
+          done < <(git diff --name-only "$BASE" "$HEAD")
+
+          exit $FAIL
