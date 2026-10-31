@@ -1,4 +1,4 @@
-# Version tracker — v1.0.0 through v2.0.1
+# Version tracker — v1.0.0 through v2.0.3
 
 Every released version, three practical/reader-facing benefits each — including
 doc-only and metadata-only releases, marked as such. This is a supplement to
@@ -11,6 +11,23 @@ There is no v0.x or v1.1.x — v1.0.0 is the first tagged release, and
 versioning jumps v1.0.1 → v1.2.0.
 
 ---
+
+## v2.0.3 — 2026-10-31 — Scope cut (doc/metadata-only)
+
+Distribution: GitHub tag and PyPI, same path as `v2.0.2`.
+
+1. The external specification this package was historically informed by is
+   declared fully out of scope (operator decision) — no further intake,
+   comparison, or benchmarking against it going forward.
+2. Removed the upstream-intake advisory (`ADV-16`) and every doc that
+   existed solely to name that upstream repo; genericized the rest
+   (`SOURCES.md`, `docs/deep/README.md`, and several `docs/deep/*.md`
+   notes) so the substantive design reasoning survives without the named
+   source. README's independence disclaimer reworded.
+3. Added a CI guard (`.github/workflows/scope-guard.yml`) that fails any
+   future push/PR reintroducing a reference to that upstream project
+   outside its own detection pattern. `verify.py` 40/40, `dev_mcp/test_server.py`
+   45/45, runtime unchanged.
 
 ## v2.0.1 — 2026-10-08 — Reference hardware (doc/metadata-only)
 

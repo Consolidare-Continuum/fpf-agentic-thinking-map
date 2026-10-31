@@ -17,7 +17,7 @@ list: [`docs/deep/EXPANDED_PROVENANCE.md`](docs/deep/EXPANDED_PROVENANCE.md).
 - Includes the unreleased traversal checkpoint and restore (ADV-08) listed
   below, additive, zero behavior change for callers who never checkpoint.
 
-## [Unreleased]
+## [2.0.3] - 2026-10-31
 
 ### Changed
 

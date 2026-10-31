@@ -511,4 +511,4 @@ This is not a bug. The underlying primitives already exist, but the traversal la
 
 ---
 
-**igareosh.com / @igareosh** — v2.0.1 (2026-10-08)
+**igareosh.com / @igareosh** — v2.0.3 (2026-10-31)
