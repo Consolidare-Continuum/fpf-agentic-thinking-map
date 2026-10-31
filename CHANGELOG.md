@@ -21,13 +21,17 @@ list: [`docs/deep/EXPANDED_PROVENANCE.md`](docs/deep/EXPANDED_PROVENANCE.md).
 
 ### Changed
 
-- **Scope**: `ailev/FPF` upstream-intake practice (`ADV-16`,
-  `docs/deep/UPSTREAM_SCOPE_INSPECTION.md`) discontinued — `ailev/FPF` and
-  its ~150k-line `FPF-Spec.md` are out of scope for this package, full
-  stop. README's independence disclaimer reworded to drop the
-  upstream-review framing; no code, dependency, or runtime behavior
-  changed. Historical advisory/inspection text kept for the audit record,
-  marked superseded rather than deleted.
+- **Scope**: `ailev/FPF` and its ~150k-line `FPF-Spec.md` declared fully
+  out of scope for this package (operator, 2026-10-31). `ADV-16`
+  (upstream-intake advisory) removed from `docs/deep/ADVISORIES.md`;
+  `UPSTREAM_SCOPE_INSPECTION.md`, `FPF_SCOPE_AUDIT_LOG.md`,
+  `FPF_THINKING_MAP_VS_AILEV_FPF_POSITIONING.md`, and
+  `RELATED_WORK_LEVENCHUK_FPF_KNOWLEDGE_GRAPH_TOOLKIT.md` deleted.
+  README's independence disclaimer reworded to drop the upstream-review
+  framing. No code, dependency, or runtime behavior changed. This
+  diverges from the file set hashed in the signed/notarized `v2.0.2`
+  evidence bundle; that snapshot remains the record of the state as of
+  2026-10-28/29, unaffected by this change.
 
 ### Added
 
