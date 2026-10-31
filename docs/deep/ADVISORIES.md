@@ -219,6 +219,12 @@ This is a distinct question from whether the model reads or chooses to use a *va
 
 *Tag: upstream intake. Second thread (with ADV-15). No auto-detector — same class as ADV-09.*
 
+**Status (operator, 2026-10-31): discontinued.** `ailev/FPF` and the ~150k-line
+`FPF-Spec.md` monolith are out of scope for this package, full stop — no
+further upstream intake, inspection, or disposition against that repo.
+Entry kept below for the audit record only; it does not describe current
+practice.
+
 **What**: nothing in the engine, `dev_mcp`, or a PyPI pin watches [ailev/FPF](https://github.com/ailev/FPF). A new upstream commit does not enter our runtime scopes by existing. Our **predefined scopes** (proposed/advised for this carrier — one lawful move, executable frontier, small compiled surface, scenario-or-HOLD, honest provenance) are documented in [`UPSTREAM_SCOPE_INSPECTION.md`](UPSTREAM_SCOPE_INSPECTION.md). Until a commit is inspected against those scopes and **PASS**es, it is **open**, not adopted. If inspection **FAIL**s the conditions, the honest fate is **TOMBSTONE**: tombstone that upstream commit (ledger / `REJECTED_*` / scope-audit row) **and/or** tombstone any advisory that would pretend the commit is in scope or that itself fails the same conditions. Leaving either live as if authoritative is the defect this advisory names.
 
 **Why this is the default**: `ailev/FPF` owns the evolving formal framework; this package owns the executable frontier. Auto-following upstream would guess that every ontology/edit delta changes one lawful `step()` — it does not. Auto-ignoring would leave material commits unclassified forever. Inspection + PASS/FAIL + TOMBSTONE is the only shape that keeps both honesty and a bounded surface.

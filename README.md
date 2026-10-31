@@ -230,8 +230,6 @@ The MIT license requires
 that the copyright notice and license text be kept in copies and substantial
 portions of the software; see [LICENSE](LICENSE) and [NOTICE](NOTICE).
 
-This is an independent implementation. It follows the public
-[ailev/FPF](https://github.com/ailev/FPF) work: upstream changes are reviewed
-and adopted, adapted or rejected (see
-[docs/deep/UPSTREAM_SCOPE_INSPECTION.md](docs/deep/UPSTREAM_SCOPE_INSPECTION.md)).
-It is not affiliated with or endorsed by that project.
+This is an independent implementation, out of scope of and not derived from
+any third-party framework's document or ontology. It is not affiliated
+with, sponsored by, or endorsed by any such project.

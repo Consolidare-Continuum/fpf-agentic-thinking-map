@@ -1,6 +1,8 @@
 # Upstream scope inspection (`ailev/FPF` → our scopes)
 
-**Status**: Adopted as true (operator, 2026-09-19) — second thread alongside ADV-15.
+**Status**: Adopted 2026-09-19, **superseded 2026-10-31** (operator) — `ailev/FPF`
+declared fully out of scope; this inspection protocol is retired, no further
+upstream commits are reviewed against it. Kept below as historical record only.
 **Advisory face**: [`ADV-16`](ADVISORIES.md#adv-16--ailevfpf-commits-must-pass-our-predefined-scopes--else-tombstone).
 **Ledger**: brain `governance/FPF-THINKING-MAP-VS-AILEV-FPF-POSITIONING.md` disposition table; package mirror `FPF_THINKING_MAP_VS_AILEV_FPF_POSITIONING.md` / `FPF_SCOPE_AUDIT_LOG.md`.
 

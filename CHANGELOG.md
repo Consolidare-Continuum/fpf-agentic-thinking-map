@@ -19,6 +19,16 @@ list: [`docs/deep/EXPANDED_PROVENANCE.md`](docs/deep/EXPANDED_PROVENANCE.md).
 
 ## [Unreleased]
 
+### Changed
+
+- **Scope**: `ailev/FPF` upstream-intake practice (`ADV-16`,
+  `docs/deep/UPSTREAM_SCOPE_INSPECTION.md`) discontinued — `ailev/FPF` and
+  its ~150k-line `FPF-Spec.md` are out of scope for this package, full
+  stop. README's independence disclaimer reworded to drop the
+  upstream-review framing; no code, dependency, or runtime behavior
+  changed. Historical advisory/inspection text kept for the audit record,
+  marked superseded rather than deleted.
+
 ### Added
 
 - **Traversal checkpoint and restore** (ADV-08) — `ActiveState.checkpoint()`,
